@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      String   // SUPER_ADMIN, GURU, MURID
+  className String?  // Untuk role MURID
+  token     String?  // Untuk menyimpan 5 digit unik password/token
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  examResults ExamResult[]
+}
+
+model Exam {
+  id          String     @id @default(uuid())
+  examType    String     @default("Ujian Tengah Semester") // Tipe Ujian
+  subject     String     @default("Pelajaran Umum") // Nama Mata Pelajaran
+  targetClass String     @default("Semua Kelas") // Kelas yang dituju
+  token       String     @unique @default(uuid()) // Token akses ujian
+  duration    Int        @default(60) // Durasi ujian dalam menit
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime     @updatedAt
+  questions   Question[]
+  results     ExamResult[]
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  text          String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctOption String   // "A", "B", "C", atau "D"
+  examId        String
+  exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ExamResult {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  score       Float
+  isCheated   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([studentId, examId])
+}
