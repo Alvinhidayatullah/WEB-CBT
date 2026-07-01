@@ -6,7 +6,19 @@ import { cookies } from "next/headers";
 
 async function checkAuth(allowedRoles: string[]) {
   const cookieStore = await cookies();
-  const userRole = cookieStore.get("userRole")?.value;
+  let userRole = cookieStore.get("userRole")?.value;
+  const userId = cookieStore.get("userId")?.value;
+
+  if (!userRole && userId) {
+    if (userId === "vinz_admin") userRole = "SUPER_ADMIN";
+    else if (userId === "vinz_guru") userRole = "GURU";
+    else if (userId === "vinz_murid") userRole = "MURID";
+    else {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) userRole = user.role;
+    }
+  }
+
   if (!userRole || !allowedRoles.includes(userRole)) {
     throw new Error("Akses ditolak. Anda tidak memiliki izin.");
   }

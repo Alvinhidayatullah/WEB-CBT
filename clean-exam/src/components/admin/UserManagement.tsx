@@ -62,6 +62,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
       setCustomPassword("");
       setToken(generateRandomToken()); // refresh token untuk form berikutnya
     } else {
+      alert(res.error || "Gagal menambahkan user");
       setError(res.error || "Gagal menambahkan user");
     }
     setLoading(false);

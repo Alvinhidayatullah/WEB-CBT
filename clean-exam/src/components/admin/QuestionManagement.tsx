@@ -60,10 +60,14 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
     e.preventDefault();
     if (!subject.trim()) return;
     setLoading(true);
-    await createExam(examType, subject, targetClass, duration);
-    setSubject("");
-    setTargetClass("");
-    setDuration(60);
+    const res = await createExam(examType, subject, targetClass, duration);
+    if (res.success) {
+      setSubject("");
+      setTargetClass("");
+      setDuration(60);
+    } else {
+      alert(res.error || "Gagal membuat sesi ujian");
+    }
     setLoading(false);
   };
 
@@ -94,20 +98,22 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
       setOptD("");
       setCorrectOpt("A");
     } else {
-      alert("Gagal menambahkan soal");
+      alert(res.error || "Gagal menambahkan soal");
     }
     setLoading(false);
   };
 
   const handleDeleteQuestion = async (id: string) => {
     if (!window.confirm("Hapus soal ini?")) return;
-    await deleteQuestion(id);
+    const res = await deleteQuestion(id);
+    if (!res.success) alert(res.error || "Gagal menghapus soal");
   };
 
   const handleDeleteExam = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!window.confirm("Hapus sesi ujian ini beserta semua soalnya?")) return;
-    await deleteExam(id);
+    const res = await deleteExam(id);
+    if (!res.success) alert(res.error || "Gagal menghapus ujian");
   };
 
   const toggleExpand = (id: string) => {
