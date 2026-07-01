@@ -198,7 +198,7 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-900 text-lg leading-tight">{exam.examType} - {exam.subject}</h4>
-                      <p className="text-slate-500 text-sm mt-1 flex flex-wrap gap-2 items-center">
+                      <div className="text-slate-500 text-sm mt-1 flex flex-wrap gap-2 items-center">
                         <span className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-700 shadow-sm">Kelas: {exam.targetClass || "Semua"}</span>
                         <span className="hidden md:inline text-slate-300">•</span>
                         {editingExamId === exam.id ? (
@@ -230,7 +230,7 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                         )}
                         <span className="hidden md:inline text-slate-300">•</span>
                         <span className="font-mono bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md border border-blue-100 font-semibold tracking-wider">Token: {exam.token}</span>
-                      </p>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 self-end md:self-auto">
