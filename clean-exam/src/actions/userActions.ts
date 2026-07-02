@@ -47,13 +47,29 @@ export async function createUser(data: { username: string; role: string; token?:
       if (!data.className || data.className.trim() === "") {
         return { success: false, error: "400 Bad Request: Atribut 'className' wajib diisi untuk pembuatan akun MURID." };
       }
+      if (!data.token || data.token.trim() === "") {
+        return { success: false, error: "400 Bad Request: Atribut 'token' wajib diisi untuk pembuatan akun MURID." };
+      }
     } else if (assignedRole === "GURU") {
       if (data.className && data.className.trim() !== "") {
         return { success: false, error: "400 Bad Request: Role GURU tidak boleh memiliki atribut 'className'." };
       }
+      if (!data.token || data.token.trim() === "") {
+        return { success: false, error: "400 Bad Request: Atribut 'token' wajib diisi untuk pembuatan akun GURU." };
+      }
+    } else if (assignedRole === "SUPER_ADMIN") {
+      if (!data.password || data.password.trim() === "") {
+        return { success: false, error: "400 Bad Request: Atribut 'password' wajib diisi untuk pembuatan akun SUPER_ADMIN." };
+      }
+      if (data.token && data.token.trim() !== "") {
+        return { success: false, error: "400 Bad Request: Role SUPER_ADMIN tidak boleh memiliki atribut 'token'." };
+      }
+      if (data.className && data.className.trim() !== "") {
+        return { success: false, error: "400 Bad Request: Role SUPER_ADMIN tidak boleh memiliki atribut 'className'." };
+      }
     }
 
-    const finalPassword = (assignedRole === "SUPER_ADMIN" && data.password) ? data.password : (data.token || "vinzcbt");
+    const finalPassword = assignedRole === "SUPER_ADMIN" ? data.password! : data.token!;
     const hashedPassword = await bcrypt.hash(finalPassword, 10);
 
     const newUser = await prisma.user.create({
@@ -61,7 +77,7 @@ export async function createUser(data: { username: string; role: string; token?:
         username: data.username,
         password: hashedPassword,
         role: assignedRole,
-        className: assignedRole === "MURID" ? (data.className || null) : null,
+        className: assignedRole === "MURID" ? data.className : null,
         token: assignedRole === "SUPER_ADMIN" ? null : data.token,
       },
     });
