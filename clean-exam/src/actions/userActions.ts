@@ -43,7 +43,7 @@ export async function createUser(data: { username: string; role: string; token?:
     const finalPassword = (data.role === "SUPER_ADMIN" && data.password) ? data.password : (data.token || "vinzcbt");
     const hashedPassword = await bcrypt.hash(finalPassword, 10);
     
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         username: data.username,
         password: hashedPassword,
@@ -53,8 +53,7 @@ export async function createUser(data: { username: string; role: string; token?:
       },
     });
 
-    revalidatePath("/", "layout");
-    return { success: true };
+    return { success: true, user: newUser };
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
       return { success: false, error: "Username sudah digunakan." };
@@ -77,7 +76,6 @@ export async function deleteUser(id: string) {
       where: { id },
     });
     
-    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
@@ -105,13 +103,12 @@ export async function updateProfile(data: { username: string; oldPassword?: stri
       updateData.password = await bcrypt.hash(data.newPassword, 10);
     }
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
     });
 
-    revalidatePath("/", "layout");
-    return { success: true };
+    return { success: true, user: updatedUser };
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
       return { success: false, error: "Username sudah digunakan oleh orang lain." };

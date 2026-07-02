@@ -67,7 +67,7 @@ export async function createExam(examType: string, subject: string, targetClass:
     };
     const examToken = generateToken();
 
-    await prisma.exam.create({ 
+    const newExam = await prisma.exam.create({ 
       data: { 
         examType, 
         subject, 
@@ -76,8 +76,7 @@ export async function createExam(examType: string, subject: string, targetClass:
         duration
       } 
     });
-    revalidatePath("/", "layout");
-    return { success: true };
+    return { success: true, exam: newExam };
   } catch (error: unknown) {
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
@@ -87,7 +86,7 @@ export async function updateExam(id: string, data: { examType?: string, subject?
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
-    await prisma.exam.update({
+    const updated = await prisma.exam.update({
       where: { id },
       data: {
         ...(data.examType && { examType: data.examType }),
@@ -96,8 +95,7 @@ export async function updateExam(id: string, data: { examType?: string, subject?
         ...(data.duration && { duration: data.duration })
       }
     });
-    revalidatePath("/", "layout");
-    return { success: true };
+    return { success: true, exam: updated };
   } catch (error: unknown) {
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
@@ -153,7 +151,6 @@ export async function deleteExam(id: string) {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
     await prisma.exam.delete({ where: { id } });
-    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };

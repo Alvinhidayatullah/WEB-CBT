@@ -31,12 +31,12 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
   }, [examId]);
 
   const fetchExam = async (id: string) => {
-    setLoading(true);
     const exams = await getExams();
     const found = exams.find((e: any) => e.id === id);
     if (found) setExam(found);
     setLoading(false);
   };
+
 
   const handleAddQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +111,15 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
             <p className="text-slate-500 text-sm">{exam.examType} - {exam.subject}</p>
           </div>
         </header>
+
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-6 shadow-sm">
+          <h3 className="font-bold text-amber-800 flex items-center gap-2 mb-1">
+            ⚠️ Informasi Penting
+          </h3>
+          <p className="text-amber-700 text-sm leading-relaxed">
+            Bobot nilai untuk soal <strong>Esai</strong> tidak dihitung secara otomatis. Hanya soal <strong>Pilihan Ganda (PG)</strong> yang akan dikalkulasi otomatis oleh sistem. Jawaban esai akan diperiksa secara manual oleh guru, dan penyesuaian nilai akhir (gabungan PG dan Esai) akan dilakukan per murid.
+          </p>
+        </div>
 
         <form onSubmit={handleAddQuestion} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h2 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">

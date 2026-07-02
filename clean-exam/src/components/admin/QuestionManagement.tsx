@@ -38,6 +38,11 @@ export interface UIExam {
 }
 
 export function QuestionManagement({ exams = [], availableClasses = [] }: { exams: UIExam[], availableClasses?: string[] }) {
+  const [localExams, setLocalExams] = useState<UIExam[]>(exams);
+
+  React.useEffect(() => {
+    setLocalExams(exams);
+  }, [exams]);
   const [examType, setExamType] = useState("Ujian Tengah Semester");
   const [subject, setSubject] = useState("");
   const [targetClasses, setTargetClasses] = useState<string[]>([]);
@@ -60,7 +65,8 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
     setLoading(true);
     const finalTargetClass = targetClasses.length > 0 ? targetClasses.join(", ") : "Semua Kelas";
     const res = await createExam(examType, subject, finalTargetClass, duration);
-    if (res.success) {
+    if (res.success && res.exam) {
+      setLocalExams([res.exam, ...localExams]);
       setSubject("");
       setTargetClasses([]);
       setClassInput("");
@@ -73,7 +79,10 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
 
   const handleUpdateDuration = async (id: string) => {
     setLoading(true);
-    await updateExam(id, { duration: editDuration });
+    const res = await updateExam(id, { duration: editDuration });
+    if (res.success) {
+      setLocalExams(localExams.map(e => e.id === id ? { ...e, duration: editDuration } : e));
+    }
     setEditingExamId(null);
     setLoading(false);
   };
@@ -82,7 +91,11 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
     e.stopPropagation();
     if (!window.confirm("Hapus sesi ujian ini beserta semua soalnya?")) return;
     const res = await deleteExam(id);
-    if (!res.success) alert(res.error || "Gagal menghapus ujian");
+    if (res.success) {
+      setLocalExams(localExams.filter(exam => exam.id !== id));
+    } else {
+      alert(res.error || "Gagal menghapus ujian");
+    }
   };
 
   const toggleExpand = (id: string) => {
@@ -173,7 +186,7 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
           <FolderEdit className="w-5 h-5 text-indigo-600" /> Daftar Ujian Aktif
         </h3>
         <div className="space-y-4">
-          {exams.map((exam) => {
+          {localExams.map((exam) => {
             const isExpanded = expandedExam === exam.id;
             return (
               <div key={exam.id} className="border border-slate-200/80 rounded-xl bg-white shadow-sm overflow-hidden transition-all hover:border-slate-300">
@@ -301,7 +314,7 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
               </div>
             );
           })}
-          {exams.length === 0 && (
+          {localExams.length === 0 && (
             <div className="text-center py-10 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
               <p className="text-slate-500 text-sm">Belum ada sesi ujian yang dibuat.</p>
             </div>

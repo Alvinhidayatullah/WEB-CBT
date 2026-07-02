@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { UserCircle, Key, Loader2, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -36,6 +37,12 @@ export function ProfileSettings({ currentUsername }: { currentUsername: string }
     }
   };
 
+  const [mounted, setMounted] = useState(false);
+  
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <>
       <button 
@@ -49,8 +56,8 @@ export function ProfileSettings({ currentUsername }: { currentUsername: string }
         <Settings className="w-4 h-4 text-slate-400 ml-2" />
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      {isOpen && mounted && document.body && createPortal(
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -97,7 +104,8 @@ export function ProfileSettings({ currentUsername }: { currentUsername: string }
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

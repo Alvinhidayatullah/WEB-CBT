@@ -56,11 +56,25 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     };
 
     const res = await createUser(payload);
-    if (res.success) {
+    if (res.success && res.user) {
+      setUsers([{
+        id: res.user.id,
+        username: res.user.username,
+        role: res.user.role,
+        token: res.user.token,
+        className: res.user.className,
+        createdAt: res.user.createdAt
+      }, ...users]);
       setUsername("");
       setClassName("");
       setCustomPassword("");
       setToken(generateRandomToken()); // refresh token untuk form berikutnya
+    } else if (res.success) {
+      // Fallback if user wasn't returned for some reason
+      setUsername("");
+      setClassName("");
+      setCustomPassword("");
+      setToken(generateRandomToken());
     } else {
       alert(res.error || "Gagal menambahkan user");
       setError(res.error || "Gagal menambahkan user");
