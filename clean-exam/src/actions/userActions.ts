@@ -29,7 +29,7 @@ export async function getUsers() {
     });
     return { success: true, users };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
@@ -67,7 +67,7 @@ export async function createUser(data: { username: string; role: string; token?:
     if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
       return { success: false, error: "Username sudah digunakan." };
     }
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
@@ -93,7 +93,7 @@ export async function deleteUser(id: string) {
 
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 

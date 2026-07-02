@@ -73,7 +73,7 @@ export async function createExam(examType: string, subject: string, targetClass:
     });
     return { success: true, exam: newExam };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
@@ -92,7 +92,7 @@ export async function updateExam(id: string, data: { examType?: string, subject?
     });
     return { success: true, exam: updated };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
@@ -125,7 +125,7 @@ export async function createQuestion(data: {
     revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
@@ -137,7 +137,7 @@ export async function deleteQuestion(id: string) {
     revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
@@ -148,7 +148,7 @@ export async function deleteExam(id: string) {
     await prisma.exam.delete({ where: { id } });
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
@@ -179,7 +179,7 @@ export async function updateQuestion(id: string, data: {
     revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
@@ -205,6 +205,6 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
     revalidatePath("/", "layout");
     return { success: true, count: formattedQuestions.length };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }

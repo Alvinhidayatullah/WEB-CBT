@@ -41,13 +41,19 @@ export async function joinExam(token: string) {
     }
 
     return { success: true, examId: exam.id };
-  } catch (error: unknown) {
-    return { success: false, error: "Terjadi kesalahan sistem saat memvalidasi token." };
+  } catch (error) {
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
 export async function getExamData(examId: string) {
   try {
+    const session = await getSession();
+    const userId = session?.userId as string;
+    const userClass = session?.className as string;
+
+    if (!userId) return null;
+
     const exam = await prisma.exam.findUnique({
       where: { id: examId },
       include: {
@@ -66,7 +72,12 @@ export async function getExamData(examId: string) {
       }
     });
     
-    if (!exam) return null;
+    if (!exam || !exam.isActive) return null;
+
+    const allowedClasses = exam.targetClass.split(",").map(c => c.trim());
+    if (exam.targetClass !== "Semua Kelas" && !allowedClasses.includes(userClass || "")) {
+      return null;
+    }
 
     // Fisher-Yates Shuffle
     const shuffledQuestions = [...exam.questions];
@@ -101,7 +112,13 @@ export async function submitExam(examId: string, answers: Record<string, string>
       include: { questions: true }
     });
 
-    if (!exam) return { success: false, error: "Ujian tidak ditemukan." };
+    if (!exam || !exam.isActive) return { success: false, error: "Ujian tidak ditemukan atau sudah ditutup." };
+
+    const userClass = session?.className as string;
+    const allowedClasses = exam.targetClass.split(",").map(c => c.trim());
+    if (exam.targetClass !== "Semua Kelas" && !allowedClasses.includes(userClass || "")) {
+      return { success: false, error: "Anda tidak memiliki akses ke ujian ini." };
+    }
 
     let correctCount = 0;
     const totalQuestions = exam.questions.length;
@@ -140,6 +157,6 @@ export async function submitExam(examId: string, answers: Record<string, string>
     if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'P2002') {
        return { success: false, error: "Anda sudah mensubmit ujian ini sebelumnya." };
     }
-    return { success: false, error: "Terjadi kesalahan saat menyimpan nilai." };
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
