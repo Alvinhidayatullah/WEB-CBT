@@ -18,6 +18,8 @@ async function checkAuth(allowedRoles: string[]) {
   if (!userRole || !allowedRoles.includes(userRole)) {
     throw new Error("Akses ditolak. Anda tidak memiliki izin.");
   }
+
+  return { userId, userRole };
 }
 
 export async function getUsers() {
@@ -33,11 +35,15 @@ export async function getUsers() {
 
 export async function createUser(data: { username: string; role: string; token?: string; password?: string; className?: string }) {
   try {
-    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    const { userRole } = await checkAuth(["SUPER_ADMIN", "GURU"]);
+
+    if (userRole === "GURU" && data.role !== "MURID") {
+      return { success: false, error: "Akses Ditolak: Guru hanya diizinkan membuat akun Murid." };
+    }
 
     const finalPassword = (data.role === "SUPER_ADMIN" && data.password) ? data.password : (data.token || "vinzcbt");
     const hashedPassword = await bcrypt.hash(finalPassword, 10);
-    
+
     const newUser = await prisma.user.create({
       data: {
         username: data.username,
@@ -59,18 +65,24 @@ export async function createUser(data: { username: string; role: string; token?:
 
 export async function deleteUser(id: string) {
   try {
-    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    const { userRole } = await checkAuth(["SUPER_ADMIN", "GURU"]);
 
     // Hindari menghapus akun super admin bawaan
     const user = await prisma.user.findUnique({ where: { id } });
-    if (user?.username === "vinz_admin") {
-      return { success: false, error: "Akun Super Admin bawaan tidak boleh dihapus." };
+    if (!user) return { success: false, error: "Pengguna tidak ditemukan." };
+
+    if (user.username === "vinz_admin") {
+      return { success: false, error: "Akun Super Admin bawaan tidak boleh dihapus - by Vinzz" };
+    }
+
+    if (userRole === "GURU" && user.role !== "MURID") {
+      return { success: false, error: "Akses Ditolak: Guru hanya diizinkan menghapus akun Murid." };
     }
 
     await prisma.user.delete({
       where: { id },
     });
-    
+
     return { success: true };
   } catch (error: unknown) {
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
