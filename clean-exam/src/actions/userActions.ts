@@ -37,8 +37,6 @@ export async function createUser(data: { username: string; role: string; token?:
   try {
     const { userRole } = await checkAuth(["SUPER_ADMIN", "GURU"]);
 
-    // OWASP Recommendation: Server-side role assignment
-    // Jika pembuat akun adalah GURU, secara paksa menetapkan role menjadi MURID, mengabaikan input client.
     const assignedRole = userRole === "GURU" ? "MURID" : data.role;
 
     if (!assignedRole || !["MURID", "GURU", "SUPER_ADMIN"].includes(assignedRole)) {
@@ -108,11 +106,11 @@ export async function deleteUser(id: string) {
 export async function bulkDeleteUsers(ids: string[]) {
   try {
     const { userRole } = await checkAuth(["SUPER_ADMIN", "GURU"]);
-    
+
     const users = await prisma.user.findMany({ where: { id: { in: ids } } });
     const deletableUsers = users.filter(u => u.username !== "vinz_admin");
-    
-    const finalIds = userRole === "GURU" 
+
+    const finalIds = userRole === "GURU"
       ? deletableUsers.filter(u => u.role === "MURID").map(u => u.id)
       : deletableUsers.map(u => u.id);
 
@@ -123,7 +121,7 @@ export async function bulkDeleteUsers(ids: string[]) {
     await prisma.user.deleteMany({
       where: { id: { in: finalIds } }
     });
-    
+
     revalidatePath("/", "layout");
     return { success: true, count: finalIds.length };
   } catch (error: unknown) {
