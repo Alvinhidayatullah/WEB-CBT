@@ -37,20 +37,24 @@ export async function createUser(data: { username: string; role: string; token?:
   try {
     const { userRole } = await checkAuth(["SUPER_ADMIN", "GURU"]);
 
-    if (userRole === "GURU" && data.role !== "MURID") {
-      return { success: false, error: "Akses Ditolak: Guru hanya diizinkan membuat akun Murid." };
+    // OWASP Recommendation: Server-side role assignment
+    // Jika pembuat akun adalah GURU, secara paksa menetapkan role menjadi MURID, mengabaikan input client.
+    const assignedRole = userRole === "GURU" ? "MURID" : data.role;
+
+    if (!assignedRole) {
+      return { success: false, error: "Role wajib diisi." };
     }
 
-    const finalPassword = (data.role === "SUPER_ADMIN" && data.password) ? data.password : (data.token || "vinzcbt");
+    const finalPassword = (assignedRole === "SUPER_ADMIN" && data.password) ? data.password : (data.token || "vinzcbt");
     const hashedPassword = await bcrypt.hash(finalPassword, 10);
 
     const newUser = await prisma.user.create({
       data: {
         username: data.username,
         password: hashedPassword,
-        role: data.role,
-        className: data.role === "MURID" ? (data.className || null) : null,
-        token: data.role === "SUPER_ADMIN" ? null : data.token,
+        role: assignedRole,
+        className: assignedRole === "MURID" ? (data.className || null) : null,
+        token: assignedRole === "SUPER_ADMIN" ? null : data.token,
       },
     });
 
