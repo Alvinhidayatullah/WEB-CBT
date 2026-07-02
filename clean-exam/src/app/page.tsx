@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 import { loginUser } from "@/actions/authActions";
 
@@ -45,10 +44,10 @@ export default function Home() {
       {/* Subtle Grid Pattern for texture */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none" />
 
-      <Card className="relative z-10 w-full max-w-[420px] shadow-2xl border-white/10 bg-[#0a0a0c]/60 backdrop-blur-2xl rounded-3xl overflow-hidden ring-1 ring-white/5">
+      <div className="relative z-10 w-full max-w-[420px] shadow-2xl border border-white/10 bg-[#0a0a0c]/80 backdrop-blur-3xl rounded-3xl overflow-hidden ring-1 ring-white/5">
         <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none"></div>
         
-        <CardHeader className="text-center pt-12 pb-8 relative z-10">
+        <div className="text-center pt-12 pb-8 relative z-10 border-b border-white/5">
           <div className="mx-auto w-14 h-14 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl flex items-center justify-center mb-6 shadow-lg backdrop-blur-md">
             <Lock className="w-6 h-6 text-slate-200" strokeWidth={1.5} />
           </div>
@@ -58,9 +57,9 @@ export default function Home() {
           <p className="text-slate-400 text-sm font-medium tracking-wide">
             Masuk ke ruang kerja Anda
           </p>
-        </CardHeader>
+        </div>
         
-        <CardContent className="px-8 pb-12 relative z-10">
+        <div className="px-8 pt-8 pb-12 relative z-10">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block">
@@ -113,8 +112,8 @@ export default function Home() {
               {loading ? "Otentikasi..." : "Masuk"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
