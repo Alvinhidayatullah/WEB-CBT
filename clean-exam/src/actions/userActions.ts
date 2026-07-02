@@ -45,8 +45,18 @@ export async function createUser(data: { username: string; role: string; token?:
       return { success: false, error: "403 Forbidden: Pembuatan akun tingkat Super Admin dilarang demi keamanan sistem." };
     }
 
-    if (!assignedRole) {
-      return { success: false, error: "Role wajib diisi." };
+    if (!assignedRole || !["MURID", "GURU"].includes(assignedRole)) {
+      return { success: false, error: "400 Bad Request: Role tidak valid." };
+    }
+
+    if (assignedRole === "MURID") {
+      if (!data.className || data.className.trim() === "") {
+        return { success: false, error: "400 Bad Request: Atribut 'className' wajib diisi untuk pembuatan akun MURID." };
+      }
+    } else if (assignedRole === "GURU") {
+      if (data.className && data.className.trim() !== "") {
+        return { success: false, error: "400 Bad Request: Role GURU tidak boleh memiliki atribut 'className'." };
+      }
     }
 
     const finalPassword = (assignedRole === "SUPER_ADMIN" && data.password) ? data.password : (data.token || "vinzcbt");
