@@ -20,7 +20,7 @@ export default function Home() {
 
     const u = username.trim();
     const p = password.trim();
-    
+
     const res = await loginUser(u, p);
 
     if (res.success) {
@@ -35,16 +35,18 @@ export default function Home() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#030305] p-4 font-sans selection:bg-blue-500/30">
-      
-      {/* Minimalist Ambient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] rounded-full bg-blue-600/10 blur-[150px] pointer-events-none" />
-      
+
+      {/* Dynamic Animated Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-blue-600/20 blur-[120px] animate-pulse pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-indigo-600/20 blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-[20%] right-[10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full bg-violet-600/20 blur-[100px] animate-pulse pointer-events-none" style={{ animationDelay: '4s' }}></div>
+
       {/* Subtle Grid Pattern for texture */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-[420px] shadow-2xl border border-white/10 bg-[#0a0a0c]/80 backdrop-blur-3xl rounded-3xl overflow-hidden ring-1 ring-white/5">
         <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none"></div>
-        
+
         <div className="text-center pt-12 pb-8 relative z-10 border-b border-white/5">
           <div className="mx-auto w-14 h-14 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl flex items-center justify-center mb-6 shadow-lg backdrop-blur-md">
             <Lock className="w-6 h-6 text-slate-200" strokeWidth={1.5} />
@@ -53,10 +55,10 @@ export default function Home() {
             Secure<span className="text-blue-500 font-light">CBT</span>
           </h1>
           <p className="text-slate-400 text-sm font-medium tracking-wide">
-            Masuk ke ruang kerja Anda
+            Sistem Ujian Yang Paling Aman & Mudah
           </p>
         </div>
-        
+
         <div className="px-8 pt-8 pb-12 relative z-10">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
@@ -72,7 +74,7 @@ export default function Home() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2 relative">
               <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block">
                 Password / Token
@@ -101,11 +103,11 @@ export default function Home() {
                 {error}
               </div>
             )}
-            
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="w-full mt-8 h-12 text-sm font-semibold tracking-wide rounded-xl bg-white text-black hover:bg-slate-200 border border-transparent shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-8 h-12 text-sm font-bold tracking-wide rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
             >
               {loading ? "Otentikasi..." : "Masuk"}
             </button>
