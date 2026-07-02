@@ -19,6 +19,8 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   const [error, setError] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [markedQuestions, setMarkedQuestions] = useState<Record<string, boolean>>({});
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   useEffect(() => {
     async function loadExam() {
@@ -82,7 +84,6 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   };
 
   const handleSubmit = async () => {
-    if(window.confirm("Apakah Anda yakin ingin menyelesaikan ujian ini? Jawaban yang sudah dikirim tidak dapat diubah kembali.")) {
        setIsSubmitting(true);
        const startKey = `exam_start_${examId}`;
        const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
@@ -92,13 +93,13 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
        if (res.success) {
          localStorage.removeItem('exam_violations');
          localStorage.removeItem(startKey);
+         setShowSubmitModal(false);
          alert(`Ujian selesai! Pekerjaan Anda telah direkam.`);
          router.replace('/student/dashboard');
        } else {
          alert(res.error || "Gagal mengirim ujian.");
          setIsSubmitting(false);
        }
-    }
   };
 
   const formatTime = (seconds: number) => {
@@ -157,9 +158,6 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                  <span>{formatTime(timeLeft)}</span>
                </div>
              )}
-             <Button variant="danger" onClick={handleSubmit} disabled={isSubmitting} className="w-full md:w-auto font-semibold shadow-sm">
-                {isSubmitting ? "Mengirim..." : "Selesai Ujian"}
-             </Button>
           </div>
         </header>
 
@@ -178,9 +176,11 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                     className={`shrink-0 w-12 h-12 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
                       currentQuestion === idx 
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-600 ring-offset-2' 
-                        : answers[q.id] !== undefined
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                        : markedQuestions[q.id]
+                          ? 'bg-amber-100 text-amber-700 border border-amber-300 ring-1 ring-amber-300'
+                          : answers[q.id] && answers[q.id].trim() !== ""
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
                     {idx + 1}
@@ -245,27 +245,92 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-10 pt-6 border-t border-slate-100 flex gap-4 justify-between">
-                 <Button 
-                    variant="secondary" 
-                    onClick={() => setCurrentQuestion(p => Math.max(0, p - 1))}
-                    disabled={currentQuestion === 0}
-                    className="flex-1 md:flex-none py-3"
-                 >
-                    Sebelumnya
-                 </Button>
-                 <Button 
-                    variant="primary" 
-                    onClick={() => setCurrentQuestion(p => Math.min(examData.questions.length - 1, p + 1))}
-                    disabled={currentQuestion === examData.questions.length - 1}
-                    className="flex-1 md:flex-none py-3 shadow-md shadow-blue-600/20"
-                 >
-                    Selanjutnya
-                 </Button>
+              <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col md:flex-row gap-6 justify-between items-center">
+                 <label className="flex items-center gap-3 cursor-pointer group">
+                   <div className="relative flex items-center justify-center">
+                     <input 
+                       type="checkbox" 
+                       className="peer appearance-none w-5 h-5 rounded border-2 border-slate-300 checked:bg-amber-500 checked:border-amber-500 focus:ring-2 focus:ring-amber-500/30 focus:outline-none transition-all cursor-pointer"
+                       checked={!!markedQuestions[qId]}
+                       onChange={(e) => setMarkedQuestions(prev => ({...prev, [qId]: e.target.checked}))}
+                     />
+                     <svg className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                     </svg>
+                   </div>
+                   <span className="text-slate-600 font-medium group-hover:text-amber-600 transition-colors select-none">Tandai Ragu-ragu</span>
+                 </label>
+                 
+                 <div className="flex w-full md:w-auto gap-4">
+                   <Button 
+                      variant="secondary" 
+                      onClick={() => setCurrentQuestion(p => Math.max(0, p - 1))}
+                      disabled={currentQuestion === 0}
+                      className="flex-1 md:flex-none py-3 px-6"
+                   >
+                      Sebelumnya
+                   </Button>
+                   {currentQuestion === examData.questions.length - 1 ? (
+                     <Button 
+                        onClick={() => setShowSubmitModal(true)}
+                        className="flex-1 md:flex-none py-3 px-6 shadow-md shadow-blue-600/20 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl"
+                     >
+                        Selesaikan Ujian
+                     </Button>
+                   ) : (
+                     <Button 
+                        variant="primary" 
+                        onClick={() => setCurrentQuestion(p => Math.min(examData.questions.length - 1, p + 1))}
+                        className="flex-1 md:flex-none py-3 px-6 shadow-md shadow-blue-600/20"
+                     >
+                        Selanjutnya
+                     </Button>
+                   )}
+                 </div>
               </div>
             </div>
           </section>
         </main>
+
+        {/* Modal Konfirmasi Selesai */}
+        {showSubmitModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 md:p-8 transform transition-all animate-in fade-in zoom-in duration-200">
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6 mx-auto">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 text-center mb-2">Selesai Ujian?</h3>
+              <p className="text-slate-600 text-center mb-6 leading-relaxed">
+                Periksa kembali semua jawaban kamu. Pastikan tidak ada soal yang terlewat atau masih ditandai ragu-ragu.
+              </p>
+              
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col items-center justify-center mb-8">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Sisa Waktu</span>
+                <span className="text-4xl font-mono font-black text-slate-800 tracking-tight">{timeLeft !== null ? formatTime(timeLeft) : '00:00'}</span>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={isSubmitting}
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white text-base font-bold shadow-lg shadow-blue-600/20 rounded-xl"
+                >
+                  {isSubmitting ? "Mengirim..." : "Ya, Kirim Jawaban"}
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setShowSubmitModal(false)}
+                  disabled={isSubmitting}
+                  className="w-full py-4 text-base font-bold rounded-xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                >
+                  Batal, Periksa Lagi
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AntiCheatWrapper>
   );
