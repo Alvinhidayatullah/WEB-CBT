@@ -138,7 +138,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   ];
 
   return (
-    <AntiCheatWrapper onAutoSubmit={handleAutoSubmit}>
+    <AntiCheatWrapper onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
       <div className="min-h-screen bg-slate-50 flex flex-col">
         {/* Header Minimalis */}
         <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-6 py-4 flex flex-wrap gap-4 justify-between items-center sticky top-0 z-20 shadow-sm">

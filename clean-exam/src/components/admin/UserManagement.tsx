@@ -4,8 +4,9 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trash2, UserPlus } from "lucide-react";
+import { Trash2, UserPlus, Download } from "lucide-react";
 import { createUser, deleteUser } from "@/actions/userActions";
+import * as XLSX from "xlsx";
 
 export interface UIUser {
   id: string;
@@ -17,12 +18,27 @@ export interface UIUser {
 }
 
 export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GURU", "SUPER_ADMIN"] }: { initialUsers: UIUser[], allowedRoles?: string[] }) {
-  const [users, setUsers] = useState(initialUsers);
+  const sortUsers = (userList: UIUser[]) => {
+    const roleOrder: Record<string, number> = { SUPER_ADMIN: 1, GURU: 2, MURID: 3 };
+    return [...userList].sort((a, b) => {
+      if (roleOrder[a.role] !== roleOrder[b.role]) {
+        return (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
+      }
+      if (a.role === "MURID") {
+        const classA = a.className || "";
+        const classB = b.className || "";
+        return classA.localeCompare(classB);
+      }
+      return 0;
+    });
+  };
+
+  const [users, setUsers] = useState(() => sortUsers(initialUsers));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   React.useEffect(() => {
-    setUsers(initialUsers);
+    setUsers(sortUsers(initialUsers));
   }, [initialUsers]);
   
   // Form State
@@ -57,14 +73,14 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
 
     const res = await createUser(payload);
     if (res.success && res.user) {
-      setUsers([{
-        id: res.user.id,
-        username: res.user.username,
-        role: res.user.role,
-        token: res.user.token,
-        className: res.user.className,
-        createdAt: res.user.createdAt
-      }, ...users]);
+      setUsers(prev => sortUsers([{
+        id: res.user!.id,
+        username: res.user!.username,
+        role: res.user!.role,
+        token: res.user!.token,
+        className: res.user!.className,
+        createdAt: res.user!.createdAt
+      }, ...prev]));
       setUsername("");
       setClassName("");
       setCustomPassword("");
@@ -92,10 +108,25 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     }
   };
 
+  const handleExportExcel = () => {
+    const dataToExport = users.map(user => ({
+      Username: user.username,
+      "Pass/Token": user.token || (user.role === "SUPER_ADMIN" ? "-" : ""),
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data Pengguna");
+    XLSX.writeFile(wb, "Data_Pengguna_CleanExam.xlsx");
+  };
+
   return (
     <Card className="mt-8 shadow-sm border-slate-200/60 rounded-2xl">
       <CardHeader className="flex flex-row justify-between items-center border-b border-slate-100 pb-4">
         <h2 className="text-xl font-bold text-slate-900 tracking-tight">Manajemen Pengguna</h2>
+        <Button variant="secondary" onClick={handleExportExcel} className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
+          <Download className="w-4 h-4 mr-2" /> Export Excel
+        </Button>
       </CardHeader>
       <CardContent className="pt-6">
         {/* FORM TAMBAH PENGGUNA */}

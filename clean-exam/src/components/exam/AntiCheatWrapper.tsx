@@ -6,10 +6,16 @@ import { useRouter } from 'next/navigation';
 interface AntiCheatWrapperProps {
   children: React.ReactNode;
   onAutoSubmit?: () => void;
+  isDisabled?: boolean;
 }
 
-export function AntiCheatWrapper({ children, onAutoSubmit }: AntiCheatWrapperProps) {
+export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }: AntiCheatWrapperProps) {
   const router = useRouter();
+  const disabledRef = React.useRef(isDisabled);
+
+  useEffect(() => {
+    disabledRef.current = isDisabled;
+  }, [isDisabled]);
   const [violations, setViolations] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('exam_violations');
@@ -33,6 +39,7 @@ export function AntiCheatWrapper({ children, onAutoSubmit }: AntiCheatWrapperPro
     };
 
     const handleViolation = () => {
+      if (disabledRef.current) return;
       setViolations((prev) => {
         const nextViolations = prev + 1;
         localStorage.setItem('exam_violations', nextViolations.toString());
