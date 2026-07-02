@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { signToken } from "@/lib/auth";
 
 export async function loginUser(username: string, password: string) {
   try {
@@ -23,11 +24,13 @@ export async function loginUser(username: string, password: string) {
       return { success: false, error: "Password tidak valid." };
     }
 
-    cookieStore.set("userId", user.id, { secure: true, httpOnly: true, path: '/' });
-    cookieStore.set("userRole", user.role, { secure: true, httpOnly: true, path: '/' });
-    if (user.className) {
-      cookieStore.set("className", user.className, { secure: true, httpOnly: true, path: '/' });
-    }
+    const token = await signToken({
+      userId: user.id,
+      userRole: user.role,
+      className: user.className || null,
+    });
+
+    cookieStore.set("session", token, { secure: true, httpOnly: true, path: '/' });
 
     return { success: true, role: user.role };
   } catch (error: unknown) {
@@ -38,9 +41,7 @@ export async function loginUser(username: string, password: string) {
 export async function logoutUser() {
   try {
     const cookieStore = await cookies();
-    cookieStore.delete("userId");
-    cookieStore.delete("userRole");
-    cookieStore.delete("className");
+    cookieStore.delete("session");
     return { success: true };
   } catch (error) {
     return { success: false };

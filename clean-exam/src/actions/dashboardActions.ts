@@ -2,12 +2,12 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auth";
 
 async function checkAuth(allowedRoles: string[]) {
-  const cookieStore = await cookies();
-  let userRole = cookieStore.get("userRole")?.value;
-  const userId = cookieStore.get("userId")?.value;
+  const session = await getSession();
+  const userId = session?.userId as string;
+  let userRole = session?.userRole as string;
 
   if (!userRole && userId) {
     if (userId === "vinz_admin") userRole = "SUPER_ADMIN";

@@ -1,0 +1,36 @@
+import { jwtVerify, SignJWT } from "jose";
+import { cookies } from "next/headers";
+
+const secretKey = process.env.JWT_SECRET || "rahasia_negara_jangan_disebar";
+const encodedKey = new TextEncoder().encode(secretKey);
+
+export async function signToken(payload: any) {
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d") // Sesi berlaku 7 hari
+    .sign(encodedKey);
+}
+
+export async function verifyToken(session: string | undefined = "") {
+  try {
+    if (!session) return null;
+    const { payload } = await jwtVerify(session, encodedKey, {
+      algorithms: ["HS256"],
+    });
+    return payload;
+  } catch (error) {
+    return null; // Token tidak valid atau kadaluwarsa
+  }
+}
+
+export async function getSession() {
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get("session")?.value;
+    if (!session) return null;
+    return await verifyToken(session);
+  } catch (error) {
+    return null;
+  }
+}

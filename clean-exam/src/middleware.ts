@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyToken } from '@/lib/auth';
 
-export function middleware(request: NextRequest) {
-  const userId = request.cookies.get('userId')?.value;
-  const userRole = request.cookies.get('userRole')?.value;
+export async function middleware(request: NextRequest) {
+  const session = request.cookies.get('session')?.value;
+  let userId = null;
+  let userRole = null;
+
+  if (session) {
+    const payload = await verifyToken(session);
+    if (payload) {
+      userId = payload.userId as string;
+      userRole = payload.userRole as string;
+    }
+  }
   
   const path = request.nextUrl.pathname;
   

@@ -8,14 +8,14 @@ import { getUsers } from "@/actions/userActions";
 import { getDashboardStats, getExams } from "@/actions/dashboardActions";
 import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auth";
 
 export default async function AdminDashboard() {
   const { users: rawUsers = [] } = await getUsers();
   const users = JSON.parse(JSON.stringify(rawUsers));
 
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const session = await getSession();
+  const userId = session?.userId as string;
   const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_admin";
   
   const { totalUsers, activeExams } = await getDashboardStats();

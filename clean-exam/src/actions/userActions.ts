@@ -3,12 +3,12 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auth";
 
 async function checkAuth(allowedRoles: string[]) {
-  const cookieStore = await cookies();
-  let userRole = cookieStore.get("userRole")?.value;
-  const userId = cookieStore.get("userId")?.value;
+  const session = await getSession();
+  let userRole = session?.userRole as string;
+  const userId = session?.userId as string;
 
   if (!userRole && userId) {
     if (userId === "vinz_admin") userRole = "SUPER_ADMIN";
@@ -84,8 +84,8 @@ export async function deleteUser(id: string) {
 
 export async function updateProfile(data: { username: string; oldPassword?: string; newPassword?: string }) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const session = await getSession();
+    const userId = session?.userId as string;
     if (!userId) throw new Error("Akses ditolak. Silakan login kembali.");
 
     const user = await prisma.user.findUnique({ where: { id: userId } });

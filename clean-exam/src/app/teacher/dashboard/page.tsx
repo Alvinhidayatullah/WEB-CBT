@@ -5,17 +5,17 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { QuestionManagement } from "@/components/admin/QuestionManagement";
 import { ProfileSettings } from "@/components/admin/ProfileSettings";
 import { getUsers } from "@/actions/userActions";
-import { getExams } from "@/actions/dashboardActions";
+import { getExams, getDashboardStats } from "@/actions/dashboardActions";
 import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auth";
 
 export default async function TeacherDashboard() {
+  const session = await getSession();
+  const userId = session?.userId as string;
   const { users: rawUsers = [] } = await getUsers();
   const users = JSON.parse(JSON.stringify(rawUsers));
   
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
   const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_guru";
   
   // Filter pengguna agar hanya murid yang terlihat oleh guru (opsional, tapi disarankan)

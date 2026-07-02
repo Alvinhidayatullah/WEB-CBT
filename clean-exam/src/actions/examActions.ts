@@ -2,12 +2,13 @@
 
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
+import { getSession } from "@/lib/auth";
 
 export async function joinExam(token: string) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-    const userClass = cookieStore.get("className")?.value;
+    const session = await getSession();
+    const userId = session?.userId as string;
+    const userClass = session?.className as string;
 
     if (!userId) {
       return { success: false, error: "Sesi tidak ditemukan. Silakan login kembali." };
@@ -88,8 +89,8 @@ export async function getExamData(examId: string) {
 
 export async function submitExam(examId: string, answers: Record<string, string>, isCheated: boolean = false, timeSpent: number = 0) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const session = await getSession();
+    const userId = session?.userId as string;
 
     if (!userId) {
       return { success: false, error: "Sesi tidak valid." };
