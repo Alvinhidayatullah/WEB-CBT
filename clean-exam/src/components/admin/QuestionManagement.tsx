@@ -172,14 +172,23 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
              />
             </div>
             <div className="md:col-span-1">
-              <label className="text-sm font-medium text-slate-700 block mb-1">Kelas Target <span className="text-xs text-slate-500 font-normal">(Tekan Enter)</span></label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">Kelas Target <span className="text-xs text-slate-500 font-normal">(Pilih dari opsi)</span></label>
               <div className="flex flex-col gap-2">
-                <Input 
-                  placeholder="Ketik lalu tekan Enter..." 
-                  value={classInput} 
-                  onChange={(e) => setClassInput(e.target.value)}
-                  onKeyDown={handleAddClass}
-                />
+                <select
+                  className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value=""
+                  onChange={(e) => {
+                    const newClass = e.target.value;
+                    if (newClass && !targetClasses.includes(newClass)) {
+                      setTargetClasses([...targetClasses, newClass]);
+                    }
+                  }}
+                >
+                  <option value="" disabled>-- Klik untuk memilih kelas --</option>
+                  {availableClasses.map(cls => (
+                    <option key={cls} value={cls}>{cls}</option>
+                  ))}
+                </select>
                 <div className="flex flex-wrap gap-1">
                   {targetClasses.length === 0 && <span className="text-xs text-slate-400 italic">"Semua Kelas" akan dipilih jika kosong.</span>}
                   {targetClasses.map(cls => (
