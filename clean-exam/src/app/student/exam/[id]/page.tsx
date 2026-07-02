@@ -195,7 +195,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
             <div className="bg-white rounded-2xl border border-slate-100 p-6 md:p-10 shadow-sm min-h-[500px] flex flex-col">
               <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-100">
                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Soal Nomor {currentQuestion + 1}</h2>
-                 <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">Bobot: 10</span>
+                 <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">Bobot: {(100 / examData.questions.length).toFixed(1).replace(/\.0$/, '')}</span>
               </div>
               
               <div className="text-lg text-slate-800 leading-relaxed mb-10">
