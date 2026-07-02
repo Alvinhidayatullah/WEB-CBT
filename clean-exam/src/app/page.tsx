@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 import { loginUser } from "@/actions/authActions";
 
@@ -65,12 +63,12 @@ export default function Home() {
               <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block">
                 Username
               </label>
-              <Input
+              <input
                 type="text"
                 placeholder="Masukkan username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="h-12 bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all"
+                className="flex w-full px-4 h-12 bg-black/40 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-xl transition-all"
                 required
               />
             </div>
@@ -80,12 +78,12 @@ export default function Home() {
                 Password / Token
               </label>
               <div className="relative">
-                <Input
+                <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20 pr-12 rounded-xl transition-all"
+                  className="flex w-full px-4 h-12 bg-black/40 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 pr-12 rounded-xl transition-all"
                   required
                 />
                 <button
@@ -104,13 +102,13 @@ export default function Home() {
               </div>
             )}
             
-            <Button 
+            <button 
               type="submit" 
               disabled={loading} 
-              className="w-full mt-8 h-12 text-sm font-semibold tracking-wide rounded-xl bg-white text-black hover:bg-slate-200 border border-transparent shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full mt-8 h-12 text-sm font-semibold tracking-wide rounded-xl bg-white text-black hover:bg-slate-200 border border-transparent shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
             >
               {loading ? "Otentikasi..." : "Masuk"}
-            </Button>
+            </button>
           </form>
         </div>
       </div>
