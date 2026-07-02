@@ -367,28 +367,33 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                             <tr>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Siswa</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Kelas</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Waktu</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Nilai</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Status</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 bg-white">
-                            {exam.results && exam.results.map((res) => (
-                              <tr key={res.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="py-3 px-5 font-semibold text-slate-900">{res.student.username}</td>
-                                <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
-                                <td className="py-3 px-5 font-bold text-slate-900 text-base">{res.score}</td>
-                                <td className="py-3 px-5">
-                                  {res.isCheated ? (
-                                    <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold">Terindikasi Curang</span>
-                                  ) : (
-                                    <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded font-semibold">Valid</span>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
+                            {exam.results && exam.results.map((res: any) => {
+                              const timeStr = res.timeSpent ? `${Math.floor(res.timeSpent / 60)}m ${res.timeSpent % 60}s` : "-";
+                              return (
+                                <tr key={res.id} className="hover:bg-slate-50 transition-colors">
+                                  <td className="py-3 px-5 font-semibold text-slate-900">{res.student.username}</td>
+                                  <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
+                                  <td className="py-3 px-5 text-slate-600 font-mono text-sm">{timeStr}</td>
+                                  <td className="py-3 px-5 font-bold text-slate-900 text-base">{res.score}</td>
+                                  <td className="py-3 px-5">
+                                    {res.isCheated ? (
+                                      <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold">Terindikasi Curang</span>
+                                    ) : (
+                                      <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded font-semibold">Valid</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                             {(!exam.results || exam.results.length === 0) && (
                               <tr>
-                                <td colSpan={4} className="py-4 text-center text-slate-500">Belum ada siswa yang mengerjakan ujian ini.</td>
+                                <td colSpan={5} className="py-4 text-center text-slate-500">Belum ada siswa yang mengerjakan ujian ini.</td>
                               </tr>
                             )}
                           </tbody>

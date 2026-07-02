@@ -55,6 +55,7 @@ model ExamResult {
   exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   score       Float
   isCheated   Boolean  @default(false)
+  timeSpent   Int      @default(0) // Waktu pengerjaan dalam detik
   createdAt   DateTime @default(now())
 
   @@unique([studentId, examId])

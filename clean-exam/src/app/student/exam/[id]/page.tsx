@@ -71,19 +71,27 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   const handleAutoSubmit = async () => {
     if (!examData || isSubmitting) return;
     setIsSubmitting(true);
+    const startKey = `exam_start_${examId}`;
+    const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
     localStorage.removeItem('exam_violations');
-    localStorage.removeItem(`exam_start_${examId}`);
-    await submitExam(examId, answers, true);
+    localStorage.removeItem(startKey);
+    await submitExam(examId, answers, true, timeSpent);
     router.replace('/student/dashboard');
   };
 
   const handleSubmit = async () => {
     if(window.confirm("Apakah Anda yakin ingin menyelesaikan ujian ini? Jawaban yang sudah dikirim tidak dapat diubah kembali.")) {
        setIsSubmitting(true);
-       const res = await submitExam(examId, answers, false);
+       const startKey = `exam_start_${examId}`;
+       const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
+       const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+       const res = await submitExam(examId, answers, false, timeSpent);
        if (res.success) {
          localStorage.removeItem('exam_violations');
-         localStorage.removeItem(`exam_start_${examId}`);
+         localStorage.removeItem(startKey);
          alert(`Ujian selesai! Pekerjaan Anda telah direkam.`);
          router.replace('/student/dashboard');
        } else {

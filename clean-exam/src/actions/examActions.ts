@@ -85,7 +85,7 @@ export async function getExamData(examId: string) {
   }
 }
 
-export async function submitExam(examId: string, answers: Record<string, string>, isCheated: boolean = false) {
+export async function submitExam(examId: string, answers: Record<string, string>, isCheated: boolean = false, timeSpent: number = 0) {
   try {
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
@@ -118,7 +118,8 @@ export async function submitExam(examId: string, answers: Record<string, string>
         studentId: userId,
         examId: examId,
         score: finalScore,
-        isCheated: isCheated
+        isCheated: isCheated,
+        timeSpent: timeSpent
       }
     });
 
