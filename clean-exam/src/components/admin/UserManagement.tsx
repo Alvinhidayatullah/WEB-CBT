@@ -244,7 +244,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
           </div>
           {selectedUsers.size > 0 && (
             <Button 
-              variant="destructive" 
+              variant="danger" 
               onClick={handleBulkDelete}
               className="bg-red-500 hover:bg-red-600 shadow-sm"
             >
