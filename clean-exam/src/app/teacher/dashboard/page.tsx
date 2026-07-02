@@ -29,8 +29,9 @@ export default async function TeacherDashboard() {
   )) as string[];
   
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6">
-      <header className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-slate-50/50 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/50 via-slate-50 to-slate-50">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-slate-200/60 shadow-sm">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Dashboard Guru</h1>
           <p className="text-slate-500 mt-1">Kelola bank soal, ujian, dan data murid kelas Anda</p>
@@ -42,9 +43,9 @@ export default async function TeacherDashboard() {
             await logoutUser();
             redirect("/");
           }}>
-            <button type="submit" className="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg border border-red-100 shadow-sm flex items-center gap-2 transition-colors">
+            <button type="submit" className="bg-red-50 text-red-600 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl border border-red-100 shadow-sm flex items-center gap-2 transition-all">
               <LogOut className="w-4 h-4" />
-              <span className="font-medium text-sm">Keluar</span>
+              <span className="font-medium text-sm hidden md:inline">Keluar</span>
             </button>
           </form>
         </div>
@@ -85,6 +86,7 @@ export default async function TeacherDashboard() {
       {/* MANAJEMEN SOAL (CRUD) */}
       <QuestionManagement exams={exams} availableClasses={availableClasses} />
       
+      </div>
     </div>
   );
 }
