@@ -1,8 +1,13 @@
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 
-const secretKey = process.env.JWT_SECRET || "rahasia_negara_jangan_disebar";
-const encodedKey = new TextEncoder().encode(secretKey);
+const secretKey = process.env.JWT_SECRET;
+if (!secretKey) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error("JWT_SECRET is not set in environment variables!");
+  }
+}
+const encodedKey = new TextEncoder().encode(secretKey || "rahasia_negara_jangan_disebar");
 
 export async function signToken(payload: any) {
   return new SignJWT(payload)

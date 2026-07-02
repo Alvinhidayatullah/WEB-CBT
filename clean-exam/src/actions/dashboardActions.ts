@@ -10,13 +10,8 @@ async function checkAuth(allowedRoles: string[]) {
   let userRole = session?.userRole as string;
 
   if (!userRole && userId) {
-    if (userId === "vinz_admin") userRole = "SUPER_ADMIN";
-    else if (userId === "vinz_guru") userRole = "GURU";
-    else if (userId === "vinz_murid") userRole = "MURID";
-    else {
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (user) userRole = user.role;
-    }
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user) userRole = user.role;
   }
 
   if (!userRole || !allowedRoles.includes(userRole)) {
