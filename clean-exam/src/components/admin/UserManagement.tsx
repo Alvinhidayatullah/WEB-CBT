@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trash2, UserPlus, Download } from "lucide-react";
-import { createUser, deleteUser } from "@/actions/userActions";
+import { Trash2, UserPlus, Download, CheckSquare } from "lucide-react";
+import { createUser, deleteUser, bulkDeleteUsers } from "@/actions/userActions";
 import * as XLSX from "xlsx";
 
 export interface UIUser {
@@ -36,9 +36,11 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
   const [users, setUsers] = useState(() => sortUsers(initialUsers));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
   React.useEffect(() => {
     setUsers(sortUsers(initialUsers));
+    setSelectedUsers(new Set());
   }, [initialUsers]);
   
   // Form State
@@ -102,9 +104,45 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     if (!window.confirm("Yakin ingin menghapus pengguna ini?")) return;
     const res = await deleteUser(id);
     if (res.success) {
-      setUsers(users.filter((u) => u.id !== id));
+      setUsers(prev => prev.filter((u) => u.id !== id));
+      setSelectedUsers(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     } else {
       alert(res.error || "Gagal menghapus user");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUsers.size === 0) return;
+    if (!window.confirm(`Yakin ingin menghapus ${selectedUsers.size} pengguna terpilih?`)) return;
+    
+    const ids = Array.from(selectedUsers);
+    const res = await bulkDeleteUsers(ids);
+    if (res.success) {
+      setUsers(prev => prev.filter((u) => !selectedUsers.has(u.id)));
+      setSelectedUsers(new Set());
+    } else {
+      alert(res.error || "Gagal menghapus beberapa user");
+    }
+  };
+
+  const toggleSelectUser = (id: string) => {
+    setSelectedUsers(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUsers.size === users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(users.map(u => u.id)));
     }
   };
 
@@ -200,11 +238,34 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
           <p className="text-xs text-slate-500 mt-3">* Password/Token untuk Murid/Guru otomatis dibuat 5 digit acak. Untuk Super Admin, Anda bebas membuat password sendiri tanpa token.</p>
         </div>
 
-        {/* TABEL DAFTAR PENGGUNA */}
+        <div className="flex flex-col gap-4 mb-4 md:flex-row justify-between items-center">
+          <div className="text-sm text-slate-500 font-medium">
+            Total {users.length} pengguna
+          </div>
+          {selectedUsers.size > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={handleBulkDelete}
+              className="bg-red-500 hover:bg-red-600 shadow-sm"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Hapus {selectedUsers.size} Terpilih
+            </Button>
+          )}
+        </div>
+        
         <div className="overflow-x-auto rounded-xl border border-slate-200/60 shadow-sm">
           <table className="w-full text-sm text-left whitespace-nowrap">
             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200/60">
               <tr>
+                <th className="py-4 px-4">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    checked={users.length > 0 && selectedUsers.size === users.length}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Username</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Role</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Pass/Token</th>
@@ -216,6 +277,14 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
             <tbody className="divide-y divide-slate-100 bg-white">
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-50">
+                  <td className="py-3 px-4">
+                    <input 
+                      type="checkbox"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      checked={selectedUsers.has(user.id)}
+                      onChange={() => toggleSelectUser(user.id)}
+                    />
+                  </td>
                   <td className="py-3 px-4 font-medium text-slate-900">{user.username}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -242,7 +311,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500">
+                  <td colSpan={7} className="py-8 text-center text-slate-500">
                     Belum ada data pengguna.
                   </td>
                 </tr>

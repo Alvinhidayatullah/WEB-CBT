@@ -101,9 +101,38 @@ export async function deleteUser(id: string) {
       where: { id },
     });
 
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: "Terjadi kesalahan sistem internal." };
+    console.error("Delete user error:", error);
+    return { success: false, error: "Terjadi kesalahan sistem internal saat menghapus." };
+  }
+}
+
+export async function bulkDeleteUsers(ids: string[]) {
+  try {
+    const { userRole } = await checkAuth(["SUPER_ADMIN", "GURU"]);
+    
+    const users = await prisma.user.findMany({ where: { id: { in: ids } } });
+    const deletableUsers = users.filter(u => u.username !== "vinz_admin");
+    
+    const finalIds = userRole === "GURU" 
+      ? deletableUsers.filter(u => u.role === "MURID").map(u => u.id)
+      : deletableUsers.map(u => u.id);
+
+    if (finalIds.length === 0) {
+      return { success: false, error: "Tidak ada pengguna valid yang dapat dihapus." };
+    }
+
+    await prisma.user.deleteMany({
+      where: { id: { in: finalIds } }
+    });
+    
+    revalidatePath("/", "layout");
+    return { success: true, count: finalIds.length };
+  } catch (error: unknown) {
+    console.error("Bulk delete error:", error);
+    return { success: false, error: "Terjadi kesalahan sistem internal saat menghapus banyak pengguna." };
   }
 }
 

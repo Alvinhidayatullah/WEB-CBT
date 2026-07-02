@@ -14,12 +14,12 @@ export default function ForbiddenPage() {
         <div className="mx-auto w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mb-8 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
           <ShieldAlert className="w-12 h-12 text-red-500" />
         </div>
-        
+
         <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tight">403</h1>
         <h2 className="text-xl font-bold text-slate-200 mb-6">Akses Ditolak</h2>
-        
+
         <p className="text-slate-400 mb-10 leading-relaxed">
-          Maaf, Anda tidak memiliki izin untuk melihat halaman ini. Silakan kembali ke dasbor atau masuk menggunakan akun yang memiliki hak akses.
+          Maaf, Anda tidak memiliki izin untuk melihat halaman ini. Silakan kembali ke dashboard atau masuk menggunakan akun yang memiliki hak akses.
         </p>
 
         <Link href="/">
