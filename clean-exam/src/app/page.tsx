@@ -49,7 +49,7 @@ export default function Home() {
           <div className="mx-auto bg-gradient-to-tr from-blue-500 to-indigo-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(59,130,246,0.5)]">
             <Lock className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">CleanExam</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">SecureCBT</h1>
           <p className="text-slate-300 mt-2 text-sm font-medium tracking-wide">Sistem CBT Modern & Aman</p>
         </CardHeader>
         <CardContent className="px-8 pb-10 relative z-10">

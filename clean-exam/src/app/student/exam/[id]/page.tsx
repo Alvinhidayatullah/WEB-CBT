@@ -143,7 +143,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
         {/* Header Minimalis */}
         <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-6 py-4 flex flex-wrap gap-4 justify-between items-center sticky top-0 z-20 shadow-sm">
           <div className="flex items-center gap-3">
-             <div className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight">CleanExam</div>
+             <div className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight">SecureCBT</div>
              <div className="h-6 w-px bg-slate-200 hidden md:block"></div>
              <div className="text-slate-600 font-medium text-sm hidden md:block">{examData.title} - Kelas {examData.targetClass}</div>
           </div>

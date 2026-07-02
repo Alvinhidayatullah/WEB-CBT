@@ -152,7 +152,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
-    XLSX.writeFile(wb, "Template_Soal_CleanExam.xlsx");
+    XLSX.writeFile(wb, "Template_Soal_SecureCBT.xlsx");
   };
 
   const handleDeleteQuestion = async (qId: string) => {

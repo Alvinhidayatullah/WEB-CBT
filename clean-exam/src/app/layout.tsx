@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CleanExam | Sistem CBT Modern",
+  title: "SecureCBT | Sistem CBT Modern",
   description: "Platform Computer Based Test yang aman dan cepat.",
 };
 

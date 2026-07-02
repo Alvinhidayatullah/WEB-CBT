@@ -118,7 +118,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Data Pengguna");
-    XLSX.writeFile(wb, "Data_Pengguna_CleanExam.xlsx");
+    XLSX.writeFile(wb, "Data_Pengguna_SecureCBT.xlsx");
   };
 
   return (
