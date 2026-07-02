@@ -42,7 +42,7 @@ export default async function AdminDashboard() {
             await logoutUser();
             redirect("/");
           }}>
-            <button type="submit" className="bg-red-50 text-red-600 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl border border-red-100 shadow-sm flex items-center gap-2 transition-all">
+            <button type="submit" className="bg-red-50 text-red-600 hover:bg-red-500 hover:text-white px-5 h-12 rounded-xl border border-red-100 shadow-sm flex items-center justify-center gap-2 transition-all">
               <LogOut className="w-4 h-4" />
               <span className="font-medium text-sm hidden md:inline">Keluar</span>
             </button>

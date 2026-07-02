@@ -47,7 +47,7 @@ export function ProfileSettings({ currentUsername }: { currentUsername: string }
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3 hover:bg-slate-50 transition-colors"
+        className="bg-white px-4 h-12 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3 hover:bg-slate-50 transition-colors"
       >
         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm">
           {username.substring(0, 2).toUpperCase()}
