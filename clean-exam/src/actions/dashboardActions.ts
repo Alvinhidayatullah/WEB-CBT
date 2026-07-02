@@ -156,3 +156,60 @@ export async function deleteExam(id: string) {
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
+
+export async function updateQuestion(id: string, data: {
+  type?: string;
+  text: string;
+  optionA?: string;
+  optionB?: string;
+  optionC?: string;
+  optionD?: string;
+  correctOption?: string;
+}) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    
+    await prisma.question.update({
+      where: { id },
+      data: {
+        type: data.type || "MULTIPLE_CHOICE",
+        text: data.text,
+        optionA: data.optionA || null,
+        optionB: data.optionB || null,
+        optionC: data.optionC || null,
+        optionD: data.optionD || null,
+        correctOption: data.correctOption || null,
+      },
+    });
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
+export async function bulkCreateQuestions(examId: string, questions: any[]) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    
+    const formattedQuestions = questions.map(q => ({
+      examId,
+      type: q.type || "MULTIPLE_CHOICE",
+      text: q.text,
+      optionA: q.optionA || null,
+      optionB: q.optionB || null,
+      optionC: q.optionC || null,
+      optionD: q.optionD || null,
+      correctOption: q.correctOption || null,
+    }));
+
+    await prisma.question.createMany({
+      data: formattedQuestions
+    });
+    
+    revalidatePath("/", "layout");
+    return { success: true, count: formattedQuestions.length };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}

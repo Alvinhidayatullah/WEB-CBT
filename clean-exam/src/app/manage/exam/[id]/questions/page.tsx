@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Trash2, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Trash2, Loader2, Save, Upload, Download, Edit } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { getExams, createQuestion, deleteQuestion } from "@/actions/dashboardActions";
+import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions } from "@/actions/dashboardActions";
+import * as XLSX from "xlsx";
 import { use } from "react";
 
 export default function ManageQuestionsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,6 +26,8 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
   const [optD, setOptD] = useState("");
   const [correctOpt, setCorrectOpt] = useState("A");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchExam(examId);
@@ -49,23 +52,107 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
       return;
     }
     setIsSubmitting(true);
-    const res = await createQuestion({
-      examId,
-      type: qType,
-      text: qText,
-      optionA: optA,
-      optionB: optB,
-      optionC: optC,
-      optionD: optD,
-      correctOption: correctOpt
-    });
+    
+    let res;
+    if (editingId) {
+      res = await updateQuestion(editingId, {
+        type: qType,
+        text: qText,
+        optionA: optA,
+        optionB: optB,
+        optionC: optC,
+        optionD: optD,
+        correctOption: correctOpt
+      });
+    } else {
+      res = await createQuestion({
+        examId,
+        type: qType,
+        text: qText,
+        optionA: optA,
+        optionB: optB,
+        optionC: optC,
+        optionD: optD,
+        correctOption: correctOpt
+      });
+    }
+
     if (res.success) {
       setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); setCorrectOpt("A");
+      setEditingId(null);
       await fetchExam(examId);
     } else {
-      alert(res.error || "Gagal menambah soal");
+      alert(res.error || "Gagal menyimpan soal");
     }
     setIsSubmitting(false);
+  };
+
+  const handleEditClick = (q: any) => {
+    setEditingId(q.id);
+    setQType(q.type || "MULTIPLE_CHOICE");
+    setQText(q.text);
+    setOptA(q.optionA || "");
+    setOptB(q.optionB || "");
+    setOptC(q.optionC || "");
+    setOptD(q.optionD || "");
+    setCorrectOpt(q.correctOption || "A");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        
+        const formattedQuestions = data.map((row: any) => ({
+          type: (row["Tipe Soal"]?.toString().toUpperCase() === "ESAI" || row["Tipe Soal"]?.toString().toUpperCase() === "ESSAY") ? "ESSAY" : "MULTIPLE_CHOICE",
+          text: row["Pertanyaan"]?.toString() || "",
+          optionA: row["Opsi A"]?.toString() || "",
+          optionB: row["Opsi B"]?.toString() || "",
+          optionC: row["Opsi C"]?.toString() || "",
+          optionD: row["Opsi D"]?.toString() || "",
+          correctOption: row["Kunci Jawaban"]?.toString().toUpperCase() || "A",
+        })).filter(q => q.text !== "");
+
+        if (formattedQuestions.length === 0) {
+          alert("Format file tidak valid atau data kosong.");
+          return;
+        }
+
+        setIsSubmitting(true);
+        const res = await bulkCreateQuestions(examId, formattedQuestions);
+        if (res.success) {
+          alert(`Berhasil mengimpor ${res.count} soal!`);
+          await fetchExam(examId);
+        } else {
+          alert(res.error || "Gagal mengimpor soal");
+        }
+      } catch (err) {
+        alert("Gagal membaca file Excel. Pastikan format sudah benar.");
+      } finally {
+        setIsSubmitting(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleDownloadTemplate = () => {
+    const ws = XLSX.utils.json_to_sheet([
+      { "Tipe Soal": "PG", "Pertanyaan": "Siapa penemu lampu bohlam?", "Opsi A": "Thomas Edison", "Opsi B": "Albert Einstein", "Opsi C": "Isaac Newton", "Opsi D": "Nikola Tesla", "Kunci Jawaban": "A" },
+      { "Tipe Soal": "ESAI", "Pertanyaan": "Jelaskan proses terjadinya fotosintesis!", "Opsi A": "", "Opsi B": "", "Opsi C": "", "Opsi D": "", "Kunci Jawaban": "" }
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
+    XLSX.writeFile(wb, "Template_Soal_CleanExam.xlsx");
   };
 
   const handleDeleteQuestion = async (qId: string) => {
@@ -106,9 +193,20 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
           <Button variant="secondary" onClick={() => router.back()} className="px-3 py-2 rounded-xl">
             <ArrowLeft className="w-5 h-5 mr-1" /> Kembali
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Kelola Soal</h1>
-            <p className="text-slate-500 text-sm">{exam.examType} - {exam.subject}</p>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Kelola Soal</h1>
+              <p className="text-slate-500 text-sm">{exam.examType} - {exam.subject}</p>
+            </div>
+            <div className="flex gap-2 mt-4 md:mt-0">
+              <input type="file" accept=".xlsx, .xls" className="hidden" ref={fileInputRef} onChange={handleImportExcel} />
+              <Button variant="secondary" onClick={handleDownloadTemplate} disabled={isSubmitting} className="shadow-sm bg-white">
+                <Download className="w-4 h-4 mr-2" /> Template
+              </Button>
+              <Button variant="primary" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting} className="shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white border-transparent">
+                <Upload className="w-4 h-4 mr-2" /> Import Excel
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -122,9 +220,16 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
         </div>
 
         <form onSubmit={handleAddQuestion} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h2 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-            <Save className="w-5 h-5 text-blue-600" /> Tambah Soal Baru
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+              <Save className="w-5 h-5 text-blue-600" /> {editingId ? "Edit Soal" : "Tambah Soal Baru"}
+            </h2>
+            {editingId && (
+              <Button variant="secondary" className="px-3 py-1.5 text-sm" onClick={() => {
+                setEditingId(null); setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); setCorrectOpt("A");
+              }}>Batal Edit</Button>
+            )}
+          </div>
           <div className="space-y-5">
             <div>
               <label className="text-sm font-semibold text-slate-700 block mb-1.5">Tipe Soal</label>
@@ -157,7 +262,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
 
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={isSubmitting} variant="primary" className="shadow-md shadow-blue-600/20 px-8">
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Simpan Soal"}
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingId ? "Perbarui Soal" : "Simpan Soal")}
               </Button>
             </div>
           </div>
@@ -184,9 +289,14 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
                     </div>
                   )}
                 </div>
-                <button onClick={() => handleDeleteQuestion(q.id)} disabled={isSubmitting} className="text-red-500 hover:bg-red-50 p-2.5 rounded-xl transition-colors border border-transparent hover:border-red-100 self-end md:self-start shrink-0">
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
-                </button>
+                <div className="flex gap-2 self-end md:self-start shrink-0">
+                  <button onClick={() => handleEditClick(q)} disabled={isSubmitting} className="text-blue-600 hover:bg-blue-50 p-2.5 rounded-xl transition-colors border border-transparent hover:border-blue-100">
+                    <Edit className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => handleDeleteQuestion(q.id)} disabled={isSubmitting} className="text-red-500 hover:bg-red-50 p-2.5 rounded-xl transition-colors border border-transparent hover:border-red-100">
+                    {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             ))
           ) : (
