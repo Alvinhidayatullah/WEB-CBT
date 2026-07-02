@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 export default function ForbiddenPage() {
   return (
     <div className="min-h-screen bg-[#050507] flex flex-col items-center justify-center relative overflow-hidden selection:bg-red-500/30">
-      
+
       {/* Background Gradients & Pulses */}
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-red-900/20 blur-[150px] rounded-full animate-pulse pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-orange-900/10 blur-[150px] rounded-full pointer-events-none" style={{ animation: 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
@@ -16,7 +16,7 @@ export default function ForbiddenPage() {
 
       {/* Main Glass Card */}
       <div className="z-10 bg-slate-900/40 backdrop-blur-2xl border border-red-500/20 p-10 md:p-14 rounded-[2.5rem] shadow-[0_0_80px_rgba(220,38,38,0.15)] max-w-lg w-full text-center relative overflow-hidden group mx-4">
-        
+
         {/* Hover Flare */}
         <div className="absolute inset-0 bg-gradient-to-tr from-red-500/0 via-red-500/5 to-orange-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
@@ -37,9 +37,9 @@ export default function ForbiddenPage() {
 
         {/* Message */}
         <p className="text-slate-400 mb-10 text-base leading-relaxed font-medium">
-          Identitas terdeteksi. Namun Anda berada di luar batas yurisdiksi otoritas Anda.<br/>
+          Identitas terdeteksi. Namun Anda berada di luar batas otoritas Anda.<br />
           <span className="text-red-400/80 text-sm mt-3 block font-mono bg-red-950/30 py-2 rounded-lg border border-red-900/30">
-            &gt; INSIDEN DIREKAM OLEH SISTEM
+            INSIDEN DIREKAM OLEH SISTEM
           </span>
         </p>
 
@@ -52,7 +52,7 @@ export default function ForbiddenPage() {
           </Button>
         </Link>
       </div>
-      
+
       {/* Footer Branding */}
       <div className="absolute bottom-6 text-slate-600/50 text-[10px] font-mono tracking-[0.3em] uppercase">
         SecureCBT Security Gateway • OWASP Protected

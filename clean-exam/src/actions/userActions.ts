@@ -41,11 +41,7 @@ export async function createUser(data: { username: string; role: string; token?:
     // Jika pembuat akun adalah GURU, secara paksa menetapkan role menjadi MURID, mengabaikan input client.
     const assignedRole = userRole === "GURU" ? "MURID" : data.role;
 
-    if (assignedRole === "SUPER_ADMIN") {
-      return { success: false, error: "403 Forbidden: Pembuatan akun tingkat Super Admin dilarang!." };
-    }
-
-    if (!assignedRole || !["MURID", "GURU"].includes(assignedRole)) {
+    if (!assignedRole || !["MURID", "GURU", "SUPER_ADMIN"].includes(assignedRole)) {
       return { success: false, error: "400 Bad Request: Role tidak valid." };
     }
 
