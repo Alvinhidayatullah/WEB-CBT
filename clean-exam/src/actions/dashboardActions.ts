@@ -70,7 +70,7 @@ export async function createExam(examType: string, subject: string, targetClass:
     const newExam = await prisma.exam.create({ 
       data: { 
         examType, 
-        subject, 
+        subject: subject.toUpperCase(), 
         targetClass: targetClass || "Semua Kelas",
         token: examToken,
         duration
