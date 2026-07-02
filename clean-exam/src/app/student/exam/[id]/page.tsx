@@ -202,37 +202,46 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                 {question.text}
               </div>
 
-              <div className="space-y-3 flex-1">
-                {options.map((opt, idx) => {
-                   const isSelected = answers[qId] === opt.value;
-                   return (
-                    <label 
-                      key={idx} 
-                      className={`group flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                        isSelected 
-                          ? 'border-blue-500 bg-blue-50 shadow-sm shadow-blue-500/10' 
-                          : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors ${
-                        isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-300 group-hover:border-slate-400'
-                      }`}>
-                         {isSelected && <div className="w-2 h-2 bg-white rounded-full shadow-sm"></div>}
-                      </div>
-                      <input 
-                        type="radio" 
-                        name={`q-${qId}`} 
-                        className="hidden" 
-                        checked={isSelected}
-                        onChange={() => handleSelect(opt.value)}
-                      />
-                      <span className={`text-base leading-relaxed ${isSelected ? 'text-blue-900 font-semibold' : 'text-slate-700'}`}>
-                         <span className={`font-bold mr-2 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`}>{opt.label}.</span> 
-                         {opt.text}
-                      </span>
-                    </label>
-                  );
-                })}
+              <div className="space-y-3 flex-1 flex flex-col">
+                {question.type === "ESSAY" ? (
+                  <textarea 
+                    className="w-full flex-1 min-h-[200px] p-4 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-800 text-lg leading-relaxed transition-all resize-y"
+                    placeholder="Ketik jawaban esai Anda di sini..."
+                    value={answers[qId] || ""}
+                    onChange={(e) => handleSelect(e.target.value)}
+                  />
+                ) : (
+                  options.map((opt, idx) => {
+                     const isSelected = answers[qId] === opt.value;
+                     return (
+                      <label 
+                        key={idx} 
+                        className={`group flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                          isSelected 
+                            ? 'border-blue-500 bg-blue-50 shadow-sm shadow-blue-500/10' 
+                            : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors ${
+                          isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-300 group-hover:border-slate-400'
+                        }`}>
+                           {isSelected && <div className="w-2 h-2 bg-white rounded-full shadow-sm"></div>}
+                        </div>
+                        <input 
+                          type="radio" 
+                          name={`q-${qId}`} 
+                          className="hidden" 
+                          checked={isSelected}
+                          onChange={() => handleSelect(opt.value)}
+                        />
+                        <span className={`text-base leading-relaxed ${isSelected ? 'text-blue-900 font-semibold' : 'text-slate-700'}`}>
+                           <span className={`font-bold mr-2 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`}>{opt.label}.</span> 
+                           {opt.text}
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
               </div>
 
               {/* Action Buttons */}

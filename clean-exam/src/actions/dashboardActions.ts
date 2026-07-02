@@ -106,12 +106,13 @@ export async function updateExam(id: string, data: { examType?: string, subject?
 
 export async function createQuestion(data: {
   examId: string;
+  type?: string;
   text: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctOption: string;
+  optionA?: string;
+  optionB?: string;
+  optionC?: string;
+  optionD?: string;
+  correctOption?: string;
 }) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
@@ -119,12 +120,13 @@ export async function createQuestion(data: {
     await prisma.question.create({
       data: {
         examId: data.examId,
+        type: data.type || "MULTIPLE_CHOICE",
         text: data.text,
-        optionA: data.optionA,
-        optionB: data.optionB,
-        optionC: data.optionC,
-        optionD: data.optionD,
-        correctOption: data.correctOption,
+        optionA: data.optionA || null,
+        optionB: data.optionB || null,
+        optionC: data.optionC || null,
+        optionD: data.optionD || null,
+        correctOption: data.correctOption || null,
       },
     });
     revalidatePath("/", "layout");

@@ -35,12 +35,13 @@ model Exam {
 
 model Question {
   id            String   @id @default(uuid())
+  type          String   @default("MULTIPLE_CHOICE") // "MULTIPLE_CHOICE" or "ESSAY"
   text          String
-  optionA       String
-  optionB       String
-  optionC       String
-  optionD       String
-  correctOption String   // "A", "B", "C", atau "D"
+  optionA       String?
+  optionB       String?
+  optionC       String?
+  optionD       String?
+  correctOption String?  // "A", "B", "C", "D", or null for essay
   examId        String
   exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
@@ -56,6 +57,7 @@ model ExamResult {
   score       Float
   isCheated   Boolean  @default(false)
   timeSpent   Int      @default(0) // Waktu pengerjaan dalam detik
+  answersJson String?  // Menyimpan jawaban asli murid dalam format JSON
   createdAt   DateTime @default(now())
 
   @@unique([studentId, examId])

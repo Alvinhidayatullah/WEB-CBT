@@ -53,6 +53,7 @@ export async function getExamData(examId: string) {
         questions: {
           select: {
             id: true,
+            type: true,
             text: true,
             optionA: true,
             optionB: true,
@@ -105,8 +106,16 @@ export async function submitExam(examId: string, answers: Record<string, string>
     const totalQuestions = exam.questions.length;
 
     exam.questions.forEach(q => {
-      if (answers[q.id] === q.correctOption) {
-        correctCount++;
+      const studentAnswer = answers[q.id];
+      if (q.type === "ESSAY") {
+        // Option A: Automatically score essay as correct if answered
+        if (studentAnswer && studentAnswer.trim().length > 0) {
+          correctCount++;
+        }
+      } else {
+        if (studentAnswer === q.correctOption) {
+          correctCount++;
+        }
       }
     });
 
@@ -119,7 +128,8 @@ export async function submitExam(examId: string, answers: Record<string, string>
         examId: examId,
         score: finalScore,
         isCheated: isCheated,
-        timeSpent: timeSpent
+        timeSpent: timeSpent,
+        answersJson: JSON.stringify(answers)
       }
     });
 

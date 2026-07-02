@@ -17,6 +17,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
   const [loading, setLoading] = useState(true);
   
   // Form states
+  const [qType, setQType] = useState("MULTIPLE_CHOICE");
   const [qText, setQText] = useState("");
   const [optA, setOptA] = useState("");
   const [optB, setOptB] = useState("");
@@ -39,13 +40,18 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
 
   const handleAddQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!qText || !optA || !optB || !optC || !optD || !correctOpt) {
-      alert("Semua kolom harus diisi!");
+    if (!qText) {
+      alert("Pertanyaan harus diisi!");
+      return;
+    }
+    if (qType === "MULTIPLE_CHOICE" && (!optA || !optB || !optC || !optD || !correctOpt)) {
+      alert("Semua kolom opsi Pilihan Ganda harus diisi!");
       return;
     }
     setIsSubmitting(true);
     const res = await createQuestion({
       examId,
+      type: qType,
       text: qText,
       optionA: optA,
       optionB: optB,
@@ -112,21 +118,34 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
           </h2>
           <div className="space-y-5">
             <div>
+              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Tipe Soal</label>
+              <select className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:bg-white" value={qType} onChange={(e) => setQType(e.target.value)}>
+                <option value="MULTIPLE_CHOICE">Pilihan Ganda</option>
+                <option value="ESSAY">Esai / Uraian</option>
+              </select>
+            </div>
+            <div>
               <label className="text-sm font-semibold text-slate-700 block mb-1.5">Pertanyaan</label>
               <Input value={qText} onChange={(e) => setQText(e.target.value)} required placeholder="Ketik pertanyaan di sini..." />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi A</label><Input value={optA} onChange={(e) => setOptA(e.target.value)} required /></div>
-              <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi B</label><Input value={optB} onChange={(e) => setOptB(e.target.value)} required /></div>
-              <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi C</label><Input value={optC} onChange={(e) => setOptC(e.target.value)} required /></div>
-              <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi D</label><Input value={optD} onChange={(e) => setOptD(e.target.value)} required /></div>
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Kunci Jawaban</label>
-              <select className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:bg-white" value={correctOpt} onChange={(e) => setCorrectOpt(e.target.value)}>
-                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-              </select>
-            </div>
+            
+            {qType === "MULTIPLE_CHOICE" && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi A</label><Input value={optA} onChange={(e) => setOptA(e.target.value)} required /></div>
+                  <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi B</label><Input value={optB} onChange={(e) => setOptB(e.target.value)} required /></div>
+                  <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi C</label><Input value={optC} onChange={(e) => setOptC(e.target.value)} required /></div>
+                  <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi D</label><Input value={optD} onChange={(e) => setOptD(e.target.value)} required /></div>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 block mb-1.5">Kunci Jawaban</label>
+                  <select className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:bg-white" value={correctOpt} onChange={(e) => setCorrectOpt(e.target.value)}>
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                  </select>
+                </div>
+              </>
+            )}
+
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={isSubmitting} variant="primary" className="shadow-md shadow-blue-600/20 px-8">
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Simpan Soal"}
@@ -141,13 +160,20 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
             exam.questions.map((q: any, idx: number) => (
               <div key={q.id} className="p-6 border border-slate-200 rounded-2xl flex flex-col md:flex-row justify-between items-start gap-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex-1">
-                  <p className="font-medium text-slate-900 mb-4 text-lg leading-relaxed"><span className="text-blue-600 font-bold mr-2">{idx + 1}.</span> {q.text}</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-600">
-                    <p className={q.correctOption === "A" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>A. {q.optionA}</p>
-                    <p className={q.correctOption === "B" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>B. {q.optionB}</p>
-                    <p className={q.correctOption === "C" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>C. {q.optionC}</p>
-                    <p className={q.correctOption === "D" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>D. {q.optionD}</p>
-                  </div>
+                  <p className="font-medium text-slate-900 mb-4 text-lg leading-relaxed">
+                    <span className="text-blue-600 font-bold mr-2">{idx + 1}.</span> 
+                    <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold mr-2">{q.type === "ESSAY" ? "ESAI" : "PG"}</span>
+                    {q.text}
+                  </p>
+                  
+                  {q.type !== "ESSAY" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-600">
+                      <p className={q.correctOption === "A" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>A. {q.optionA}</p>
+                      <p className={q.correctOption === "B" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>B. {q.optionB}</p>
+                      <p className={q.correctOption === "C" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>C. {q.optionC}</p>
+                      <p className={q.correctOption === "D" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>D. {q.optionD}</p>
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => handleDeleteQuestion(q.id)} disabled={isSubmitting} className="text-red-500 hover:bg-red-50 p-2.5 rounded-xl transition-colors border border-transparent hover:border-red-100 self-end md:self-start shrink-0">
                   {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
