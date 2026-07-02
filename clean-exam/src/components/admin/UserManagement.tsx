@@ -112,6 +112,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     const dataToExport = users.map(user => ({
       Username: user.username,
       "Pass/Token": user.token || (user.role === "SUPER_ADMIN" ? "-" : ""),
+      Kelas: user.className || "-",
     }));
     
     const ws = XLSX.utils.json_to_sheet(dataToExport);
