@@ -21,8 +21,9 @@ export async function joinExam(token: string) {
       return { success: false, error: "Token ujian tidak valid atau ujian tidak aktif." };
     }
 
-    if (exam.targetClass !== "Semua Kelas" && exam.targetClass !== userClass) {
-      return { success: false, error: `Ujian ini khusus untuk kelas ${exam.targetClass}.` };
+    const allowedClasses = exam.targetClass.split(",").map(c => c.trim());
+    if (exam.targetClass !== "Semua Kelas" && !allowedClasses.includes(userClass || "")) {
+      return { success: false, error: `Ujian ini khusus untuk kelas: ${exam.targetClass}.` };
     }
 
     const existingResult = await prisma.examResult.findUnique({

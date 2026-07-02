@@ -39,7 +39,8 @@ export interface UIExam {
 export function QuestionManagement({ exams = [], availableClasses = [] }: { exams: UIExam[], availableClasses?: string[] }) {
   const [examType, setExamType] = useState("Ujian Tengah Semester");
   const [subject, setSubject] = useState("");
-  const [targetClass, setTargetClass] = useState(availableClasses[0] || "");
+  const [targetClasses, setTargetClasses] = useState<string[]>([]);
+  const [classInput, setClassInput] = useState("");
   const [duration, setDuration] = useState(60);
   const [loading, setLoading] = useState(false);
   const [expandedExam, setExpandedExam] = useState<string | null>(null);
@@ -56,14 +57,31 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
   const [optD, setOptD] = useState("");
   const [correctOpt, setCorrectOpt] = useState("A");
 
+  const handleAddClass = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const newClass = classInput.trim();
+      if (newClass && !targetClasses.includes(newClass)) {
+        setTargetClasses([...targetClasses, newClass]);
+      }
+      setClassInput("");
+    }
+  };
+
+  const removeClass = (cls: string) => {
+    setTargetClasses(targetClasses.filter(c => c !== cls));
+  };
+
   const handleAddExam = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject.trim()) return;
     setLoading(true);
-    const res = await createExam(examType, subject, targetClass, duration);
+    const finalTargetClass = targetClasses.length > 0 ? targetClasses.join(", ") : "Semua Kelas";
+    const res = await createExam(examType, subject, finalTargetClass, duration);
     if (res.success) {
       setSubject("");
-      setTargetClass("");
+      setTargetClasses([]);
+      setClassInput("");
       setDuration(60);
     } else {
       alert(res.error || "Gagal membuat sesi ujian");
@@ -154,13 +172,24 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
              />
             </div>
             <div className="md:col-span-1">
-              <label className="text-sm font-medium text-slate-700 block mb-1">Kelas Target</label>
-              <Input 
-                placeholder="Contoh: MIPA 2" 
-                value={targetClass} 
-                onChange={(e) => setTargetClass(e.target.value)}
-                required
-              />
+              <label className="text-sm font-medium text-slate-700 block mb-1">Kelas Target <span className="text-xs text-slate-500 font-normal">(Tekan Enter)</span></label>
+              <div className="flex flex-col gap-2">
+                <Input 
+                  placeholder="Ketik lalu tekan Enter..." 
+                  value={classInput} 
+                  onChange={(e) => setClassInput(e.target.value)}
+                  onKeyDown={handleAddClass}
+                />
+                <div className="flex flex-wrap gap-1">
+                  {targetClasses.length === 0 && <span className="text-xs text-slate-400 italic">"Semua Kelas" akan dipilih jika kosong.</span>}
+                  {targetClasses.map(cls => (
+                    <span key={cls} className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md border border-blue-100 flex items-center gap-1">
+                      {cls}
+                      <button type="button" onClick={() => removeClass(cls)} className="hover:text-red-500"><X className="w-3 h-3"/></button>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="md:col-span-1">
               <label className="text-sm font-medium text-slate-700 block mb-1">Durasi (Menit)</label>
@@ -199,7 +228,11 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                     <div>
                       <h4 className="font-bold text-slate-900 text-lg leading-tight">{exam.examType} - {exam.subject}</h4>
                       <div className="text-slate-500 text-sm mt-1 flex flex-wrap gap-2 items-center">
-                        <span className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-700 shadow-sm">Kelas: {exam.targetClass || "Semua"}</span>
+                        <div className="flex flex-wrap gap-1">
+                          {(exam.targetClass === "Semua Kelas" ? ["Semua Kelas"] : exam.targetClass.split(",")).map((cls, idx) => (
+                            <span key={idx} className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-700 shadow-sm">Kelas: {cls.trim()}</span>
+                          ))}
+                        </div>
                         <span className="hidden md:inline text-slate-300">•</span>
                         {editingExamId === exam.id ? (
                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
