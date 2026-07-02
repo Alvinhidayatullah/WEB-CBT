@@ -4,8 +4,9 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trash2, Plus, BookOpen, ChevronDown, ChevronUp, FolderEdit, Edit2, Save, X } from "lucide-react";
-import { createExam, createQuestion, deleteQuestion, deleteExam, updateExam } from "@/actions/dashboardActions";
+import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit } from "lucide-react";
+import { createExam, deleteExam, updateExam } from "@/actions/dashboardActions";
+import Link from "next/link";
 
 export interface UIQuestion {
   id: string;
@@ -49,25 +50,6 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
   const [editDuration, setEditDuration] = useState(60);
 
-  // Question Form State
-  const [qText, setQText] = useState("");
-  const [optA, setOptA] = useState("");
-  const [optB, setOptB] = useState("");
-  const [optC, setOptC] = useState("");
-  const [optD, setOptD] = useState("");
-  const [correctOpt, setCorrectOpt] = useState("A");
-
-  const handleAddClass = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const newClass = classInput.trim();
-      if (newClass && !targetClasses.includes(newClass)) {
-        setTargetClasses([...targetClasses, newClass]);
-      }
-      setClassInput("");
-    }
-  };
-
   const removeClass = (cls: string) => {
     setTargetClasses(targetClasses.filter(c => c !== cls));
   };
@@ -94,37 +76,6 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
     await updateExam(id, { duration: editDuration });
     setEditingExamId(null);
     setLoading(false);
-  };
-
-  const handleAddQuestion = async (e: React.FormEvent, examId: string) => {
-    e.preventDefault();
-    setLoading(true);
-    const res = await createQuestion({
-      examId,
-      text: qText,
-      optionA: optA,
-      optionB: optB,
-      optionC: optC,
-      optionD: optD,
-      correctOption: correctOpt,
-    });
-    if (res.success) {
-      setQText("");
-      setOptA("");
-      setOptB("");
-      setOptC("");
-      setOptD("");
-      setCorrectOpt("A");
-    } else {
-      alert(res.error || "Gagal menambahkan soal");
-    }
-    setLoading(false);
-  };
-
-  const handleDeleteQuestion = async (id: string) => {
-    if (!window.confirm("Hapus soal ini?")) return;
-    const res = await deleteQuestion(id);
-    if (!res.success) alert(res.error || "Gagal menghapus soal");
   };
 
   const handleDeleteExam = async (e: React.MouseEvent, id: string) => {
@@ -289,77 +240,21 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
 
                 {isExpanded && (
                   <div className="p-4 md:p-6 bg-white border-t border-slate-200">
-                    <form onSubmit={(e) => handleAddQuestion(e, exam.id)} className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                      <h4 className="font-semibold text-slate-800 mb-4 text-sm">Tambah Soal Baru</h4>
-                      <div className="space-y-4">
-                        <div>
-                           <label className="text-xs font-medium text-slate-600 block mb-1">Pertanyaan</label>
-                           <Input value={qText} onChange={(e) => setQText(e.target.value)} required />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                           <div>
-                             <label className="text-xs font-medium text-slate-600 block mb-1">Opsi A</label>
-                             <Input value={optA} onChange={(e) => setOptA(e.target.value)} required />
-                           </div>
-                           <div>
-                             <label className="text-xs font-medium text-slate-600 block mb-1">Opsi B</label>
-                             <Input value={optB} onChange={(e) => setOptB(e.target.value)} required />
-                           </div>
-                           <div>
-                             <label className="text-xs font-medium text-slate-600 block mb-1">Opsi C</label>
-                             <Input value={optC} onChange={(e) => setOptC(e.target.value)} required />
-                           </div>
-                           <div>
-                             <label className="text-xs font-medium text-slate-600 block mb-1">Opsi D</label>
-                             <Input value={optD} onChange={(e) => setOptD(e.target.value)} required />
-                           </div>
-                        </div>
-                        <div>
-                           <label className="text-xs font-medium text-slate-600 block mb-1">Kunci Jawaban</label>
-                           <select 
-                             className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-white"
-                             value={correctOpt}
-                             onChange={(e) => setCorrectOpt(e.target.value)}
-                           >
-                             <option value="A">A</option>
-                             <option value="B">B</option>
-                             <option value="C">C</option>
-                             <option value="D">D</option>
-                           </select>
-                        </div>
-                        <div className="flex justify-end">
-                          <Button type="submit" disabled={loading} className="w-full md:w-auto shadow-sm">Simpan Soal</Button>
-                        </div>
+                    
+                    {/* View / Manage Questions Link */}
+                    <div className="mb-8 flex items-center justify-between bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                      <div>
+                        <h4 className="font-semibold text-slate-800">Manajemen Soal ({exam.questions?.length || 0} Soal)</h4>
+                        <p className="text-xs text-slate-500 mt-1">Tambah, edit, atau hapus soal untuk ujian ini di halaman khusus.</p>
                       </div>
-                    </form>
-
-                    <div className="space-y-3 mt-8">
-                      {exam.questions && exam.questions.length > 0 ? (
-                        exam.questions.map((q, idx) => (
-                          <div key={q.id} className="p-5 border border-slate-200/80 rounded-xl flex flex-col md:flex-row justify-between items-start gap-4 bg-white hover:border-blue-200 transition-colors">
-                            <div className="flex-1">
-                              <p className="font-medium text-slate-900 mb-3"><span className="text-slate-500 font-bold mr-1">{idx + 1}.</span> {q.text}</p>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm text-slate-600">
-                                <p className={q.correctOption === "A" ? "text-green-700 font-bold bg-green-50 px-2 py-1 rounded" : "px-2 py-1"}>A. {q.optionA}</p>
-                                <p className={q.correctOption === "B" ? "text-green-700 font-bold bg-green-50 px-2 py-1 rounded" : "px-2 py-1"}>B. {q.optionB}</p>
-                                <p className={q.correctOption === "C" ? "text-green-700 font-bold bg-green-50 px-2 py-1 rounded" : "px-2 py-1"}>C. {q.optionC}</p>
-                                <p className={q.correctOption === "D" ? "text-green-700 font-bold bg-green-50 px-2 py-1 rounded" : "px-2 py-1"}>D. {q.optionD}</p>
-                              </div>
-                            </div>
-                            <button 
-                              onClick={() => handleDeleteQuestion(q.id)}
-                              className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors self-end md:self-start shrink-0"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-center text-slate-500 py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">Belum ada soal untuk ujian ini.</p>
-                      )}
+                      <Link href={`/manage/exam/${exam.id}/questions`}>
+                        <Button variant="primary" className="flex items-center gap-2 shadow-sm">
+                          <ExternalLink className="w-4 h-4" /> Lihat / Kelola Soal
+                        </Button>
+                      </Link>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-slate-200">
+                    <div className="pt-2">
                       <h4 className="font-bold text-slate-800 mb-4 tracking-tight">Daftar Nilai Siswa</h4>
                       <div className="overflow-x-auto rounded-xl border border-slate-200/60 shadow-sm">
                         <table className="w-full text-sm text-left">

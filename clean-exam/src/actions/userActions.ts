@@ -83,3 +83,39 @@ export async function deleteUser(id: string) {
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
+
+export async function updateProfile(data: { username: string; oldPassword?: string; newPassword?: string }) {
+  try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("userId")?.value;
+    if (!userId) throw new Error("Akses ditolak. Silakan login kembali.");
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error("Pengguna tidak ditemukan.");
+
+    // Check old password if they want to change password
+    if (data.newPassword) {
+      if (!data.oldPassword) throw new Error("Password lama wajib diisi untuk mengubah password.");
+      const isMatch = await bcrypt.compare(data.oldPassword, user.password);
+      if (!isMatch) throw new Error("Password lama salah.");
+    }
+
+    const updateData: any = { username: data.username };
+    if (data.newPassword) {
+      updateData.password = await bcrypt.hash(data.newPassword, 10);
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
+      return { success: false, error: "Username sudah digunakan oleh orang lain." };
+    }
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}

@@ -3,14 +3,20 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Users, BookOpen, LogOut, FileText } from "lucide-react";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { QuestionManagement } from "@/components/admin/QuestionManagement";
+import { ProfileSettings } from "@/components/admin/ProfileSettings";
 import { getUsers } from "@/actions/userActions";
 import { getExams } from "@/actions/dashboardActions";
 import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export default async function TeacherDashboard() {
   const { users: rawUsers = [] } = await getUsers();
   const users = JSON.parse(JSON.stringify(rawUsers));
+  
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("userId")?.value;
+  const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_guru";
   
   // Filter pengguna agar hanya murid yang terlihat oleh guru (opsional, tapi disarankan)
   const muridUsers = users.filter((u: any) => u.role === "MURID");
@@ -30,12 +36,7 @@ export default async function TeacherDashboard() {
           <p className="text-slate-500 mt-1">Kelola bank soal, ujian, dan data murid kelas Anda</p>
         </div>
         <div className="flex gap-4">
-          <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm">
-              GR
-            </div>
-            <span className="font-medium text-slate-700">vinz_guru</span>
-          </div>
+          <ProfileSettings currentUsername={currentUsername} />
           <form action={async () => {
             "use server";
             await logoutUser();

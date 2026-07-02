@@ -3,14 +3,20 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Users, BookOpen, ShieldCheck, LogOut } from "lucide-react";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { QuestionManagement } from "@/components/admin/QuestionManagement";
+import { ProfileSettings } from "@/components/admin/ProfileSettings";
 import { getUsers } from "@/actions/userActions";
 import { getDashboardStats, getExams } from "@/actions/dashboardActions";
 import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export default async function AdminDashboard() {
   const { users: rawUsers = [] } = await getUsers();
   const users = JSON.parse(JSON.stringify(rawUsers));
+
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("userId")?.value;
+  const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_admin";
   
   const { totalUsers, activeExams } = await getDashboardStats();
   
@@ -30,12 +36,7 @@ export default async function AdminDashboard() {
           <p className="text-slate-500 mt-1">Sistem Ujian Berbasis Komputer</p>
         </div>
         <div className="flex gap-4">
-          <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm">
-              SA
-            </div>
-            <span className="font-medium text-slate-700">vinz_admin</span>
-          </div>
+          <ProfileSettings currentUsername={currentUsername} />
           <form action={async () => {
             "use server";
             await logoutUser();

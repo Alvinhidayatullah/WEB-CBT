@@ -9,20 +9,31 @@ export function middleware(request: NextRequest) {
   
   // Protect routes based on role
   if (path.startsWith('/admin')) {
-    if (!userId || userRole !== 'SUPER_ADMIN') {
-      return NextResponse.redirect(new URL('/', request.url));
+    if (!userId) return NextResponse.redirect(new URL('/', request.url));
+    if (userRole !== 'SUPER_ADMIN') {
+      return NextResponse.redirect(new URL('/403', request.url));
     }
   }
   
   if (path.startsWith('/teacher')) {
-    if (!userId || (userRole !== 'GURU' && userRole !== 'SUPER_ADMIN')) {
-      return NextResponse.redirect(new URL('/', request.url));
+    if (!userId) return NextResponse.redirect(new URL('/', request.url));
+    if (userRole !== 'GURU' && userRole !== 'SUPER_ADMIN') {
+      return NextResponse.redirect(new URL('/403', request.url));
     }
   }
   
   if (path.startsWith('/student')) {
-    if (!userId || userRole !== 'MURID') {
-      return NextResponse.redirect(new URL('/', request.url));
+    if (!userId) return NextResponse.redirect(new URL('/', request.url));
+    if (userRole !== 'MURID') {
+      return NextResponse.redirect(new URL('/403', request.url));
+    }
+  }
+
+  // Protect /manage route (Teacher and Admin can access)
+  if (path.startsWith('/manage')) {
+    if (!userId) return NextResponse.redirect(new URL('/', request.url));
+    if (userRole !== 'GURU' && userRole !== 'SUPER_ADMIN') {
+      return NextResponse.redirect(new URL('/403', request.url));
     }
   }
 
@@ -37,5 +48,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/admin/:path*', '/teacher/:path*', '/student/:path*'],
+  matcher: ['/', '/admin/:path*', '/teacher/:path*', '/student/:path*', '/manage/:path*'],
 };
