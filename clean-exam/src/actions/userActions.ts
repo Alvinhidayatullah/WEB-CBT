@@ -41,6 +41,10 @@ export async function createUser(data: { username: string; role: string; token?:
     // Jika pembuat akun adalah GURU, secara paksa menetapkan role menjadi MURID, mengabaikan input client.
     const assignedRole = userRole === "GURU" ? "MURID" : data.role;
 
+    if (assignedRole === "SUPER_ADMIN") {
+      return { success: false, error: "403 Forbidden: Pembuatan akun tingkat Super Admin dilarang demi keamanan sistem." };
+    }
+
     if (!assignedRole) {
       return { success: false, error: "Role wajib diisi." };
     }
