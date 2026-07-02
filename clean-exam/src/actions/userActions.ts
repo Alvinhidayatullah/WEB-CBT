@@ -42,7 +42,7 @@ export async function createUser(data: { username: string; role: string; token?:
     const assignedRole = userRole === "GURU" ? "MURID" : data.role;
 
     if (assignedRole === "SUPER_ADMIN") {
-      return { success: false, error: "403 Forbidden: Pembuatan akun tingkat Super Admin dilarang demi keamanan sistem." };
+      return { success: false, error: "403 Forbidden: Pembuatan akun tingkat Super Admin dilarang!." };
     }
 
     if (!assignedRole || !["MURID", "GURU"].includes(assignedRole)) {
