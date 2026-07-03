@@ -15,7 +15,8 @@ export default async function AdminDashboard() {
   const users = JSON.parse(JSON.stringify(rawUsers));
 
   const session = await getSession();
-  const userId = session?.userId as string;
+  if (!session) redirect("/");
+  const userId = session.userId as string;
   const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_admin";
   
   const { totalUsers, activeExams } = await getDashboardStats();

@@ -34,7 +34,22 @@ export async function getSession() {
     const cookieStore = await cookies();
     const session = cookieStore.get("session")?.value;
     if (!session) return null;
-    return await verifyToken(session);
+    
+    const payload = await verifyToken(session);
+    if (!payload) return null;
+
+    // Stateful Verification (Check sessionVersion against DB)
+    const prisma = (await import("@/lib/prisma")).default;
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId as string },
+      select: { sessionVersion: true }
+    });
+
+    if (!user || user.sessionVersion !== payload.sessionVersion) {
+      return null;
+    }
+
+    return payload;
   } catch (error) {
     return null;
   }

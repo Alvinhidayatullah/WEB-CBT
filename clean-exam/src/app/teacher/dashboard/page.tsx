@@ -12,7 +12,8 @@ import { getSession } from "@/lib/auth";
 
 export default async function TeacherDashboard() {
   const session = await getSession();
-  const userId = session?.userId as string;
+  if (!session) redirect("/");
+  const userId = session.userId as string;
   const { users: rawUsers = [] } = await getUsers();
   const users = JSON.parse(JSON.stringify(rawUsers));
   

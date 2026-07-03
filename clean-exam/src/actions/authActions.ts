@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { signToken } from "@/lib/auth";
+import { signToken, getSession } from "@/lib/auth";
 
 export async function loginUser(username: string, password: string) {
   try {
@@ -36,6 +36,7 @@ export async function loginUser(username: string, password: string) {
       userId: user.id,
       userRole: user.role,
       className: user.className || null,
+      sessionVersion: user.sessionVersion,
     });
 
     cookieStore.set("session", token, { secure: true, httpOnly: true, path: '/' });
@@ -48,6 +49,14 @@ export async function loginUser(username: string, password: string) {
 
 export async function logoutUser() {
   try {
+    const session = await getSession();
+    if (session?.userId) {
+      await prisma.user.update({
+        where: { id: session.userId as string },
+        data: { sessionVersion: { increment: 1 } }
+      });
+    }
+
     const cookieStore = await cookies();
     cookieStore.delete("session");
     return { success: true };
