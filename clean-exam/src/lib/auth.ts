@@ -13,7 +13,7 @@ export async function signToken(payload: any) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d") // Sesi berlaku 7 hari
+    .setExpirationTime("3d") // Sesi berlaku 3 hari
     .sign(encodedKey);
 }
 
