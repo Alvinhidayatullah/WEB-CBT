@@ -4,9 +4,10 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit } from "lucide-react";
+import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download } from "lucide-react";
 import { createExam, deleteExam, updateExam } from "@/actions/dashboardActions";
 import Link from "next/link";
+import * as XLSX from "xlsx";
 
 export interface UIQuestion {
   id: string;
@@ -100,6 +101,29 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
 
   const toggleExpand = (id: string) => {
     setExpandedExam(expandedExam === id ? null : id);
+  };
+
+  const handleDownloadExcel = (exam: UIExam) => {
+    if (!exam.results || exam.results.length === 0) {
+      alert("Belum ada data nilai untuk diunduh.");
+      return;
+    }
+
+    const dataToExport = exam.results.map((res: any) => ({
+      "Nama Ujian": `${exam.examType} - ${exam.subject}`,
+      "Siswa": res.student.username,
+      "Kelas": res.student.className || "-",
+      "Waktu Pengerjaan": res.timeSpent ? `${Math.floor(res.timeSpent / 60)}m ${res.timeSpent % 60}s` : "-",
+      "Nilai": res.score,
+      "Status": res.isCheated ? "Terindikasi Curang" : "Valid"
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Nilai Siswa");
+
+    const safeFileName = `Nilai_${exam.subject.replace(/[^a-z0-9]/gi, '_')}_${exam.targetClass.replace(/[^a-z0-9]/gi, '_')}.xlsx`;
+    XLSX.writeFile(workbook, safeFileName);
   };
 
   return (
@@ -268,7 +292,15 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                     </div>
 
                     <div className="pt-2">
-                      <h4 className="font-bold text-slate-800 mb-4 tracking-tight">Daftar Nilai Siswa</h4>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-bold text-slate-800 tracking-tight">Daftar Nilai Siswa</h4>
+                        <Button 
+                          onClick={() => handleDownloadExcel(exam)}
+                          className="flex items-center gap-2 text-emerald-700 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 shadow-sm text-xs py-1.5 px-3 h-auto font-semibold"
+                        >
+                          <Download className="w-3.5 h-3.5" /> Unduh ke Excel
+                        </Button>
+                      </div>
                       <div className="overflow-x-auto rounded-xl border border-slate-200/60 shadow-sm">
                         <table className="w-full text-sm text-left">
                           <thead className="bg-slate-50 text-slate-600 border-b border-slate-200/60">
