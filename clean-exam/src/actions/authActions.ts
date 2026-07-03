@@ -7,6 +7,14 @@ import { signToken } from "@/lib/auth";
 
 export async function loginUser(username: string, password: string) {
   try {
+    // 1. Strict Payload Validation (Anti-Tampering & Anti-Buffer Overflow)
+    if (typeof username !== 'string' || typeof password !== 'string') {
+      return { success: false, error: "Tipe data tidak valid." };
+    }
+    if (username.length === 0 || username.length > 50 || password.length === 0 || password.length > 50) {
+      return { success: false, error: "Panjang input tidak valid." };
+    }
+
     const cookieStore = await cookies();
 
     // Login verification using database

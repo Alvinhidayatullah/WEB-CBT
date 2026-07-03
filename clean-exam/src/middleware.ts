@@ -2,7 +2,38 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
+// --- SECURITY GATEWAY (WAF Mini) ---
+// Simple in-memory rate limiting (Per-Isolate)
+const rateLimitMap = new Map<string, { count: number, timestamp: number }>();
+const RATE_LIMIT_MAX = 50; // max requests
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+
 export async function middleware(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+  const userAgent = request.headers.get('user-agent') || '';
+
+  // 1. WAF: Anti-Scanner & Anti-Bot Protection
+  const suspiciousBots = /sqlmap|nikto|nmap|burpsuite|postman|curl|wget|python-requests|java\/|go-http-client|ruby|php|acunetix|nessus|dirb|gobuster|hydra/i;
+  if (suspiciousBots.test(userAgent) || userAgent.length === 0) {
+    return new NextResponse('Security Gateway: Malicious User-Agent Detected. Request Dropped.', { status: 403 });
+  }
+
+  // 2. WAF: Rate Limiting (Anti-Bruteforce & DDoS Protection)
+  const now = Date.now();
+  const rateData = rateLimitMap.get(ip);
+  if (!rateData || now - rateData.timestamp > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { count: 1, timestamp: now });
+  } else {
+    if (rateData.count >= RATE_LIMIT_MAX) {
+      return new NextResponse('Security Gateway: Rate Limit Exceeded. Incident Logged.', { 
+        status: 429,
+        headers: { 'Retry-After': '60' }
+      });
+    }
+    rateData.count += 1;
+  }
+  // --- END SECURITY GATEWAY ---
+
   const session = request.cookies.get('session')?.value;
   let userId = null;
   let userRole = null;
@@ -58,5 +89,13 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/admin/:path*', '/teacher/:path*', '/student/:path*', '/manage/:path*'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };

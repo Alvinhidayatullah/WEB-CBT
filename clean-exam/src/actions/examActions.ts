@@ -6,6 +6,11 @@ import { getSession } from "@/lib/auth";
 
 export async function joinExam(token: string) {
   try {
+    // 1. Strict Payload Validation
+    if (typeof token !== 'string' || token.length > 20) {
+      return { success: false, error: "Format token tidak valid." };
+    }
+
     const session = await getSession();
     const userId = session?.userId as string;
     const userClass = session?.className as string;
@@ -100,6 +105,14 @@ export async function getExamData(examId: string) {
 
 export async function submitExam(examId: string, answers: Record<string, string>, isCheated: boolean = false, timeSpent: number = 0) {
   try {
+    // 1. Strict Payload Validation
+    if (typeof examId !== 'string' || examId.length > 100) {
+      return { success: false, error: "Format ID Ujian tidak valid." };
+    }
+    if (typeof answers !== 'object' || answers === null || Array.isArray(answers)) {
+      return { success: false, error: "Format jawaban tidak valid." };
+    }
+    
     const session = await getSession();
     const userId = session?.userId as string;
 
