@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { signToken, getSession } from "@/lib/auth";
+import { signToken, verifyToken } from "@/lib/auth";
 
 export async function loginUser(username: string, password: string) {
   try {
@@ -49,15 +49,19 @@ export async function loginUser(username: string, password: string) {
 
 export async function logoutUser() {
   try {
-    const session = await getSession();
-    if (session?.userId) {
-      await prisma.user.update({
-        where: { id: session.userId as string },
-        data: { sessionVersion: { increment: 1 } }
-      });
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("session")?.value;
+    
+    if (sessionToken) {
+      const payload = await verifyToken(sessionToken);
+      if (payload?.userId) {
+        await prisma.user.update({
+          where: { id: payload.userId as string },
+          data: { sessionVersion: { increment: 1 } }
+        });
+      }
     }
 
-    const cookieStore = await cookies();
     cookieStore.delete("session");
     return { success: true };
   } catch (error) {
