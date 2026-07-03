@@ -24,7 +24,7 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
     return 0;
   });
   const [showWarning, setShowWarning] = useState(false);
-  const MAX_VIOLATIONS = 3;
+  const MAX_VIOLATIONS = 5;
 
   useEffect(() => {
     // 1. Detect Visibility Change & Blur (Tab Switch / Minimize)
@@ -43,7 +43,7 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
       setViolations((prev) => {
         const nextViolations = prev + 1;
         localStorage.setItem('exam_violations', nextViolations.toString());
-        
+
         // Menjalankan efek samping (side effects) di luar render cycle React
         setTimeout(() => {
           if (nextViolations >= MAX_VIOLATIONS) {
@@ -57,7 +57,7 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
             setShowWarning(true);
           }
         }, 0);
-        
+
         return nextViolations;
       });
     };
@@ -107,7 +107,7 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
           <div className="bg-white rounded-xl max-w-md w-full p-6 text-center shadow-2xl">
             <h2 className="text-2xl font-bold text-red-600 mb-2">Peringatan Kecurangan!</h2>
             <p className="text-slate-600 mb-6">
-              Sistem mendeteksi Anda mencoba berpindah tab atau keluar dari area ujian. 
+              Sistem mendeteksi Anda mencoba berpindah tab atau keluar dari area ujian.
               Ini adalah pelanggaran ke-{violations} dari maksimal {MAX_VIOLATIONS} pelanggaran.
             </p>
             <button

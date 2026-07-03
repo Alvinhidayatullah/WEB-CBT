@@ -1,8 +1,8 @@
-# 🛡️ CleanExam
+# 🛡️ SecureCBT
 
 > **Modern, Secure, and Comprehensive Computer Based Test (CBT) Application**
 
-CleanExam is a powerful, secure, and modern Next.js application designed to facilitate Computer Based Tests (CBT) for schools and institutions. Built with the Next.js App Router and Prisma, CleanExam ensures high performance, seamless user experience, and rigorous cybersecurity standards to maintain academic integrity.
+SecureCBT is a powerful, secure, and modern Next.js application designed to facilitate Computer Based Tests (CBT) for schools and institutions. Built with the Next.js App Router and Prisma, SecureCBT ensures high performance, seamless user experience, and rigorous cybersecurity standards to maintain academic integrity.
 
 ## ✨ Key Features
 

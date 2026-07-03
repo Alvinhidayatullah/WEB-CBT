@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
   
   if (path.startsWith('/teacher')) {
     if (!userId) return NextResponse.redirect(new URL('/', request.url));
-    if (userRole !== 'GURU' && userRole !== 'SUPER_ADMIN') {
+    if (userRole !== 'GURU') {
       return NextResponse.redirect(new URL('/403', request.url));
     }
   }

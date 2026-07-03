@@ -180,7 +180,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-2">Ujian Tidak Ditemukan</h2>
-          <Button onClick={() => router.back()}>Kembali</Button>
+          <Button onClick={() => router.push("/")}>Kembali</Button>
         </div>
       </div>
     );
@@ -190,7 +190,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="flex items-center gap-4 mb-8">
-          <Button variant="secondary" onClick={() => router.back()} className="px-3 py-2 rounded-xl">
+          <Button variant="secondary" onClick={() => router.push("/")} className="px-3 py-2 rounded-xl">
             <ArrowLeft className="w-5 h-5 mr-1" /> Kembali
           </Button>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full">
