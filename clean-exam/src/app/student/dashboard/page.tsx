@@ -2,10 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { KeyRound, LogOut } from "lucide-react";
+import { KeyRound, LogOut, BookOpen } from "lucide-react";
 import { joinExam } from "@/actions/examActions";
 import { logoutUser } from "@/actions/authActions";
 
@@ -42,36 +39,37 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-900 p-8">
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 blur-[120px] animate-pulse" style={{ animationDelay: '3s' }}></div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#030305] p-4 font-sans selection:bg-blue-500/30">
+      {/* Dynamic Animated Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-blue-600/20 blur-[120px] animate-pulse pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-indigo-600/20 blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-[20%] right-[10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full bg-violet-600/20 blur-[100px] animate-pulse pointer-events-none" style={{ animationDelay: '4s' }}></div>
 
-      <div className="w-full max-w-4xl space-y-6 flex flex-col items-center justify-center relative z-10">
-        <div className="absolute top-0 right-0 md:top-4 md:right-4">
-          <button onClick={handleLogout} className="bg-red-500/10 text-red-400 hover:bg-red-500/20 px-4 py-2 rounded-xl border border-red-500/20 shadow-sm flex items-center gap-2 transition-colors">
-            <LogOut className="w-4 h-4" />
-            <span className="font-medium text-sm">Keluar</span>
-          </button>
-        </div>
-        <div className="text-center mb-8 pt-12 md:pt-0">
-          <h1 className="text-4xl font-extrabold text-white mb-3 tracking-tight">Portal Siswa</h1>
-          <p className="text-slate-300 font-medium tracking-wide">Masukkan Token Ujian yang diberikan oleh Guru Anda</p>
+      {/* Subtle Grid Pattern */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none" />
+
+      <div className="w-full max-w-lg space-y-6 flex flex-col items-center justify-center relative z-10">
+        
+        <div className="text-center mb-4">
+          <div className="mx-auto w-14 h-14 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl flex items-center justify-center mb-4 shadow-lg backdrop-blur-md">
+            <BookOpen className="w-6 h-6 text-slate-200" strokeWidth={1.5} />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2 tracking-tight">Portal Siswa</h1>
+          <p className="text-slate-400 text-sm font-medium tracking-wide">Masukkan Token Ujian dari Guru Anda</p>
         </div>
 
-        <Card className="w-full max-w-md shadow-2xl border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl overflow-hidden ring-1 ring-white/20">
-          <CardContent className="p-8 relative z-10">
-            <form onSubmit={handleJoinExam} className="space-y-6">
+        <div className="w-full shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-white/10 bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-3xl overflow-hidden ring-1 ring-white/5 p-8 relative">
+          <form onSubmit={handleJoinExam} className="space-y-6">
                <div className="flex justify-center mb-6">
                   <div className="bg-gradient-to-tr from-blue-500 to-indigo-500 p-4 rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.5)]">
                     <KeyRound className="w-8 h-8 text-white" />
                   </div>
                </div>
                <div className="space-y-1">
-                 <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1 block">Token Ujian</label>
-                 <Input
+                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block mb-2 text-center">Token Ujian</label>
+                 <input
                     type="text"
-                    className="text-center font-mono text-3xl tracking-widest uppercase h-16 bg-white/10 border-white/10 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/20 rounded-2xl"
+                    className="flex w-full text-center font-mono text-3xl tracking-widest uppercase h-16 bg-black/40 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl transition-all"
                     placeholder="XXXX-XXXX"
                     value={token}
                     onChange={(e) => setToken(e.target.value.toUpperCase())}
@@ -81,20 +79,33 @@ export default function StudentDashboard() {
                </div>
              
                {error && (
-                 <div className="p-4 bg-red-500/10 backdrop-blur-sm text-red-200 text-sm rounded-xl border border-red-500/20 text-center font-medium">
+                 <div className="p-3 bg-red-500/10 text-red-400 text-sm rounded-xl border border-red-500/20 font-medium text-center">
                    {error}
                  </div>
                )}
                
-               <Button type="submit" disabled={loading} className="w-full h-14 text-lg font-bold shadow-[0_0_20px_rgba(59,130,246,0.4)] rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 transition-all hover:scale-[1.02] active:scale-[0.98]">
+               <button 
+                 type="submit" 
+                 disabled={loading} 
+                 className="w-full h-14 text-lg font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
+               >
                  {loading ? "Memvalidasi..." : "Mulai Ujian"}
-               </Button>
+               </button>
             </form>
-          </CardContent>
-        </Card>
+        </div>
         
-        <div className="mt-8 text-center bg-yellow-500/10 p-5 rounded-2xl border border-yellow-500/20 text-yellow-200 text-sm max-w-md shadow-lg backdrop-blur-md">
-          <strong className="block mb-1 text-yellow-400">Perhatian:</strong> Pastikan Anda menggunakan koneksi internet yang stabil. Membuka tab baru atau meminimalkan browser akan dianggap sebagai pelanggaran.
+        <div className="w-full">
+          <button 
+            onClick={handleLogout} 
+            className="mx-auto flex items-center justify-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors bg-transparent border-0"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Bukan Anda? Keluar Akun</span>
+          </button>
+        </div>
+        
+        <div className="mt-8 text-center bg-yellow-500/10 p-5 rounded-2xl border border-yellow-500/20 text-yellow-200 text-sm max-w-md shadow-lg backdrop-blur-md mx-auto">
+          <strong className="block mb-1 text-yellow-400">Perhatian:</strong> Perhatian! Ujian akan segera dimulai. Pastikan jaringan internet Anda dalam kondisi stabil. Dilarang membuka tab baru atau meminimalkan browser, ini akan tercatat sebagai pelanggaran. Sebelum tombol 'Mulai Ujian' di-klik, luangkan sejenak untuk berdoa dan menenangkan hati. Percaya pada usaha Anda, percaya pada doa Anda, dan percaya pada diri sendiri. Semoga lancar sampai akhir! Tetap fokus, tetap tenang, dan raih hasil terbaik!
         </div>
       </div>
     </div>
