@@ -294,12 +294,12 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                     <div className="pt-2">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="font-bold text-slate-800 tracking-tight">Daftar Nilai Siswa</h4>
-                        <Button 
+                        <button 
                           onClick={() => handleDownloadExcel(exam)}
-                          className="flex items-center gap-2 text-emerald-700 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 shadow-sm text-xs py-1.5 px-3 h-auto font-semibold"
+                          className="flex items-center gap-2 text-emerald-700 border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 shadow-sm text-xs py-2 px-4 rounded-lg font-bold transition-colors focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                         >
-                          <Download className="w-3.5 h-3.5" /> Unduh ke Excel
-                        </Button>
+                          <Download className="w-4 h-4" /> Unduh ke Excel
+                        </button>
                       </div>
                       <div className="overflow-x-auto rounded-xl border border-slate-200/60 shadow-sm">
                         <table className="w-full text-sm text-left">
