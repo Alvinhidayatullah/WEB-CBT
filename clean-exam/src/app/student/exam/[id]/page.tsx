@@ -139,9 +139,16 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
 
   return (
     <AntiCheatWrapper onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        {/* Header Minimalis */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-6 py-4 flex flex-wrap gap-4 justify-between items-center sticky top-0 z-20 shadow-sm">
+      <div className="min-h-screen bg-[#030305] flex flex-col relative overflow-hidden selection:bg-blue-500/30">
+        
+        {/* Fixed Background from Login */}
+        <div className="fixed inset-0 bg-[#030305] -z-20"></div>
+        <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-blue-600/20 blur-[120px] animate-pulse pointer-events-none -z-10"></div>
+        <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-indigo-600/20 blur-[120px] animate-pulse pointer-events-none -z-10" style={{ animationDelay: '2s' }}></div>
+        <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none -z-10" />
+
+        {/* Header Minimalis (Tetap Putih) */}
+        <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-8 py-4 flex flex-wrap gap-4 justify-between items-center sticky top-0 z-20 shadow-sm">
           <div className="flex items-center gap-3">
              <div className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight">SecureCBT</div>
              <div className="h-6 w-px bg-slate-200 hidden md:block"></div>
@@ -162,18 +169,18 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
         </header>
 
         {/* Konten Utama */}
-        <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+        <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-10">
           
           {/* Navigasi Soal */}
-          <aside className="md:col-span-1 order-2 md:order-1 relative">
-            <div className="bg-white rounded-2xl border border-slate-100 p-5 md:sticky md:top-24 shadow-sm">
-              <h3 className="font-semibold text-slate-800 mb-4 hidden md:block">Navigasi Soal</h3>
-              <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-2 pb-2 md:pb-0 scrollbar-hide">
+          <aside className="lg:col-span-1 order-2 lg:order-1 relative z-10">
+            <div className="bg-white rounded-3xl border border-slate-100 p-6 lg:sticky lg:top-28 shadow-xl shadow-black/10">
+              <h3 className="font-bold text-slate-800 mb-6 hidden md:block text-lg border-b border-slate-100 pb-4">Navigasi Soal</h3>
+              <div className="flex overflow-x-auto md:grid md:grid-cols-5 gap-3 md:gap-3 pb-2 md:pb-0 scrollbar-hide">
                 {examData.questions.map((q: any, idx: number) => (
                   <button
                     key={q.id}
                     onClick={() => setCurrentQuestion(idx)}
-                    className={`shrink-0 w-12 h-12 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
+                    className={`shrink-0 w-12 h-12 md:w-11 md:h-11 rounded-xl flex items-center justify-center font-bold text-sm transition-all shadow-sm ${
                       currentQuestion === idx 
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-600 ring-offset-2' 
                         : markedQuestions[q.id]
@@ -191,8 +198,8 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           </aside>
 
           {/* Area Soal */}
-          <section className="md:col-span-3 order-1 md:order-2">
-            <div className="bg-white rounded-2xl border border-slate-100 p-6 md:p-10 shadow-sm min-h-[500px] flex flex-col">
+          <section className="lg:col-span-3 order-1 lg:order-2 relative z-10">
+            <div className="bg-white rounded-3xl border border-slate-100 p-6 md:p-10 lg:p-12 shadow-xl shadow-black/10 min-h-[500px] flex flex-col">
               <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-100">
                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Soal Nomor {currentQuestion + 1}</h2>
                  <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">Bobot: {(100 / examData.questions.length).toFixed(1).replace(/\.0$/, '')}</span>
