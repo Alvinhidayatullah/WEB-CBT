@@ -64,7 +64,7 @@ graph TD
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/clean-exam.git
+   git clone https://github.com/Alvinhidayatullah/WEB-CBT.git
    cd clean-exam
    ```
 
