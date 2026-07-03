@@ -1,11 +1,20 @@
 import React from 'react';
 import Link from 'next/link';
-import { ShieldAlert, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { AlertTriangle, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { headers } from 'next/headers';
 
-export default function ForbiddenPage() {
+export default async function ForbiddenPage() {
+  const headersList = await headers();
+  const forwardedFor = headersList.get('x-forwarded-for');
+  const realIp = headersList.get('x-real-ip');
+  
+  // Extract the first IP if there are multiple (e.g., "client, proxy1, proxy2")
+  const rawIp = forwardedFor ? forwardedFor.split(',')[0].trim() : realIp;
+  const displayIp = rawIp || '127.0.0.1';
+
   return (
-    <div className="min-h-screen bg-[#050507] flex flex-col items-center justify-center relative overflow-hidden selection:bg-red-500/30">
+    <div className="min-h-screen bg-[#050507] flex flex-col items-center justify-center relative overflow-hidden selection:bg-red-500/30 p-4">
 
       {/* Background Gradients & Pulses */}
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-red-900/20 blur-[150px] rounded-full animate-pulse pointer-events-none" />
@@ -15,7 +24,7 @@ export default function ForbiddenPage() {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_70%)] pointer-events-none" />
 
       {/* Main Glass Card */}
-      <div className="z-10 bg-slate-900/40 backdrop-blur-2xl border border-red-500/20 p-10 md:p-14 rounded-[2.5rem] shadow-[0_0_80px_rgba(220,38,38,0.15)] max-w-lg w-full text-center relative overflow-hidden group mx-4">
+      <div className="z-10 bg-slate-900/40 backdrop-blur-2xl border border-red-500/20 p-8 md:p-14 rounded-3xl md:rounded-[2.5rem] shadow-[0_0_80px_rgba(220,38,38,0.15)] w-full max-w-lg text-center relative overflow-hidden group">
 
         {/* Hover Flare */}
         <div className="absolute inset-0 bg-gradient-to-tr from-red-500/0 via-red-500/5 to-orange-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
@@ -28,7 +37,7 @@ export default function ForbiddenPage() {
         </div>
 
         {/* 403 Title */}
-        <h1 className="text-7xl font-black mb-2 tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-red-400 via-red-500 to-red-800 drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]">
+        <h1 className="text-6xl md:text-7xl font-black mb-2 tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-red-400 via-red-500 to-red-800 drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]">
           403
         </h1>
         <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-widest uppercase">
@@ -36,10 +45,11 @@ export default function ForbiddenPage() {
         </h2>
 
         {/* Message */}
-        <p className="text-slate-400 mb-10 text-base leading-relaxed font-medium">
-          Identitas terdeteksi. Namun Anda berada di luar batas otoritas Anda.<br />
-          <span className="text-red-400/80 text-sm mt-3 block font-mono bg-red-950/30 py-2 rounded-lg border border-red-900/30">
-            INSIDEN DIREKAM OLEH SISTEM
+        <p className="text-slate-400 mb-10 text-sm md:text-base leading-relaxed font-medium">
+          Profil dikenali. Otoritas tidak mencukupi. Silakan ajukan peningkatan akses.<br />
+          <span className="text-red-400/90 text-[11px] md:text-sm mt-4 block font-mono bg-red-950/40 py-2.5 px-2 rounded-lg border border-red-900/50 shadow-inner">
+            <span className="animate-pulse inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+            ANOMALI DARI IP [{displayIp}] DIREKAM
           </span>
         </p>
 
