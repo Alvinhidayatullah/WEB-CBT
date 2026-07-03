@@ -45,7 +45,7 @@ export async function getSession() {
       select: { sessionVersion: true }
     });
 
-    if (!user || user.sessionVersion !== payload.sessionVersion) {
+    if (!user || user.sessionVersion !== (payload.sessionVersion as number)) {
       return null;
     }
 
