@@ -11,18 +11,25 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 
 export default async function AdminDashboard() {
-  const { users: rawUsers = [] } = await getUsers();
-  const users = JSON.parse(JSON.stringify(rawUsers));
-
   const session = await getSession();
   if (!session) redirect("/");
   const userId = session.userId as string;
-  const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_admin";
-  
-  const { totalUsers, activeExams } = await getDashboardStats();
-  
-  const rawExams = await getExams();
+
+  // Parallelize database queries to drastically reduce loading time (avoid waterfall)
+  const [
+    { users: rawUsers = [] },
+    { totalUsers, activeExams },
+    rawExams
+  ] = await Promise.all([
+    getUsers(),
+    getDashboardStats(),
+    getExams()
+  ]);
+
+  const users = JSON.parse(JSON.stringify(rawUsers));
   const exams = JSON.parse(JSON.stringify(rawExams));
+  
+  const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_admin";
   
   const availableClasses = Array.from(new Set(
     users.map((u: any) => u.className).filter((c: any) => typeof c === 'string' && c.trim() !== '')
