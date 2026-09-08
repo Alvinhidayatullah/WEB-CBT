@@ -133,24 +133,29 @@ export async function submitExam(examId: string, answers: Record<string, string>
       return { success: false, error: "Anda tidak memiliki akses ke ujian ini." };
     }
 
-    let correctCount = 0;
-    const totalQuestions = exam.questions.length;
+    let totalEarnedWeights = 0;
+    let totalMaxWeights = 0;
 
     exam.questions.forEach(q => {
       const studentAnswer = answers[q.id];
       if (q.type === "ESSAY") {
-        // Option A: Automatically score essay as correct if answered
-        if (studentAnswer && studentAnswer.trim().length > 0) {
-          correctCount++;
-        }
+        // Bobot esai dihitung manual oleh guru, tidak masuk otomatis
       } else {
-        if (studentAnswer === q.correctOption) {
-          correctCount++;
-        }
+        const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
+        const questionMax = maxW > 0 ? maxW : 100; // Default 100 jika lupa set bobot
+        totalMaxWeights += questionMax;
+
+        let earned = 0;
+        if (studentAnswer === "A") earned = q.weightA || 0;
+        else if (studentAnswer === "B") earned = q.weightB || 0;
+        else if (studentAnswer === "C") earned = q.weightC || 0;
+        else if (studentAnswer === "D") earned = q.weightD || 0;
+
+        totalEarnedWeights += earned;
       }
     });
 
-    const score = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+    const score = totalMaxWeights > 0 ? (totalEarnedWeights / totalMaxWeights) * 100 : 0;
     const finalScore = parseFloat(score.toFixed(2));
 
     await prisma.examResult.create({

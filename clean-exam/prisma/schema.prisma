@@ -42,7 +42,10 @@ model Question {
   optionB       String?
   optionC       String?
   optionD       String?
-  correctOption String?  // "A", "B", "C", "D", or null for essay
+  weightA       Int?     @default(0)
+  weightB       Int?     @default(0)
+  weightC       Int?     @default(0)
+  weightD       Int?     @default(0)
   examId        String
   exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())

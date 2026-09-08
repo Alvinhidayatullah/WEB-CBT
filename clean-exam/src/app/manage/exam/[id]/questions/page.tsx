@@ -24,7 +24,10 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
   const [optB, setOptB] = useState("");
   const [optC, setOptC] = useState("");
   const [optD, setOptD] = useState("");
-  const [correctOpt, setCorrectOpt] = useState("A");
+  const [weightA, setWeightA] = useState(100);
+  const [weightB, setWeightB] = useState(0);
+  const [weightC, setWeightC] = useState(0);
+  const [weightD, setWeightD] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -47,7 +50,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
       alert("Pertanyaan harus diisi!");
       return;
     }
-    if (qType === "MULTIPLE_CHOICE" && (!optA || !optB || !optC || !optD || !correctOpt)) {
+    if (qType === "MULTIPLE_CHOICE" && (!optA || !optB || !optC || !optD)) {
       alert("Semua kolom opsi Pilihan Ganda harus diisi!");
       return;
     }
@@ -62,7 +65,10 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
         optionB: optB,
         optionC: optC,
         optionD: optD,
-        correctOption: correctOpt
+        weightA: weightA,
+        weightB: weightB,
+        weightC: weightC,
+        weightD: weightD
       });
     } else {
       res = await createQuestion({
@@ -73,12 +79,16 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
         optionB: optB,
         optionC: optC,
         optionD: optD,
-        correctOption: correctOpt
+        weightA: weightA,
+        weightB: weightB,
+        weightC: weightC,
+        weightD: weightD
       });
     }
 
     if (res.success) {
-      setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); setCorrectOpt("A");
+      setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); 
+      setWeightA(100); setWeightB(0); setWeightC(0); setWeightD(0);
       setEditingId(null);
       await fetchExam(examId);
     } else {
@@ -95,7 +105,10 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
     setOptB(q.optionB || "");
     setOptC(q.optionC || "");
     setOptD(q.optionD || "");
-    setCorrectOpt(q.correctOption || "A");
+    setWeightA(q.weightA || 0);
+    setWeightB(q.weightB || 0);
+    setWeightC(q.weightC || 0);
+    setWeightD(q.weightD || 0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -119,7 +132,10 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
           optionB: row["Opsi B"]?.toString() || "",
           optionC: row["Opsi C"]?.toString() || "",
           optionD: row["Opsi D"]?.toString() || "",
-          correctOption: row["Kunci Jawaban"]?.toString().toUpperCase() || "A",
+          weightA: parseInt(row["Bobot A"]) || 0,
+          weightB: parseInt(row["Bobot B"]) || 0,
+          weightC: parseInt(row["Bobot C"]) || 0,
+          weightD: parseInt(row["Bobot D"]) || 0,
         })).filter(q => q.text !== "");
 
         if (formattedQuestions.length === 0) {
@@ -147,8 +163,8 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
 
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([
-      { "Tipe Soal": "PG", "Pertanyaan": "Siapa penemu lampu bohlam?", "Opsi A": "Thomas Edison", "Opsi B": "Albert Einstein", "Opsi C": "Isaac Newton", "Opsi D": "Nikola Tesla", "Kunci Jawaban": "A" },
-      { "Tipe Soal": "ESAI", "Pertanyaan": "Jelaskan proses terjadinya fotosintesis!", "Opsi A": "", "Opsi B": "", "Opsi C": "", "Opsi D": "", "Kunci Jawaban": "" }
+      { "Tipe Soal": "PG", "Pertanyaan": "Siapa penemu lampu bohlam?", "Opsi A": "Thomas Edison", "Opsi B": "Albert Einstein", "Opsi C": "Isaac Newton", "Opsi D": "Nikola Tesla", "Bobot A": 100, "Bobot B": 0, "Bobot C": 0, "Bobot D": 0 },
+      { "Tipe Soal": "ESAI", "Pertanyaan": "Jelaskan proses terjadinya fotosintesis!", "Opsi A": "", "Opsi B": "", "Opsi C": "", "Opsi D": "", "Bobot A": 0, "Bobot B": 0, "Bobot C": 0, "Bobot D": 0 }
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
@@ -226,7 +242,8 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
             </h2>
             {editingId && (
               <Button variant="secondary" className="px-3 py-1.5 text-sm" onClick={() => {
-                setEditingId(null); setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); setCorrectOpt("A");
+                setEditingId(null); setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); 
+                setWeightA(100); setWeightB(0); setWeightC(0); setWeightD(0);
               }}>Batal Edit</Button>
             )}
           </div>
@@ -246,16 +263,34 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
             {qType === "MULTIPLE_CHOICE" && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi A</label><Input value={optA} onChange={(e) => setOptA(e.target.value)} required /></div>
-                  <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi B</label><Input value={optB} onChange={(e) => setOptB(e.target.value)} required /></div>
-                  <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi C</label><Input value={optC} onChange={(e) => setOptC(e.target.value)} required /></div>
-                  <div><label className="text-sm font-medium text-slate-700 block mb-1">Opsi D</label><Input value={optD} onChange={(e) => setOptD(e.target.value)} required /></div>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-slate-700 block mb-1.5">Kunci Jawaban</label>
-                  <select className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:bg-white" value={correctOpt} onChange={(e) => setCorrectOpt(e.target.value)}>
-                    <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                  </select>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 block mb-1">Opsi A</label>
+                    <div className="flex gap-2">
+                      <Input value={optA} onChange={(e) => setOptA(e.target.value)} required placeholder="Teks opsi A" />
+                      <Input type="number" min="0" max="100" value={weightA} onChange={(e) => setWeightA(parseInt(e.target.value)||0)} required className="w-24 text-center font-bold" placeholder="100" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 block mb-1">Opsi B</label>
+                    <div className="flex gap-2">
+                      <Input value={optB} onChange={(e) => setOptB(e.target.value)} required placeholder="Teks opsi B" />
+                      <Input type="number" min="0" max="100" value={weightB} onChange={(e) => setWeightB(parseInt(e.target.value)||0)} required className="w-24 text-center font-bold" placeholder="0" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 block mb-1">Opsi C</label>
+                    <div className="flex gap-2">
+                      <Input value={optC} onChange={(e) => setOptC(e.target.value)} required placeholder="Teks opsi C" />
+                      <Input type="number" min="0" max="100" value={weightC} onChange={(e) => setWeightC(parseInt(e.target.value)||0)} required className="w-24 text-center font-bold" placeholder="0" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 block mb-1">Opsi D</label>
+                    <div className="flex gap-2">
+                      <Input value={optD} onChange={(e) => setOptD(e.target.value)} required placeholder="Teks opsi D" />
+                      <Input type="number" min="0" max="100" value={weightD} onChange={(e) => setWeightD(parseInt(e.target.value)||0)} required className="w-24 text-center font-bold" placeholder="0" />
+                    </div>
+                  </div>
                 </div>
               </>
             )}
@@ -282,10 +317,10 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
                   
                   {q.type !== "ESSAY" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-600">
-                      <p className={q.correctOption === "A" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>A. {q.optionA}</p>
-                      <p className={q.correctOption === "B" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>B. {q.optionB}</p>
-                      <p className={q.correctOption === "C" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>C. {q.optionC}</p>
-                      <p className={q.correctOption === "D" ? "text-green-700 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100" : "px-3 py-2"}>D. {q.optionD}</p>
+                      <p className="px-3 py-2 flex justify-between"><span>A. {q.optionA}</span> <span className="font-bold text-blue-600">Bobot: {q.weightA}%</span></p>
+                      <p className="px-3 py-2 flex justify-between"><span>B. {q.optionB}</span> <span className="font-bold text-blue-600">Bobot: {q.weightB}%</span></p>
+                      <p className="px-3 py-2 flex justify-between"><span>C. {q.optionC}</span> <span className="font-bold text-blue-600">Bobot: {q.weightC}%</span></p>
+                      <p className="px-3 py-2 flex justify-between"><span>D. {q.optionD}</span> <span className="font-bold text-blue-600">Bobot: {q.weightD}%</span></p>
                     </div>
                   )}
                 </div>
