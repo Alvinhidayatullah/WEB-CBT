@@ -12,7 +12,7 @@ import { getSession } from "@/lib/auth";
 
 export default async function AdminDashboard() {
   const session = await getSession();
-  if (!session) redirect("/");
+  if (!session) redirect("/api/auth/logout");
   const userId = session.userId as string;
 
   // Parallelize database queries to drastically reduce loading time (avoid waterfall)
