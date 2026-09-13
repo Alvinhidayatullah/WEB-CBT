@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download } from "lucide-react";
-import { createExam, deleteExam, updateExam } from "@/actions/dashboardActions";
+import { createExam, deleteExam, updateExam, getExams } from "@/actions/dashboardActions";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 
@@ -49,6 +49,25 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   React.useEffect(() => {
     setLocalExams(exams);
   }, [exams]);
+
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const freshExams = (await getExams()) as unknown as UIExam[];
+        // Update local exams safely (merge new data without overriding local optimistic state if possible)
+        // Since we want realtime, we just replace it but be careful if user is editing. 
+        // We only update if no exam is currently being edited.
+        setLocalExams(prev => {
+          // simple check: if length differs or if we just want to force update
+          return freshExams;
+        });
+      } catch (e) {
+        // ignore errors on polling
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   const [examType, setExamType] = useState("Ujian Tengah Semester");
   const [subject, setSubject] = useState("");
   const [targetClasses, setTargetClasses] = useState<string[]>([]);

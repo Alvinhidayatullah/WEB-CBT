@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Trash2, UserPlus, Download, CheckSquare } from "lucide-react";
-import { createUser, deleteUser, bulkDeleteUsers } from "@/actions/userActions";
+import { createUser, deleteUser, bulkDeleteUsers, getUsers } from "@/actions/userActions";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 
@@ -45,6 +45,24 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     setUsers(sortUsers(initialUsers));
     setSelectedUsers(new Set());
   }, [initialUsers]);
+
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await getUsers();
+        if (res.users) {
+          // Filter dynamically based on allowedRoles just like the server page does, 
+          // or assume getUsers already filters based on session role.
+          const filtered = res.users.filter((u: any) => allowedRoles.includes(u.role));
+          // Update local users safely (optimistic updates take precedence if they just clicked, but for a 15s poll this is usually fine)
+          setUsers(sortUsers(filtered));
+        }
+      } catch (e) {
+        // ignore errors on polling
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [allowedRoles]);
   
   // Form State
   const [username, setUsername] = useState("");
@@ -113,7 +131,6 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
       setTeacherSubject("");
       setCustomPassword("");
       setToken(generateRandomToken()); // refresh token untuk form berikutnya
-      router.refresh();
     } else if (res.success) {
       // Fallback if user wasn't returned for some reason
       setUsername("");
@@ -138,7 +155,6 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
         next.delete(id);
         return next;
       });
-      router.refresh();
     } else {
       alert(res.error || "Gagal menghapus user");
     }
@@ -153,7 +169,6 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     if (res.success) {
       setUsers(prev => prev.filter((u) => !selectedUsers.has(u.id)));
       setSelectedUsers(new Set());
-      router.refresh();
     } else {
       alert(res.error || "Gagal menghapus beberapa user");
     }
