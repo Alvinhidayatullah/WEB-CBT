@@ -21,6 +21,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [markedQuestions, setMarkedQuestions] = useState<Record<string, boolean>>({});
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [shuffledOptions, setShuffledOptions] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadExam() {
@@ -63,6 +64,31 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
 
     return () => clearInterval(timer);
   }, [timeLeft, isSubmitting]);
+
+  useEffect(() => {
+    if (!examData || !examData.questions || examData.questions.length === 0) return;
+    const q = examData.questions[currentQuestion];
+    if (q.type === 'ESSAY') return;
+
+    const opts = [
+      { originalValue: "A", text: q.optionA },
+      { originalValue: "B", text: q.optionB },
+      { originalValue: "C", text: q.optionC },
+      { originalValue: "D", text: q.optionD },
+    ];
+    
+    for (let i = opts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    
+    const visualOpts = opts.map((opt, idx) => ({
+      ...opt,
+      label: String.fromCharCode(65 + idx)
+    }));
+    
+    setShuffledOptions(visualOpts);
+  }, [currentQuestion, examData]);
 
   const handleSelect = (optionValue: string) => {
     if (!examData) return;
@@ -130,16 +156,10 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
 
   const question = examData.questions[currentQuestion];
   const qId = question.id;
-  const options = [
-    { label: "A", text: question.optionA, value: "A" },
-    { label: "B", text: question.optionB, value: "B" },
-    { label: "C", text: question.optionC, value: "C" },
-    { label: "D", text: question.optionD, value: "D" },
-  ];
 
   return (
     <AntiCheatWrapper onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
-      <div className="min-h-screen bg-[#030305] flex flex-col relative overflow-hidden selection:bg-blue-500/30">
+      <div className="min-h-[100dvh] bg-[#030305] flex flex-col relative overflow-hidden selection:bg-blue-500/30 overscroll-y-none">
         
         {/* Fixed Background from Login */}
         <div className="fixed inset-0 bg-[#030305] -z-20"></div>
@@ -219,8 +239,8 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                     onChange={(e) => handleSelect(e.target.value)}
                   />
                 ) : (
-                  options.map((opt, idx) => {
-                     const isSelected = answers[qId] === opt.value;
+                  shuffledOptions.map((opt, idx) => {
+                     const isSelected = answers[qId] === opt.originalValue;
                      return (
                       <label 
                         key={`${qId}-${idx}`} 
@@ -240,7 +260,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                           name={`q-${qId}`} 
                           className="hidden" 
                           checked={isSelected}
-                          onChange={() => handleSelect(opt.value)}
+                          onChange={() => handleSelect(opt.originalValue)}
                         />
                         <span className={`text-base leading-relaxed ${isSelected ? 'text-blue-900 font-semibold' : 'text-slate-700'}`}>
                            <span className={`font-bold mr-2 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`}>{opt.label}.</span> 
