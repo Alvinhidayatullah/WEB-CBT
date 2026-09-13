@@ -209,7 +209,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
         <header className="flex items-center gap-4 mb-8">
           <Button variant="secondary" onClick={() => router.push("/")} className="px-3 py-2 rounded-xl">
             <ArrowLeft className="w-5 h-5 mr-1" /> Kembali
