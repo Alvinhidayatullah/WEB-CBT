@@ -48,7 +48,9 @@ export default async function AdminDashboard() {
   const totalRealUsers = users.length;
   
   const availableClasses = Array.from(new Set(
-    users.map((u: any) => u.className).filter((c: any) => typeof c === 'string' && c.trim() !== '')
+    users.filter((u: any) => u.role === "MURID")
+         .map((u: any) => u.className)
+         .filter((c: any) => typeof c === 'string' && c.trim() !== '')
   )) as string[];
 
   return (
