@@ -32,15 +32,16 @@ export default async function TeacherDashboard() {
   
   const userClasses = currentUser?.className || "-";
   const userSubjects = currentUser?.teacherSubject || "-";
+  
+  const availableSubjects = userSubjects !== "-" ? userSubjects.split(",").map(s => s.trim()) : [];
+
   // Filter pengguna agar hanya murid yang terlihat oleh guru (opsional, tapi disarankan)
   const muridUsers = users.filter((u: any) => u.role === "MURID");
   
   const rawExams = await getExams();
   const exams = JSON.parse(JSON.stringify(rawExams));
   
-  const availableClasses = Array.from(new Set(
-    users.map((u: any) => u.className).filter((c: any) => typeof c === 'string' && c.trim() !== '')
-  )) as string[];
+  const availableClasses = userClasses !== "-" ? userClasses.split(",").map(c => c.trim()) : [];
   
   return (
     <div className="min-h-screen bg-slate-50/50 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/50 via-slate-50 to-slate-50">
@@ -100,7 +101,7 @@ export default async function TeacherDashboard() {
       <UserManagement initialUsers={muridUsers} allowedRoles={["MURID"]} />
 
       {/* MANAJEMEN SOAL (CRUD) */}
-      <QuestionManagement exams={exams} availableClasses={availableClasses} />
+      <QuestionManagement exams={exams} availableClasses={availableClasses} availableSubjects={availableSubjects} />
       
       </div>
     </div>

@@ -43,7 +43,7 @@ export interface UIExam {
   results?: UIExamResult[];
 }
 
-export function QuestionManagement({ exams = [], availableClasses = [] }: { exams: UIExam[], availableClasses?: string[] }) {
+export function QuestionManagement({ exams = [], availableClasses = [], availableSubjects = [] }: { exams: UIExam[], availableClasses?: string[], availableSubjects?: string[] }) {
   const [localExams, setLocalExams] = useState<UIExam[]>(exams);
 
   React.useEffect(() => {
@@ -164,12 +164,27 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
              </select>
             </div>
             <div className="md:col-span-1">
-             <label className="text-sm font-medium text-slate-700 block mb-1">Mata Pelajaran</label>
-             <Input 
-               placeholder="Contoh: Biologi" 
-               value={subject} 
-               onChange={(e) => setSubject(e.target.value)}
-             />
+              <label className="text-sm font-medium text-slate-700 block mb-1">Mata Pelajaran</label>
+              {availableSubjects && availableSubjects.length > 0 ? (
+                 <select
+                   className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   value={subject}
+                   onChange={(e) => setSubject(e.target.value)}
+                   required
+                 >
+                   <option value="" disabled>-- Pilih Mata Pelajaran --</option>
+                   {availableSubjects.map(sub => (
+                     <option key={sub} value={sub}>{sub}</option>
+                   ))}
+                 </select>
+              ) : (
+                 <Input 
+                   placeholder="Contoh: Biologi" 
+                   value={subject} 
+                   onChange={(e) => setSubject(e.target.value)}
+                   required
+                 />
+              )}
             </div>
             <div className="md:col-span-1">
               <label className="text-sm font-medium text-slate-700 block mb-1">Kelas Target <span className="text-xs text-slate-500 font-normal">(Pilih dari opsi)</span></label>
