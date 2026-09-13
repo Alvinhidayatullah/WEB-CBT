@@ -12,7 +12,8 @@ model User {
   username  String   @unique
   password  String
   role      String   // SUPER_ADMIN, GURU, MURID
-  className String?  // Untuk role MURID
+  className String?  // Untuk role MURID dan GURU
+  teacherSubject String? // Untuk role GURU
   token     String?  // Untuk menyimpan 5 digit unik password/token
   sessionVersion Int @default(1) // Versi sesi untuk mencegah replay attack
   createdAt   DateTime @default(now())

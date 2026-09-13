@@ -49,6 +49,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
   const [username, setUsername] = useState("");
   const [role, setRole] = useState("MURID");
   const [className, setClassName] = useState("");
+  const [teacherSubject, setTeacherSubject] = useState("");
   const [customPassword, setCustomPassword] = useState("");
   
   const generateRandomToken = () => {
@@ -67,12 +68,32 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     setLoading(true);
     setError("");
 
+    if (role === "MURID" && !className) {
+      setError("Kelas wajib diisi untuk murid.");
+      setLoading(false);
+      return;
+    }
+
+    if (role === "GURU") {
+      if (!className) {
+        setError("Kelas yang Diampu wajib diisi untuk guru.");
+        setLoading(false);
+        return;
+      }
+      if (!teacherSubject) {
+        setError("Mata Pelajaran wajib diisi untuk guru.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const payload = {
       username,
       role,
-      className,
       token: role === "SUPER_ADMIN" ? undefined : token,
-      password: role === "SUPER_ADMIN" ? customPassword : undefined
+      password: role === "SUPER_ADMIN" ? customPassword : "",
+      className: role === "SUPER_ADMIN" ? undefined : className,
+      teacherSubject: role === "GURU" ? teacherSubject : undefined
     };
 
     const res = await createUser(payload);
@@ -83,10 +104,12 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
         role: res.user!.role,
         token: res.user!.token,
         className: res.user!.className,
+        teacherSubject: res.user!.teacherSubject,
         createdAt: res.user!.createdAt
       }, ...prev]));
       setUsername("");
       setClassName("");
+      setTeacherSubject("");
       setCustomPassword("");
       setToken(generateRandomToken()); // refresh token untuk form berikutnya
       router.refresh();
@@ -94,6 +117,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
       // Fallback if user wasn't returned for some reason
       setUsername("");
       setClassName("");
+      setTeacherSubject("");
       setCustomPassword("");
       setToken(generateRandomToken());
     } else {
@@ -156,6 +180,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
       Username: user.username,
       "Pass/Token": user.token || (user.role === "SUPER_ADMIN" ? "-" : ""),
       Kelas: user.className || "-",
+      Mapel: user.role === "GURU" ? (user.teacherSubject || "-") : "-",
     }));
     
     const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -223,17 +248,31 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
               </div>
             )}
             
-            {role === "MURID" && (
+            {(role === "MURID" || role === "GURU") && (
               <div>
-                 <label className="text-sm font-medium text-slate-700 block mb-1">Kelas</label>
+                 <label className="text-sm font-medium text-slate-700 block mb-1">
+                   {role === "GURU" ? "Kelas yang Diampu" : "Kelas"}
+                 </label>
                  <Input 
-                   placeholder="MIPA 1" 
+                   placeholder={role === "GURU" ? "Contoh: 10" : "MIPA 1"} 
                    value={className} 
                    onChange={(e) => setClassName(e.target.value)}
+                   required
                  />
               </div>
             )}
-            <div className={role !== "MURID" ? "md:col-span-2" : ""}>
+            {role === "GURU" && (
+              <div>
+                 <label className="text-sm font-medium text-slate-700 block mb-1">Mata Pelajaran</label>
+                 <Input 
+                   placeholder="Contoh: Matematika" 
+                   value={teacherSubject} 
+                   onChange={(e) => setTeacherSubject(e.target.value)}
+                   required
+                 />
+              </div>
+            )}
+            <div className={role !== "SUPER_ADMIN" ? "md:col-span-2" : ""}>
                <Button type="submit" className="w-full h-11 shadow-sm font-medium" disabled={loading}>
                  {loading ? "Menyimpan..." : "Simpan Pengguna"}
                </Button>
@@ -275,6 +314,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Role</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Pass/Token</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Kelas</th>
+                <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Mapel</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Tgl Dibuat</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-right">Aksi</th>
               </tr>
@@ -301,6 +341,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                   </td>
                   <td className="py-3 px-4 font-mono font-medium text-slate-700">{user.token || "-"}</td>
                   <td className="py-3 px-4 text-slate-600">{user.className || "-"}</td>
+                  <td className="py-3 px-4 text-slate-600">{user.role === "GURU" ? (user.teacherSubject || "-") : "-"}</td>
                   <td className="py-3 px-4 text-slate-500">{new Date(user.createdAt).toLocaleDateString("id-ID")}</td>
                   <td className="py-3 px-5 text-right">
                     <button 

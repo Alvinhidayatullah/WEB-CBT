@@ -33,7 +33,7 @@ export async function getUsers() {
   }
 }
 
-export async function createUser(data: { username: string; role: string; token?: string; password?: string; className?: string }) {
+export async function createUser(data: { username: string; role: string; token?: string; password?: string; className?: string; teacherSubject?: string }) {
   try {
     const { userRole } = await checkAuth(["SUPER_ADMIN", "GURU"]);
 
@@ -51,8 +51,11 @@ export async function createUser(data: { username: string; role: string; token?:
         return { success: false, error: "400 Bad Request: Atribut 'token' wajib diisi untuk pembuatan akun MURID." };
       }
     } else if (assignedRole === "GURU") {
-      if (data.className && data.className.trim() !== "") {
-        return { success: false, error: "400 Bad Request: Role GURU tidak boleh memiliki atribut 'className'." };
+      if (!data.className || data.className.trim() === "") {
+        return { success: false, error: "400 Bad Request: Atribut 'className' (Kelas yang Diampu) wajib diisi untuk pembuatan akun GURU." };
+      }
+      if (!data.teacherSubject || data.teacherSubject.trim() === "") {
+        return { success: false, error: "400 Bad Request: Atribut 'teacherSubject' (Mata Pelajaran) wajib diisi untuk pembuatan akun GURU." };
       }
       if (!data.token || data.token.trim() === "") {
         return { success: false, error: "400 Bad Request: Atribut 'token' wajib diisi untuk pembuatan akun GURU." };
@@ -77,7 +80,8 @@ export async function createUser(data: { username: string; role: string; token?:
         username: data.username,
         password: hashedPassword,
         role: assignedRole,
-        className: assignedRole === "MURID" ? data.className : null,
+        className: assignedRole === "SUPER_ADMIN" ? null : data.className,
+        teacherSubject: assignedRole === "GURU" ? data.teacherSubject : null,
         token: assignedRole === "SUPER_ADMIN" ? null : data.token,
       },
     });

@@ -21,12 +21,34 @@ async function checkAuth(allowedRoles: string[]) {
 
 export async function getDashboardStats() {
   try {
+    const session = await getSession();
+    const userId = session?.userId as string;
+    
+    let userRole = session?.userRole;
+    let userClassName = null;
+    let userTeacherSubject = null;
+
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        userRole = user.role;
+        userClassName = user.className;
+        userTeacherSubject = user.teacherSubject;
+      }
+    }
+
     const totalUsers = await prisma.user.count({
       where: { role: { in: ["GURU", "MURID"] } },
     });
     
+    const examWhereClause: any = { isActive: true };
+    if (userRole === "GURU") {
+      if (userClassName) examWhereClause.targetClass = userClassName;
+      if (userTeacherSubject) examWhereClause.subject = userTeacherSubject;
+    }
+
     const activeExams = await prisma.exam.count({
-      where: { isActive: true },
+      where: examWhereClause,
     });
     
     return { totalUsers, activeExams };
@@ -37,7 +59,30 @@ export async function getDashboardStats() {
 
 export async function getExams() {
   try {
+    const session = await getSession();
+    const userId = session?.userId as string;
+    
+    let userRole = session?.userRole;
+    let userClassName = null;
+    let userTeacherSubject = null;
+
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        userRole = user.role;
+        userClassName = user.className;
+        userTeacherSubject = user.teacherSubject;
+      }
+    }
+
+    const whereClause: any = {};
+    if (userRole === "GURU") {
+      if (userClassName) whereClause.targetClass = userClassName;
+      if (userTeacherSubject) whereClause.subject = userTeacherSubject;
+    }
+
     const exams = await prisma.exam.findMany({
+      where: whereClause,
       include: { 
         questions: true,
         results: { include: { student: true } }
@@ -62,11 +107,24 @@ export async function createExam(examType: string, subject: string, targetClass:
     };
     const examToken = generateToken();
 
+    const session = await getSession();
+    const userId = session?.userId as string;
+    let finalTargetClass = targetClass || "Semua Kelas";
+    let finalSubject = subject.toUpperCase();
+
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user && user.role === "GURU") {
+        if (user.className) finalTargetClass = user.className;
+        if (user.teacherSubject) finalSubject = user.teacherSubject;
+      }
+    }
+
     const newExam = await prisma.exam.create({ 
       data: { 
         examType, 
-        subject: subject.toUpperCase(), 
-        targetClass: targetClass || "Semua Kelas",
+        subject: finalSubject, 
+        targetClass: finalTargetClass,
         token: examToken,
         duration
       } 
@@ -80,13 +138,26 @@ export async function createExam(examType: string, subject: string, targetClass:
 export async function updateExam(id: string, data: { examType?: string, subject?: string, targetClass?: string, duration?: number }) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
+    const session = await getSession();
+    const userId = session?.userId as string;
     
+    let finalTargetClass = data.targetClass;
+    let finalSubject = data.subject;
+
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user && user.role === "GURU") {
+        if (user.className) finalTargetClass = user.className;
+        if (user.teacherSubject) finalSubject = user.teacherSubject;
+      }
+    }
+
     const updated = await prisma.exam.update({
       where: { id },
       data: {
         ...(data.examType && { examType: data.examType }),
-        ...(data.subject && { subject: data.subject }),
-        ...(data.targetClass && { targetClass: data.targetClass }),
+        ...(finalSubject && { subject: finalSubject }),
+        ...(finalTargetClass && { targetClass: finalTargetClass }),
         ...(data.duration && { duration: data.duration })
       }
     });
