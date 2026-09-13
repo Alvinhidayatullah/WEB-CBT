@@ -116,7 +116,13 @@ export async function getExams() {
       where: whereClause,
       include: { 
         questions: true,
-        results: { include: { student: true } }
+        results: { 
+          include: { 
+            student: {
+              select: { id: true, username: true, className: true }
+            } 
+          } 
+        }
       },
       orderBy: { createdAt: "desc" },
     });

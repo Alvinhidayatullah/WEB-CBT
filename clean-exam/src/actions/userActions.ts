@@ -41,6 +41,15 @@ export async function getUsers() {
     }
 
     let users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        token: true,
+        className: true,
+        teacherSubject: true,
+        createdAt: true
+      },
       orderBy: { createdAt: "desc" },
     });
     
@@ -139,6 +148,15 @@ export async function createUser(data: { username: string; role: string; token?:
         teacherSubject: assignedRole === "GURU" ? data.teacherSubject : null,
         token: assignedRole === "SUPER_ADMIN" ? null : data.token,
       },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        token: true,
+        className: true,
+        teacherSubject: true,
+        createdAt: true
+      }
     });
 
     return { success: true, user: newUser };
