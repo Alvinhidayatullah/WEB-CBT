@@ -416,7 +416,10 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                   const isEssay = q.type === "ESSAY";
                   
                   let displayAnswer = studentAns;
+                  let isCorrect = false;
+                  
                   if (!isEssay && studentAns !== "Tidak dijawab") {
+                    isCorrect = studentAns === q.correctAnswer;
                     if (studentAns === "A") displayAnswer = `A. ${q.optionA}`;
                     else if (studentAns === "B") displayAnswer = `B. ${q.optionB}`;
                     else if (studentAns === "C") displayAnswer = `C. ${q.optionC}`;
@@ -424,16 +427,34 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                   }
                   
                   return (
-                    <div key={q.id} className="p-4 border border-slate-200 rounded-xl bg-slate-50/50">
+                    <div key={q.id} className={`p-4 border rounded-xl ${!isEssay && studentAns !== "Tidak dijawab" ? (isCorrect ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30') : 'border-slate-200 bg-slate-50/50'}`}>
                       <p className="font-medium text-slate-900 mb-2">
                         <span className="font-bold text-blue-600 mr-2">{idx + 1}.</span>
                         <span className="text-xs bg-slate-200 px-2 py-0.5 rounded mr-2 font-bold">{isEssay ? 'ESAI' : 'PG'}</span>
                         {q.text}
                       </p>
                       
-                      <div className="mt-3 bg-white p-3 border border-slate-200 rounded-lg">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Jawaban Siswa:</span>
-                        <p className={`text-slate-800 ${isEssay ? 'italic' : 'font-bold'}`}>{displayAnswer}</p>
+                      <div className="mt-3 bg-white p-3 border border-slate-200 rounded-lg flex flex-col gap-2">
+                        <div>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Jawaban Siswa:</span>
+                          <div className="flex items-start justify-between gap-4">
+                            <p className={`text-slate-800 ${isEssay ? 'italic' : 'font-bold'}`}>{displayAnswer}</p>
+                            {!isEssay && studentAns !== "Tidak dijawab" && (
+                              <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-md ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {isCorrect ? 'BENAR' : 'SALAH'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {!isEssay && !isCorrect && studentAns !== "Tidak dijawab" && (
+                          <div className="pt-2 mt-1 border-t border-slate-100">
+                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Kunci Jawaban:</span>
+                             <p className="text-green-700 font-bold text-sm">
+                               {q.correctAnswer === "A" ? `A. ${q.optionA}` : q.correctAnswer === "B" ? `B. ${q.optionB}` : q.correctAnswer === "C" ? `C. ${q.optionC}` : `D. ${q.optionD}`}
+                             </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
