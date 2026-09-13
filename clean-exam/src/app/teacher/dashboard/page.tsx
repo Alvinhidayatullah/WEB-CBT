@@ -9,6 +9,7 @@ import { getExams, getDashboardStats } from "@/actions/dashboardActions";
 import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
 export default async function TeacherDashboard() {
   const session = await getSession();
@@ -17,8 +18,20 @@ export default async function TeacherDashboard() {
   const { users: rawUsers = [] } = await getUsers();
   const users = JSON.parse(JSON.stringify(rawUsers));
   
-  const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_guru";
+  const currentUser = await prisma.user.findUnique({ where: { id: userId } });
+  const rawUsername = currentUser?.username || "Guru";
+  const capitalizedUsername = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
   
+  const hour = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })).getHours();
+  let greetingTime = "Malam";
+  if (hour >= 4 && hour < 11) greetingTime = "Pagi";
+  else if (hour >= 11 && hour < 15) greetingTime = "Siang";
+  else if (hour >= 15 && hour < 18) greetingTime = "Sore";
+  
+  const currentUsername = capitalizedUsername;
+  
+  const userClasses = currentUser?.className || "-";
+  const userSubjects = currentUser?.teacherSubject || "-";
   // Filter pengguna agar hanya murid yang terlihat oleh guru (opsional, tapi disarankan)
   const muridUsers = users.filter((u: any) => u.role === "MURID");
   
@@ -34,10 +47,12 @@ export default async function TeacherDashboard() {
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-slate-200/60 shadow-sm">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard Guru</h1>
-          <p className="text-slate-500 mt-1">Kelola bank soal, ujian, dan data murid kelas Anda</p>
+          <h1 className="text-3xl font-bold text-slate-900">Selamat {greetingTime}, {currentUsername} 👋</h1>
+          <p className="text-slate-500 mt-2 text-sm md:text-base bg-slate-100/50 inline-block px-3 py-1.5 rounded-lg border border-slate-200/50">
+            Mengajar Kelas: <span className="font-bold text-slate-700">{userClasses}</span> &bull; Mapel: <span className="font-bold text-slate-700">{userSubjects}</span>
+          </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 mt-4 md:mt-0">
           <ProfileSettings currentUsername={currentUsername} />
           <form action={async () => {
             "use server";
