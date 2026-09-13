@@ -35,16 +35,29 @@ export async function getUsers() {
 
 export async function createUser(data: { username: string; role: string; token?: string; password?: string; className?: string; teacherSubject?: string }) {
   try {
-    const { userRole } = await checkAuth(["SUPER_ADMIN", "GURU"]);
+    const { userRole, userId } = await checkAuth(["SUPER_ADMIN", "GURU"]);
+    
+    let guruClassName: string | undefined = undefined;
+    if (userRole === "GURU") {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      guruClassName = user?.className || undefined;
+    }
 
     const assignedRole = userRole === "GURU" ? "MURID" : data.role;
 
     if (!assignedRole || !["MURID", "GURU", "SUPER_ADMIN"].includes(assignedRole)) {
       return { success: false, error: "400 Bad Request: Role tidak valid." };
     }
+    
+    let finalClassName = data.className;
 
     if (assignedRole === "MURID") {
-      if (!data.className || data.className.trim() === "") {
+      if (userRole === "GURU") {
+        // Enforce the environment of the teacher
+        finalClassName = guruClassName;
+      }
+      
+      if (!finalClassName || finalClassName.trim() === "") {
         return { success: false, error: "400 Bad Request: Atribut 'className' wajib diisi untuk pembuatan akun MURID." };
       }
       if (!data.token || data.token.trim() === "") {
@@ -80,7 +93,7 @@ export async function createUser(data: { username: string; role: string; token?:
         username: data.username,
         password: hashedPassword,
         role: assignedRole,
-        className: assignedRole === "SUPER_ADMIN" ? null : data.className,
+        className: assignedRole === "SUPER_ADMIN" ? null : finalClassName,
         teacherSubject: assignedRole === "GURU" ? data.teacherSubject : null,
         token: assignedRole === "SUPER_ADMIN" ? null : data.token,
       },

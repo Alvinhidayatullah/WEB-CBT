@@ -15,6 +15,7 @@ export interface UIUser {
   role: string;
   token?: string | null;
   className?: string | null;
+  teacherSubject?: string | null;
   createdAt: string | Date;
 }
 
