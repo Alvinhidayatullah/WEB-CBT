@@ -9,6 +9,7 @@ import { getDashboardStats, getExams } from "@/actions/dashboardActions";
 import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
 export default async function AdminDashboard() {
   const session = await getSession();
@@ -29,7 +30,22 @@ export default async function AdminDashboard() {
   const users = JSON.parse(JSON.stringify(rawUsers));
   const exams = JSON.parse(JSON.stringify(rawExams));
   
-  const currentUsername = users.find((u: any) => u.id === userId)?.username || "vinz_admin";
+  const currentUser = await prisma.user.findUnique({ where: { id: userId } });
+  const rawUsername = currentUser?.username || "Admin";
+  const capitalizedUsername = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
+  
+  const hour = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })).getHours();
+  let greetingTime = "Malam";
+  if (hour >= 4 && hour < 11) greetingTime = "Pagi";
+  else if (hour >= 11 && hour < 15) greetingTime = "Siang";
+  else if (hour >= 15 && hour < 18) greetingTime = "Sore";
+  
+  const currentUsername = capitalizedUsername;
+  
+  const totalAdmins = users.filter((u: any) => u.role === "SUPER_ADMIN").length;
+  const totalTeachers = users.filter((u: any) => u.role === "GURU").length;
+  const totalStudents = users.filter((u: any) => u.role === "MURID").length;
+  const totalRealUsers = users.length;
   
   const availableClasses = Array.from(new Set(
     users.map((u: any) => u.className).filter((c: any) => typeof c === 'string' && c.trim() !== '')
@@ -40,8 +56,10 @@ export default async function AdminDashboard() {
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-slate-200/60 shadow-sm">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard Super Admin</h1>
-          <p className="text-slate-500 mt-1">Sistem Ujian Berbasis Komputer</p>
+          <h1 className="text-3xl font-bold text-slate-900">Selamat {greetingTime}, {currentUsername} 👋</h1>
+          <p className="text-slate-500 mt-2 text-sm md:text-base bg-slate-100/50 inline-block px-3 py-1.5 rounded-lg border border-slate-200/50">
+            Pusat Kendali Sistem Ujian Berbasis Komputer
+          </p>
         </div>
         <div className="flex gap-4">
           <ProfileSettings currentUsername={currentUsername} />
@@ -67,8 +85,17 @@ export default async function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold text-slate-900">{totalUsers}</p>
-            <p className="text-sm text-slate-500 mt-1">Siswa & Guru Terdaftar</p>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-4xl font-bold text-slate-900">{totalRealUsers}</p>
+                <p className="text-sm text-slate-500 mt-1">Total Akun Terdaftar</p>
+              </div>
+              <div className="text-xs text-slate-500 space-y-1 text-right bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                <p><span className="font-semibold text-blue-600">{totalAdmins}</span> Admin</p>
+                <p><span className="font-semibold text-indigo-600">{totalTeachers}</span> Guru</p>
+                <p><span className="font-semibold text-emerald-600">{totalStudents}</span> Murid</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
         
