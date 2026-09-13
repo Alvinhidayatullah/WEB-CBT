@@ -34,10 +34,6 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
       }
     };
 
-    const handleBlur = () => {
-      handleViolation();
-    };
-
     const handleViolation = () => {
       if (disabledRef.current) return;
       setViolations((prev) => {
@@ -84,7 +80,6 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleBlur);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('copy', handleCopyPaste);
     document.addEventListener('paste', handleCopyPaste);
@@ -92,7 +87,6 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('blur', handleBlur);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('copy', handleCopyPaste);
       document.removeEventListener('paste', handleCopyPaste);

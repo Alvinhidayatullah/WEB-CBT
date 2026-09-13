@@ -212,6 +212,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
               <div className="space-y-3 flex-1 flex flex-col">
                 {question.type === "ESSAY" ? (
                   <textarea 
+                    key={`essay-${qId}`}
                     className="w-full flex-1 min-h-[200px] p-4 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-800 text-lg leading-relaxed transition-all resize-y"
                     placeholder="Ketik jawaban esai Anda di sini..."
                     value={answers[qId] || ""}
@@ -222,7 +223,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                      const isSelected = answers[qId] === opt.value;
                      return (
                       <label 
-                        key={idx} 
+                        key={`${qId}-${idx}`} 
                         className={`group flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                           isSelected 
                             ? 'border-blue-500 bg-blue-50 shadow-sm shadow-blue-500/10' 
