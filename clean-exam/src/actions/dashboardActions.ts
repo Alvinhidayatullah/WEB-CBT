@@ -265,6 +265,14 @@ export async function updateExam(id: string, data: { examType?: string, subject?
   }
 }
 
+const isValidImageUrl = (url: string | null | undefined) => {
+  if (!url) return true;
+  if (url.trim() === "") return true;
+  // Allow safe HTTP/HTTPS URLs or specific data URIs (jpeg/png/webp) to prevent XSS (SVG) or RCE
+  const isDataURI = /^data:image\/(jpeg|png|webp);base64,[a-zA-Z0-9+/=]+$/.test(url);
+  const isHttpURI = /^https?:\/\//.test(url);
+  return isDataURI || isHttpURI;
+};
 
 export async function createQuestion(data: {
   examId: string;
@@ -288,6 +296,10 @@ export async function createQuestion(data: {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
+    if (!isValidImageUrl(data.imageUrl) || !isValidImageUrl(data.optionAImg) || !isValidImageUrl(data.optionBImg) || !isValidImageUrl(data.optionCImg) || !isValidImageUrl(data.optionDImg)) {
+       return { success: false, error: "Format gambar tidak valid atau terdeteksi malware. Hanya menerima JPEG, PNG, WEBP, atau URL aman." };
+    }
+
     await prisma.question.create({
       data: {
         examId: data.examId,
@@ -360,6 +372,10 @@ export async function updateQuestion(id: string, data: {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
+    if (!isValidImageUrl(data.imageUrl) || !isValidImageUrl(data.optionAImg) || !isValidImageUrl(data.optionBImg) || !isValidImageUrl(data.optionCImg) || !isValidImageUrl(data.optionDImg)) {
+       return { success: false, error: "Format gambar tidak valid atau terdeteksi malware. Hanya menerima JPEG, PNG, WEBP, atau URL aman." };
+    }
+
     await prisma.question.update({
       where: { id },
       data: {
@@ -392,14 +408,26 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
+    // Validate images in all questions
+    for (const q of questions) {
+       if (!isValidImageUrl(q.imageUrl) || !isValidImageUrl(q.optionAImg) || !isValidImageUrl(q.optionBImg) || !isValidImageUrl(q.optionCImg) || !isValidImageUrl(q.optionDImg)) {
+          return { success: false, error: "Format gambar tidak valid pada salah satu soal. Impor dibatalkan demi keamanan." };
+       }
+    }
+
     const formattedQuestions = questions.map(q => ({
       examId,
       type: q.type || "MULTIPLE_CHOICE",
       text: q.text,
+      imageUrl: q.imageUrl || null,
       optionA: q.optionA || null,
+      optionAImg: q.optionAImg || null,
       optionB: q.optionB || null,
+      optionBImg: q.optionBImg || null,
       optionC: q.optionC || null,
+      optionCImg: q.optionCImg || null,
       optionD: q.optionD || null,
+      optionDImg: q.optionDImg || null,
       weightA: q.weightA || 0,
       weightB: q.weightB || 0,
       weightC: q.weightC || 0,

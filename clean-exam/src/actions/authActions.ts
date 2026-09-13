@@ -43,8 +43,8 @@ export async function loginUser(username: string, password: string) {
       secure: process.env.NODE_ENV === 'production', 
       httpOnly: true, 
       path: '/',
-      maxAge: 3 * 24 * 60 * 60, // 3 days (matches JWT)
-      sameSite: 'lax'
+      maxAge: 24 * 60 * 60, // 1 day (anti cookie injection max)
+      sameSite: 'strict'
     });
 
     return { success: true, role: user.role };
