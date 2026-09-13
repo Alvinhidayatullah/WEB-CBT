@@ -358,7 +358,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                   <td className="py-3 px-4 font-mono font-medium text-slate-700">{user.token || "-"}</td>
                   <td className="py-3 px-4 text-slate-600">{user.className || "-"}</td>
                   <td className="py-3 px-4 text-slate-600">{user.role === "GURU" ? (user.teacherSubject || "-") : "-"}</td>
-                  <td className="py-3 px-4 text-slate-500">{new Date(user.createdAt).toLocaleDateString("id-ID")}</td>
+                  <td className="py-3 px-4 text-slate-500" suppressHydrationWarning>{new Date(user.createdAt).toLocaleDateString("id-ID")}</td>
                   <td className="py-3 px-5 text-right">
                     <button 
                       onClick={() => handleDelete(user.id)}
