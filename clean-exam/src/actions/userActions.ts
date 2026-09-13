@@ -53,8 +53,16 @@ export async function createUser(data: { username: string; role: string; token?:
 
     if (assignedRole === "MURID") {
       if (userRole === "GURU") {
-        // Enforce the environment of the teacher
-        finalClassName = guruClassName;
+        if (!guruClassName) {
+          return { success: false, error: "403 Forbidden: Guru tidak memiliki kelas yang diampu." };
+        }
+        const allowedClasses = guruClassName.split(",").map(c => c.trim().toLowerCase());
+        const requestedClass = (data.className || "").trim().toLowerCase();
+        
+        if (!allowedClasses.includes(requestedClass)) {
+           return { success: false, error: `403 Forbidden: Anda hanya diizinkan membuat akun murid untuk lingkungan kelas Anda: ${guruClassName}` };
+        }
+        finalClassName = data.className;
       }
       
       if (!finalClassName || finalClassName.trim() === "") {

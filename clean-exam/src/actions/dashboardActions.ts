@@ -43,13 +43,28 @@ export async function getDashboardStats() {
     
     const examWhereClause: any = { isActive: true };
     if (userRole === "GURU") {
-      if (userClassName) examWhereClause.targetClass = userClassName;
       if (userTeacherSubject) examWhereClause.subject = userTeacherSubject;
     }
 
-    const activeExams = await prisma.exam.count({
+    let activeExams = await prisma.exam.count({
       where: examWhereClause,
     });
+    
+    // Perform JS filtering if user is GURU and has a comma-separated class list
+    if (userRole === "GURU" && userClassName) {
+       const allowedClasses = userClassName.split(",").map(c => c.trim().toLowerCase());
+       
+       const allActiveTeacherExams = await prisma.exam.findMany({
+         where: examWhereClause,
+         select: { targetClass: true }
+       });
+       
+       activeExams = allActiveTeacherExams.filter(exam => {
+         if (exam.targetClass === "Semua Kelas") return true;
+         const examClasses = exam.targetClass.split(",").map(c => c.trim().toLowerCase());
+         return examClasses.some(c => allowedClasses.includes(c));
+       }).length;
+    }
     
     return { totalUsers, activeExams };
   } catch {
@@ -77,11 +92,10 @@ export async function getExams() {
 
     const whereClause: any = {};
     if (userRole === "GURU") {
-      if (userClassName) whereClause.targetClass = userClassName;
       if (userTeacherSubject) whereClause.subject = userTeacherSubject;
     }
 
-    const exams = await prisma.exam.findMany({
+    let exams = await prisma.exam.findMany({
       where: whereClause,
       include: { 
         questions: true,
@@ -89,6 +103,17 @@ export async function getExams() {
       },
       orderBy: { createdAt: "desc" },
     });
+    
+    if (userRole === "GURU" && userClassName) {
+       const allowedClasses = userClassName.split(",").map(c => c.trim().toLowerCase());
+       
+       exams = exams.filter(exam => {
+         if (exam.targetClass === "Semua Kelas") return true;
+         const examClasses = exam.targetClass.split(",").map(c => c.trim().toLowerCase());
+         return examClasses.some(c => allowedClasses.includes(c));
+       });
+    }
+
     return exams;
   } catch {
     return [];
@@ -115,8 +140,21 @@ export async function createExam(examType: string, subject: string, targetClass:
     if (userId) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (user && user.role === "GURU") {
-        if (user.className) finalTargetClass = user.className;
         if (user.teacherSubject) finalSubject = user.teacherSubject;
+        
+        if (user.className) {
+           const allowedClasses = user.className.split(",").map(c => c.trim().toLowerCase());
+           const inputClasses = targetClass.split(",").map(c => c.trim().toLowerCase());
+           
+           const isValid = inputClasses.every(c => allowedClasses.includes(c));
+           if (!isValid) {
+              return { success: false, error: `403 Forbidden: Anda hanya diizinkan membuat ujian untuk kelas: ${user.className}` };
+           }
+           // Use user's input because it is valid
+           finalTargetClass = targetClass;
+        } else {
+           return { success: false, error: "403 Forbidden: Anda belum memiliki kelas yang diampu." };
+        }
       }
     }
 
@@ -147,8 +185,18 @@ export async function updateExam(id: string, data: { examType?: string, subject?
     if (userId) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (user && user.role === "GURU") {
-        if (user.className) finalTargetClass = user.className;
         if (user.teacherSubject) finalSubject = user.teacherSubject;
+        
+        if (user.className && data.targetClass) {
+           const allowedClasses = user.className.split(",").map(c => c.trim().toLowerCase());
+           const inputClasses = data.targetClass.split(",").map(c => c.trim().toLowerCase());
+           
+           const isValid = inputClasses.every(c => allowedClasses.includes(c));
+           if (!isValid) {
+              return { success: false, error: `403 Forbidden: Anda hanya diizinkan mengelola ujian untuk kelas: ${user.className}` };
+           }
+           finalTargetClass = data.targetClass;
+        }
       }
     }
 
