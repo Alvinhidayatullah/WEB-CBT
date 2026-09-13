@@ -266,7 +266,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
               <div>
                  <label className="text-sm font-medium text-slate-700 block mb-1">Mata Pelajaran</label>
                  <Input 
-                   placeholder="Contoh: Matematika" 
+                   placeholder="Contoh: Matematika, Fisika" 
                    value={teacherSubject} 
                    onChange={(e) => setTeacherSubject(e.target.value)}
                    required

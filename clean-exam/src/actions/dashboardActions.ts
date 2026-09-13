@@ -56,25 +56,28 @@ export async function getDashboardStats() {
     }
     
     const examWhereClause: any = { isActive: true };
-    if (userRole === "GURU") {
-      if (userTeacherSubject) examWhereClause.subject = userTeacherSubject;
-    }
 
     let activeExams = await prisma.exam.count({
       where: examWhereClause,
     });
     
-    // Perform JS filtering if user is GURU and has a comma-separated class list
-    if (userRole === "GURU" && userClassName) {
-       const allowedClasses = userClassName.split(",").map(c => c.trim().toLowerCase());
+    // Perform JS filtering if user is GURU
+    if (userRole === "GURU") {
+       const allowedClasses = userClassName ? userClassName.split(",").map(c => c.trim().toLowerCase()) : [];
+       const allowedSubjects = userTeacherSubject ? userTeacherSubject.split(",").map(s => s.trim().toLowerCase()) : [];
        
        const allActiveTeacherExams = await prisma.exam.findMany({
          where: examWhereClause,
-         select: { targetClass: true }
+         select: { targetClass: true, subject: true }
        });
        
        activeExams = allActiveTeacherExams.filter(exam => {
+         const examSubject = exam.subject.trim().toLowerCase();
+         if (allowedSubjects.length > 0 && !allowedSubjects.includes(examSubject)) return false;
+         
          if (exam.targetClass === "Semua Kelas") return true;
+         if (allowedClasses.length === 0) return true;
+         
          const examClasses = exam.targetClass.split(",").map(c => c.trim().toLowerCase());
          return examClasses.some(c => allowedClasses.includes(c));
        }).length;
@@ -105,9 +108,6 @@ export async function getExams() {
     }
 
     const whereClause: any = {};
-    if (userRole === "GURU") {
-      if (userTeacherSubject) whereClause.subject = userTeacherSubject;
-    }
 
     let exams = await prisma.exam.findMany({
       where: whereClause,
@@ -118,11 +118,18 @@ export async function getExams() {
       orderBy: { createdAt: "desc" },
     });
     
-    if (userRole === "GURU" && userClassName) {
-       const allowedClasses = userClassName.split(",").map(c => c.trim().toLowerCase());
+    // Perform JS filtering if user is GURU
+    if (userRole === "GURU") {
+       const allowedClasses = userClassName ? userClassName.split(",").map(c => c.trim().toLowerCase()) : [];
+       const allowedSubjects = userTeacherSubject ? userTeacherSubject.split(",").map(s => s.trim().toLowerCase()) : [];
        
        exams = exams.filter(exam => {
+         const examSubject = exam.subject.trim().toLowerCase();
+         if (allowedSubjects.length > 0 && !allowedSubjects.includes(examSubject)) return false;
+         
          if (exam.targetClass === "Semua Kelas") return true;
+         if (allowedClasses.length === 0) return true;
+         
          const examClasses = exam.targetClass.split(",").map(c => c.trim().toLowerCase());
          return examClasses.some(c => allowedClasses.includes(c));
        });
@@ -154,7 +161,18 @@ export async function createExam(examType: string, subject: string, targetClass:
     if (userId) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (user && user.role === "GURU") {
-        if (user.teacherSubject) finalSubject = user.teacherSubject;
+        if (user.teacherSubject) {
+           const allowedSubjects = user.teacherSubject.split(",").map(c => c.trim().toLowerCase());
+           const inputSubjects = subject.split(",").map(c => c.trim().toLowerCase());
+           
+           const isValid = inputSubjects.every(c => allowedSubjects.includes(c));
+           if (!isValid) {
+              return { success: false, error: `403 Forbidden: Anda hanya diizinkan membuat ujian untuk mata pelajaran: ${user.teacherSubject}` };
+           }
+           finalSubject = subject.toUpperCase();
+        } else {
+           return { success: false, error: "403 Forbidden: Anda belum memiliki mata pelajaran yang diampu." };
+        }
         
         if (user.className) {
            const allowedClasses = user.className.split(",").map(c => c.trim().toLowerCase());
@@ -199,7 +217,16 @@ export async function updateExam(id: string, data: { examType?: string, subject?
     if (userId) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (user && user.role === "GURU") {
-        if (user.teacherSubject) finalSubject = user.teacherSubject;
+        if (user.teacherSubject && data.subject) {
+           const allowedSubjects = user.teacherSubject.split(",").map(c => c.trim().toLowerCase());
+           const inputSubjects = data.subject.split(",").map(c => c.trim().toLowerCase());
+           
+           const isValid = inputSubjects.every(c => allowedSubjects.includes(c));
+           if (!isValid) {
+              return { success: false, error: `403 Forbidden: Anda hanya diizinkan mengelola ujian untuk mata pelajaran: ${user.teacherSubject}` };
+           }
+           finalSubject = data.subject.toUpperCase();
+        }
         
         if (user.className && data.targetClass) {
            const allowedClasses = user.className.split(",").map(c => c.trim().toLowerCase());
