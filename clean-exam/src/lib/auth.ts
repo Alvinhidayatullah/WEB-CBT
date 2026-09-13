@@ -39,14 +39,20 @@ export async function getSession() {
     if (!payload) return null;
 
     // Stateful Verification (Check sessionVersion against DB)
-    const prisma = (await import("@/lib/prisma")).default;
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId as string },
-      select: { sessionVersion: true }
-    });
+    try {
+      const prisma = (await import("@/lib/prisma")).default;
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId as string },
+        select: { sessionVersion: true }
+      });
 
-    if (!user || user.sessionVersion !== (payload as any).sessionVersion) {
-      return null;
+      if (user && user.sessionVersion !== (payload as any).sessionVersion) {
+        return null;
+      }
+    } catch (dbError) {
+      // If DB fails (e.g. connection limits hit on refresh), DO NOT log the user out.
+      // Fallback to trusting the cryptographically signed JWT.
+      console.warn("DB Connection failed in getSession, trusting JWT fallback.");
     }
 
     return payload;

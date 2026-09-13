@@ -39,7 +39,13 @@ export async function loginUser(username: string, password: string) {
       sessionVersion: user.sessionVersion,
     });
 
-    cookieStore.set("session", token, { secure: true, httpOnly: true, path: '/' });
+    cookieStore.set("session", token, { 
+      secure: process.env.NODE_ENV === 'production', 
+      httpOnly: true, 
+      path: '/',
+      maxAge: 3 * 24 * 60 * 60, // 3 days (matches JWT)
+      sameSite: 'lax'
+    });
 
     return { success: true, role: user.role };
   } catch (error: unknown) {
