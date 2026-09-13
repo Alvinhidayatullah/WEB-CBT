@@ -415,6 +415,14 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                   const studentAns = answersObj[q.id] || "Tidak dijawab";
                   const isEssay = q.type === "ESSAY";
                   
+                  let displayAnswer = studentAns;
+                  if (!isEssay && studentAns !== "Tidak dijawab") {
+                    if (studentAns === "A") displayAnswer = `A. ${q.optionA}`;
+                    else if (studentAns === "B") displayAnswer = `B. ${q.optionB}`;
+                    else if (studentAns === "C") displayAnswer = `C. ${q.optionC}`;
+                    else if (studentAns === "D") displayAnswer = `D. ${q.optionD}`;
+                  }
+                  
                   return (
                     <div key={q.id} className="p-4 border border-slate-200 rounded-xl bg-slate-50/50">
                       <p className="font-medium text-slate-900 mb-2">
@@ -425,7 +433,7 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                       
                       <div className="mt-3 bg-white p-3 border border-slate-200 rounded-lg">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Jawaban Siswa:</span>
-                        <p className={`text-slate-800 ${isEssay ? 'italic' : 'font-bold'}`}>{studentAns}</p>
+                        <p className={`text-slate-800 ${isEssay ? 'italic' : 'font-bold'}`}>{displayAnswer}</p>
                       </div>
                     </div>
                   );
