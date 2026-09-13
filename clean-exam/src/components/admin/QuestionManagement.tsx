@@ -23,6 +23,10 @@ export interface UIExamResult {
   id: string;
   score: number;
   isCheated: boolean;
+  timeSpent?: number;
+  essayScore?: number;
+  aiFeedback?: string;
+  gradingStatus?: string;
   student: { username: string; className: string | null };
 }
 
@@ -114,8 +118,11 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
       "Siswa": res.student.username,
       "Kelas": res.student.className || "-",
       "Waktu Pengerjaan": res.timeSpent ? `${Math.floor(res.timeSpent / 60)}m ${res.timeSpent % 60}s` : "-",
-      "Nilai": res.score,
-      "Status": res.isCheated ? "Terindikasi Curang" : "Valid"
+      "Nilai PG & Total": res.score,
+      "Nilai Esai (AI)": res.essayScore !== null ? res.essayScore : "-",
+      "Ulasan AI": res.aiFeedback || "-",
+      "Status Ujian": res.gradingStatus === "PENDING" ? "Menunggu AI" : "Selesai",
+      "Indikasi Curang": res.isCheated ? "Ya" : "Tidak"
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -320,12 +327,20 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                                   <td className="py-3 px-5 font-semibold text-slate-900">{res.student.username}</td>
                                   <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
                                   <td className="py-3 px-5 text-slate-600 font-mono text-sm">{timeStr}</td>
-                                  <td className="py-3 px-5 font-bold text-slate-900 text-base">{res.score}</td>
-                                  <td className="py-3 px-5">
-                                    {res.isCheated ? (
-                                      <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold">Terindikasi Curang</span>
+                                  <td className="py-3 px-5 font-bold text-slate-900 text-base">
+                                    {res.score} 
+                                    {res.essayScore !== null && typeof res.essayScore !== 'undefined' && (
+                                      <span className="text-xs text-blue-600 ml-1">(+ Esai: {res.essayScore})</span>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-5 flex flex-col gap-1">
+                                    {res.gradingStatus === "PENDING" ? (
+                                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center">Menunggu AI</span>
                                     ) : (
-                                      <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded font-semibold">Valid</span>
+                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center">Selesai</span>
+                                    )}
+                                    {res.isCheated && (
+                                      <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1">Curang</span>
                                     )}
                                   </td>
                                 </tr>

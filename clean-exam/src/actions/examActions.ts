@@ -135,11 +135,24 @@ export async function submitExam(examId: string, answers: Record<string, string>
 
     let totalEarnedWeights = 0;
     let totalMaxWeights = 0;
+    
+    // Untuk job AI
+    let hasEssay = false;
+    let essayPayloads: any[] = [];
 
     exam.questions.forEach(q => {
       const studentAnswer = answers[q.id];
       if (q.type === "ESSAY") {
-        // Bobot esai dihitung manual oleh guru, tidak masuk otomatis
+        hasEssay = true;
+        const essayMaxW = q.weightA && q.weightA > 0 ? q.weightA : 100;
+        totalMaxWeights += essayMaxW;
+        
+        essayPayloads.push({
+          questionText: q.text,
+          referenceAnswer: q.essayReference || "",
+          studentAnswer: studentAnswer || "",
+          weight: essayMaxW
+        });
       } else {
         const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
         const questionMax = maxW > 0 ? maxW : 100; // Default 100 jika lupa set bobot
@@ -158,18 +171,35 @@ export async function submitExam(examId: string, answers: Record<string, string>
     const score = totalMaxWeights > 0 ? (totalEarnedWeights / totalMaxWeights) * 100 : 0;
     const finalScore = parseFloat(score.toFixed(2));
 
-    await prisma.examResult.create({
+    const resultRecord = await prisma.examResult.create({
       data: {
         studentId: userId,
         examId: examId,
         score: finalScore,
         isCheated: isCheated,
         timeSpent: timeSpent,
-        answersJson: JSON.stringify(answers)
+        answersJson: JSON.stringify(answers),
+        gradingStatus: hasEssay ? "PENDING" : "GRADED"
       }
     });
+    
+    if (hasEssay && essayPayloads.length > 0) {
+      await prisma.jobQueue.create({
+        data: {
+          type: "AI_GRADING",
+          payload: JSON.stringify({
+            examResultId: resultRecord.id,
+            essays: essayPayloads
+          })
+        }
+      });
+      // Trigger background queue execution immediately without waiting
+      fetch(new URL('/api/cron/process-ai', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').href, {
+         method: 'GET'
+      }).catch(e => console.error("Failed to trigger AI queue", e));
+    }
 
-    return { success: true, score: finalScore };
+    return { success: true, score: finalScore, isPending: hasEssay };
   } catch (error) {
     // Check if unique constraint error
     if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'P2002') {

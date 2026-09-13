@@ -46,6 +46,7 @@ model Question {
   weightB       Int?     @default(0)
   weightC       Int?     @default(0)
   weightD       Int?     @default(0)
+  essayReference String? @db.Text // Kunci jawaban referensi (rubrik) untuk esai
   examId        String
   exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
@@ -62,7 +63,20 @@ model ExamResult {
   isCheated   Boolean  @default(false)
   timeSpent   Int      @default(0) // Waktu pengerjaan dalam detik
   answersJson String?  // Menyimpan jawaban asli murid dalam format JSON
+  essayScore  Float?   // Nilai esai khusus dari AI
+  aiFeedback  String?  @db.Text // Alasan / Feedback dari Gemini AI
+  gradingStatus String @default("GRADED") // "PENDING", "GRADED", "OVERRIDDEN" (Jika PG semua otomatis GRADED, jika ada esai jadi PENDING)
   createdAt   DateTime @default(now())
 
   @@unique([studentId, examId])
+}
+
+model JobQueue {
+  id          String   @id @default(uuid())
+  type        String   // "AI_GRADING"
+  payload     String   @db.Text // JSON string (examResultId, answers, dll)
+  status      String   @default("PENDING") // "PENDING", "PROCESSING", "COMPLETED", "FAILED"
+  error       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

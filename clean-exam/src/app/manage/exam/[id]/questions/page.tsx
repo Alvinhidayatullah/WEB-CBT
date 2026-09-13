@@ -24,6 +24,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
   const [optB, setOptB] = useState("");
   const [optC, setOptC] = useState("");
   const [optD, setOptD] = useState("");
+  const [essayReference, setEssayReference] = useState("");
   const [weightA, setWeightA] = useState(100);
   const [weightB, setWeightB] = useState(0);
   const [weightC, setWeightC] = useState(0);
@@ -68,7 +69,8 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
         weightA: weightA,
         weightB: weightB,
         weightC: weightC,
-        weightD: weightD
+        weightD: weightD,
+        essayReference: qType === "ESSAY" ? essayReference : null
       });
     } else {
       res = await createQuestion({
@@ -82,12 +84,13 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
         weightA: weightA,
         weightB: weightB,
         weightC: weightC,
-        weightD: weightD
+        weightD: weightD,
+        essayReference: qType === "ESSAY" ? essayReference : null
       });
     }
 
     if (res.success) {
-      setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); 
+      setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); setEssayReference("");
       setWeightA(100); setWeightB(0); setWeightC(0); setWeightD(0);
       setEditingId(null);
       await fetchExam(examId);
@@ -109,6 +112,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
     setWeightB(q.weightB || 0);
     setWeightC(q.weightC || 0);
     setWeightD(q.weightD || 0);
+    setEssayReference(q.essayReference || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -136,6 +140,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
           weightB: parseInt(row["Bobot B"]) || 0,
           weightC: parseInt(row["Bobot C"]) || 0,
           weightD: parseInt(row["Bobot D"]) || 0,
+          essayReference: row["Kunci Referensi Esai"]?.toString() || "",
         })).filter(q => q.text !== "");
 
         if (formattedQuestions.length === 0) {
@@ -163,8 +168,8 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
 
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([
-      { "Tipe Soal": "PG", "Pertanyaan": "Siapa penemu lampu bohlam?", "Opsi A": "Thomas Edison", "Opsi B": "Albert Einstein", "Opsi C": "Isaac Newton", "Opsi D": "Nikola Tesla", "Bobot A": 100, "Bobot B": 0, "Bobot C": 0, "Bobot D": 0 },
-      { "Tipe Soal": "ESAI", "Pertanyaan": "Jelaskan proses terjadinya fotosintesis!", "Opsi A": "", "Opsi B": "", "Opsi C": "", "Opsi D": "", "Bobot A": 0, "Bobot B": 0, "Bobot C": 0, "Bobot D": 0 }
+      { "Tipe Soal": "PG", "Pertanyaan": "Siapa penemu lampu bohlam?", "Opsi A": "Thomas Edison", "Opsi B": "Albert Einstein", "Opsi C": "Isaac Newton", "Opsi D": "Nikola Tesla", "Bobot A": 100, "Bobot B": 0, "Bobot C": 0, "Bobot D": 0, "Kunci Referensi Esai": "" },
+      { "Tipe Soal": "ESAI", "Pertanyaan": "Jelaskan proses terjadinya fotosintesis!", "Opsi A": "", "Opsi B": "", "Opsi C": "", "Opsi D": "", "Bobot A": 100, "Bobot B": 0, "Bobot C": 0, "Bobot D": 0, "Kunci Referensi Esai": "Tumbuhan menggunakan sinar matahari, air, dan karbon dioksida untuk menghasilkan oksigen dan energi." }
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
@@ -231,7 +236,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
             ⚠️ Informasi Penting
           </h3>
           <p className="text-amber-700 text-sm leading-relaxed">
-            Bobot nilai untuk soal <strong>Esai</strong> tidak dihitung secara otomatis. Hanya soal <strong>Pilihan Ganda (PG)</strong> yang akan dikalkulasi otomatis oleh sistem. Jawaban esai akan diperiksa secara manual oleh guru, dan penyesuaian nilai akhir (gabungan PG dan Esai) akan dilakukan per murid.
+            Bobot nilai untuk soal <strong>Pilihan Ganda (PG)</strong> akan dikalkulasi secara pasti sesuai angka. Untuk soal <strong>Esai</strong>, jawaban murid akan <strong>diperiksa otomatis oleh AI Gemini</strong>. AI akan menilai kedekatan jawaban murid dengan <strong>Kunci Referensi Esai</strong> yang Anda buat, dan memberikan skor (0-100) serta alasannya. Anda tetap bisa mengubah (override) nilai akhir esai jika dirasa kurang pas.
           </p>
         </div>
 
@@ -241,8 +246,8 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
               <Save className="w-5 h-5 text-blue-600" /> {editingId ? "Edit Soal" : "Tambah Soal Baru"}
             </h2>
             {editingId && (
-              <Button variant="secondary" className="px-3 py-1.5 text-sm" onClick={() => {
-                setEditingId(null); setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); 
+              <Button variant="secondary" type="button" className="px-3 py-1.5 text-sm" onClick={() => {
+                setEditingId(null); setQText(""); setOptA(""); setOptB(""); setOptC(""); setOptD(""); setEssayReference("");
                 setWeightA(100); setWeightB(0); setWeightC(0); setWeightD(0);
               }}>Batal Edit</Button>
             )}
@@ -295,6 +300,27 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
               </>
             )}
 
+            {qType === "ESSAY" && (
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Kunci Referensi Esai (Rubrik Penilaian AI)</label>
+                <textarea
+                  value={essayReference}
+                  onChange={(e) => setEssayReference(e.target.value)}
+                  required
+                  placeholder="Contoh: Jawaban harus menyebutkan proses fotosintesis mengubah air dan karbon dioksida menjadi glukosa dan oksigen dengan bantuan cahaya matahari."
+                  className="w-full min-h-[100px] px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Kunci ini akan digunakan oleh **AI Gemini** untuk mencocokkan jawaban siswa. Semakin detail, semakin presisi AI menilainya.
+                </p>
+                
+                <div className="mt-4">
+                  <label className="text-sm font-medium text-slate-700 block mb-1">Bobot Maksimal Esai (Maks: 100)</label>
+                  <Input type="number" min="0" max="100" value={weightA} onChange={(e) => setWeightA(parseInt(e.target.value)||0)} required className="w-24 text-center font-bold" />
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={isSubmitting} variant="primary" className="shadow-md shadow-blue-600/20 px-8">
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingId ? "Perbarui Soal" : "Simpan Soal")}
@@ -322,6 +348,12 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
                       <p className="px-3 py-2 flex justify-between"><span>C. {q.optionC}</span> <span className="font-bold text-blue-600">Bobot: {q.weightC}%</span></p>
                       <p className="px-3 py-2 flex justify-between"><span>D. {q.optionD}</span> <span className="font-bold text-blue-600">Bobot: {q.weightD}%</span></p>
                     </div>
+                  )}
+                  {q.type === "ESSAY" && q.essayReference && (
+                     <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+                        <p className="font-bold text-slate-700 mb-1">Kunci Referensi (AI Rubric):</p>
+                        <p className="text-slate-600">{q.essayReference}</p>
+                     </div>
                   )}
                 </div>
                 <div className="flex gap-2 self-end md:self-start shrink-0">

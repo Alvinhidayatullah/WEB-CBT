@@ -109,6 +109,7 @@ export async function createQuestion(data: {
   weightB?: number;
   weightC?: number;
   weightD?: number;
+  essayReference?: string | null;
 }) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
@@ -126,6 +127,7 @@ export async function createQuestion(data: {
         weightB: data.weightB || 0,
         weightC: data.weightC || 0,
         weightD: data.weightD || 0,
+        essayReference: data.essayReference || null,
       },
     });
     revalidatePath("/", "layout");
@@ -169,6 +171,7 @@ export async function updateQuestion(id: string, data: {
   weightB?: number;
   weightC?: number;
   weightD?: number;
+  essayReference?: string | null;
 }) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
@@ -186,6 +189,7 @@ export async function updateQuestion(id: string, data: {
         weightB: data.weightB || 0,
         weightC: data.weightC || 0,
         weightD: data.weightD || 0,
+        essayReference: data.essayReference || null,
       },
     });
     revalidatePath("/", "layout");
@@ -211,6 +215,7 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
       weightB: q.weightB || 0,
       weightC: q.weightC || 0,
       weightD: q.weightD || 0,
+      essayReference: q.essayReference || null,
     }));
 
     await prisma.question.createMany({
