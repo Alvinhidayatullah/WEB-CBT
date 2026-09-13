@@ -27,6 +27,7 @@ export interface UIExamResult {
   essayScore?: number;
   aiFeedback?: string;
   gradingStatus?: string;
+  answersJson?: string;
   student: { username: string; className: string | null };
 }
 
@@ -59,6 +60,10 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
   // Edit State
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
   const [editDuration, setEditDuration] = useState(60);
+
+  // View Details State
+  const [viewingResult, setViewingResult] = useState<any | null>(null);
+  const [viewingExam, setViewingExam] = useState<UIExam | null>(null);
 
   const removeClass = (cls: string) => {
     setTargetClasses(targetClasses.filter(c => c !== cls));
@@ -317,6 +322,7 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Waktu</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Nilai</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Status</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-right">Aksi</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 bg-white">
@@ -342,6 +348,14 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                                     {res.isCheated && (
                                       <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1">Curang</span>
                                     )}
+                                  </td>
+                                  <td className="py-3 px-5 text-right">
+                                    <button 
+                                      onClick={() => { setViewingResult(res); setViewingExam(exam); }}
+                                      className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors"
+                                    >
+                                      Detail Jawaban
+                                    </button>
                                   </td>
                                 </tr>
                               );
@@ -369,6 +383,58 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
         </div>
 
       </CardContent>
+
+      {/* Detail Modal */}
+      {viewingResult && viewingExam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <div>
+                <h3 className="font-bold text-xl text-slate-900">Detail Jawaban: {viewingResult.student.username}</h3>
+                <p className="text-sm text-slate-500 mt-1">Nilai Total: <strong className="text-slate-800">{viewingResult.score}</strong> | Status: {viewingResult.gradingStatus}</p>
+              </div>
+              <button onClick={() => { setViewingResult(null); setViewingExam(null); }} className="p-2 bg-slate-200 hover:bg-slate-300 rounded-full text-slate-600 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-6">
+              {viewingResult.aiFeedback && (
+                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl mb-6">
+                    <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">🤖 Feedback AI Gemini</h4>
+                    <pre className="text-sm text-blue-800 whitespace-pre-wrap font-sans">{viewingResult.aiFeedback}</pre>
+                 </div>
+              )}
+              
+              <h4 className="font-bold text-slate-800 border-b pb-2">Rincian Jawaban:</h4>
+              <div className="space-y-4">
+                {viewingExam.questions?.map((q: any, idx: number) => {
+                  let answersObj: Record<string, string> = {};
+                  try { if(viewingResult.answersJson) answersObj = JSON.parse(viewingResult.answersJson); } catch (e) {}
+                  
+                  const studentAns = answersObj[q.id] || "Tidak dijawab";
+                  const isEssay = q.type === "ESSAY";
+                  
+                  return (
+                    <div key={q.id} className="p-4 border border-slate-200 rounded-xl bg-slate-50/50">
+                      <p className="font-medium text-slate-900 mb-2">
+                        <span className="font-bold text-blue-600 mr-2">{idx + 1}.</span>
+                        <span className="text-xs bg-slate-200 px-2 py-0.5 rounded mr-2 font-bold">{isEssay ? 'ESAI' : 'PG'}</span>
+                        {q.text}
+                      </p>
+                      
+                      <div className="mt-3 bg-white p-3 border border-slate-200 rounded-lg">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Jawaban Siswa:</span>
+                        <p className={`text-slate-800 ${isEssay ? 'italic' : 'font-bold'}`}>{studentAns}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

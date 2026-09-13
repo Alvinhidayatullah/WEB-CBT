@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { getSession } from "@/lib/auth";
+import { gradeEssay } from "@/lib/ai";
 
 export async function joinExam(token: string) {
   try {
@@ -184,19 +185,33 @@ export async function submitExam(examId: string, answers: Record<string, string>
     });
     
     if (hasEssay && essayPayloads.length > 0) {
-      await prisma.jobQueue.create({
+      // PROSES AI REAL-TIME (TIDAK LAGI BACKGROUND QUEUE)
+      let totalEssayScore = 0;
+      let aiFeedbacks: string[] = [];
+
+      for (const essay of essayPayloads) {
+        const { questionText, referenceAnswer, studentAnswer, weight } = essay;
+        
+        if (!studentAnswer || studentAnswer.trim() === "") {
+          aiFeedbacks.push(`Soal: ${questionText} - Kosong (Skor: 0)`);
+          continue;
+        }
+
+        const result = await gradeEssay(questionText, referenceAnswer, studentAnswer);
+        const weightedScore = (result.score / 100) * weight;
+        totalEssayScore += weightedScore;
+        
+        aiFeedbacks.push(`Soal: ${questionText} - AI Score: ${result.score}/100. Alasan: ${result.reason}`);
+      }
+
+      await prisma.examResult.update({
+        where: { id: resultRecord.id },
         data: {
-          type: "AI_GRADING",
-          payload: JSON.stringify({
-            examResultId: resultRecord.id,
-            essays: essayPayloads
-          })
+          essayScore: totalEssayScore,
+          aiFeedback: aiFeedbacks.join("\\n\\n"),
+          gradingStatus: "GRADED"
         }
       });
-      // Trigger background queue execution immediately without waiting
-      fetch(new URL('/api/cron/process-ai', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').href, {
-         method: 'GET'
-      }).catch(e => console.error("Failed to trigger AI queue", e));
     }
 
     return { success: true, score: finalScore, isPending: hasEssay };
