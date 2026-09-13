@@ -417,9 +417,20 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                   
                   let displayAnswer = studentAns;
                   let isCorrect = false;
+                  let calculatedCorrectAnswer = "A";
+                  
+                  if (!isEssay) {
+                    const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
+                    if (maxW > 0) {
+                      if (q.weightA === maxW) calculatedCorrectAnswer = "A";
+                      else if (q.weightB === maxW) calculatedCorrectAnswer = "B";
+                      else if (q.weightC === maxW) calculatedCorrectAnswer = "C";
+                      else if (q.weightD === maxW) calculatedCorrectAnswer = "D";
+                    }
+                  }
                   
                   if (!isEssay && studentAns !== "Tidak dijawab") {
-                    isCorrect = studentAns === q.correctAnswer;
+                    isCorrect = studentAns === calculatedCorrectAnswer;
                     if (studentAns === "A") displayAnswer = `A. ${q.optionA}`;
                     else if (studentAns === "B") displayAnswer = `B. ${q.optionB}`;
                     else if (studentAns === "C") displayAnswer = `C. ${q.optionC}`;
@@ -451,7 +462,7 @@ export function QuestionManagement({ exams = [], availableClasses = [] }: { exam
                           <div className="pt-2 mt-1 border-t border-slate-100">
                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Kunci Jawaban:</span>
                              <p className="text-green-700 font-bold text-sm">
-                               {q.correctAnswer === "A" ? `A. ${q.optionA}` : q.correctAnswer === "B" ? `B. ${q.optionB}` : q.correctAnswer === "C" ? `C. ${q.optionC}` : `D. ${q.optionD}`}
+                               {calculatedCorrectAnswer === "A" ? `A. ${q.optionA}` : calculatedCorrectAnswer === "B" ? `B. ${q.optionB}` : calculatedCorrectAnswer === "C" ? `C. ${q.optionC}` : `D. ${q.optionD}`}
                              </p>
                           </div>
                         )}
