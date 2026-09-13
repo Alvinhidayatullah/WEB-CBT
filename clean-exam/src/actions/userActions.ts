@@ -4,11 +4,14 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 async function checkAuth(allowedRoles: string[]) {
   const session = await getSession();
-  let userRole = session?.userRole as string;
-  const userId = session?.userId as string;
+  if (!session) redirect("/api/auth/logout");
+
+  let userRole = session.userRole as string;
+  const userId = session.userId as string;
 
   if (!userRole && userId) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -16,7 +19,7 @@ async function checkAuth(allowedRoles: string[]) {
   }
 
   if (!userRole || !allowedRoles.includes(userRole)) {
-    throw new Error("Akses ditolak. Anda tidak memiliki izin.");
+    redirect("/api/auth/logout");
   }
 
   return { userId, userRole };
