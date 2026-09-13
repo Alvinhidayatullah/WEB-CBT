@@ -279,6 +279,11 @@ export async function createQuestion(data: {
   weightC?: number;
   weightD?: number;
   essayReference?: string | null;
+  imageUrl?: string | null;
+  optionAImg?: string | null;
+  optionBImg?: string | null;
+  optionCImg?: string | null;
+  optionDImg?: string | null;
 }) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
@@ -297,6 +302,11 @@ export async function createQuestion(data: {
         weightC: data.weightC || 0,
         weightD: data.weightD || 0,
         essayReference: data.essayReference || null,
+        imageUrl: data.imageUrl || null,
+        optionAImg: data.optionAImg || null,
+        optionBImg: data.optionBImg || null,
+        optionCImg: data.optionCImg || null,
+        optionDImg: data.optionDImg || null,
       },
     });
     revalidatePath("/", "layout");
@@ -341,6 +351,11 @@ export async function updateQuestion(id: string, data: {
   weightC?: number;
   weightD?: number;
   essayReference?: string | null;
+  imageUrl?: string | null;
+  optionAImg?: string | null;
+  optionBImg?: string | null;
+  optionCImg?: string | null;
+  optionDImg?: string | null;
 }) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
@@ -356,9 +371,14 @@ export async function updateQuestion(id: string, data: {
         optionD: data.optionD || null,
         weightA: data.weightA || 0,
         weightB: data.weightB || 0,
-        weightC: data.weightC || 0,
-        weightD: data.weightD || 0,
-        essayReference: data.essayReference || null,
+        weightC: data.weightC !== undefined ? data.weightC : undefined,
+        weightD: data.weightD !== undefined ? data.weightD : undefined,
+        essayReference: data.essayReference !== undefined ? data.essayReference : undefined,
+        imageUrl: data.imageUrl !== undefined ? data.imageUrl : undefined,
+        optionAImg: data.optionAImg !== undefined ? data.optionAImg : undefined,
+        optionBImg: data.optionBImg !== undefined ? data.optionBImg : undefined,
+        optionCImg: data.optionCImg !== undefined ? data.optionCImg : undefined,
+        optionDImg: data.optionDImg !== undefined ? data.optionDImg : undefined,
       },
     });
     revalidatePath("/", "layout");

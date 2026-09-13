@@ -71,10 +71,10 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
     if (q.type === 'ESSAY') return;
 
     const opts = [
-      { originalValue: "A", text: q.optionA },
-      { originalValue: "B", text: q.optionB },
-      { originalValue: "C", text: q.optionC },
-      { originalValue: "D", text: q.optionD },
+      { originalValue: "A", text: q.optionA, img: q.optionAImg },
+      { originalValue: "B", text: q.optionB, img: q.optionBImg },
+      { originalValue: "C", text: q.optionC, img: q.optionCImg },
+      { originalValue: "D", text: q.optionD, img: q.optionDImg },
     ];
     
     for (let i = opts.length - 1; i > 0; i--) {
@@ -225,9 +225,14 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                  <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">Bobot: {(100 / examData.questions.length).toFixed(1).replace(/\.0$/, '')}</span>
               </div>
               
-              <div className="text-lg text-slate-800 leading-relaxed mb-10">
+              <div className="text-lg text-slate-800 leading-relaxed mb-4">
                 {question.text}
               </div>
+              {question.imageUrl && (
+                <div className="mb-10 text-center">
+                  <img src={question.imageUrl} alt="Gambar Soal" className="max-h-80 w-auto inline-block rounded-xl border border-slate-200 shadow-sm object-contain" />
+                </div>
+              )}
 
               <div className="space-y-3 flex-1 flex flex-col">
                 {question.type === "ESSAY" ? (
@@ -262,9 +267,12 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                           checked={isSelected}
                           onChange={() => handleSelect(opt.originalValue)}
                         />
-                        <span className={`text-base leading-relaxed ${isSelected ? 'text-blue-900 font-semibold' : 'text-slate-700'}`}>
-                           <span className={`font-bold mr-2 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`}>{opt.label}.</span> 
-                           {opt.text}
+                        <span className={`text-base leading-relaxed flex flex-col gap-2 ${isSelected ? 'text-blue-900 font-semibold' : 'text-slate-700'}`}>
+                           <div>
+                             <span className={`font-bold mr-2 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`}>{opt.label}.</span> 
+                             {opt.text}
+                           </div>
+                           {opt.img && <img src={opt.img} alt={`Opsi ${opt.label}`} className="max-h-40 w-auto rounded border border-slate-200 object-contain mt-1" />}
                         </span>
                       </label>
                     );
