@@ -37,9 +37,23 @@ export async function getDashboardStats() {
       }
     }
 
-    const totalUsers = await prisma.user.count({
+    let totalUsers = await prisma.user.count({
       where: { role: { in: ["GURU", "MURID"] } },
     });
+    
+    if (userRole === "GURU" && userClassName) {
+       const allowedClasses = userClassName.split(",").map(c => c.trim().toLowerCase());
+       
+       const allMurid = await prisma.user.findMany({
+          where: { role: "MURID" },
+          select: { className: true }
+       });
+       
+       totalUsers = allMurid.filter(u => {
+          if (!u.className) return false;
+          return allowedClasses.includes(u.className.trim().toLowerCase());
+       }).length;
+    }
     
     const examWhereClause: any = { isActive: true };
     if (userRole === "GURU") {

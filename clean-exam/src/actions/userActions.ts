@@ -24,9 +24,32 @@ async function checkAuth(allowedRoles: string[]) {
 
 export async function getUsers() {
   try {
-    const users = await prisma.user.findMany({
+    const session = await getSession();
+    let userRole = session?.userRole as string;
+    const userId = session?.userId as string;
+
+    let guruClassName: string | null = null;
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+         userRole = user.role;
+         guruClassName = user.className;
+      }
+    }
+
+    let users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
     });
+    
+    if (userRole === "GURU" && guruClassName) {
+       const allowedClasses = guruClassName.split(",").map(c => c.trim().toLowerCase());
+       users = users.filter(u => {
+           if (u.role !== "MURID") return false;
+           if (!u.className) return false;
+           return allowedClasses.includes(u.className.trim().toLowerCase());
+       });
+    }
+
     return { success: true, users };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
