@@ -64,6 +64,14 @@ export async function createUser(data: { username: string; role: string; token?:
     if (userRole === "GURU") {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       guruClassName = user?.className || undefined;
+      
+      // Strict Bypass Check for Role and TeacherSubject
+      if (data.role && data.role !== "MURID") {
+        return { success: false, error: "yahaha mau ngapain loo? 403 gk boleh bikin selain izin gue yaaa" };
+      }
+      if (data.teacherSubject && data.teacherSubject.trim() !== "") {
+        return { success: false, error: "yahaha mau ngapain loo? 403 gk boleh bikin selain izin gue yaaa" };
+      }
     }
 
     const assignedRole = userRole === "GURU" ? "MURID" : data.role;
@@ -77,13 +85,13 @@ export async function createUser(data: { username: string; role: string; token?:
     if (assignedRole === "MURID") {
       if (userRole === "GURU") {
         if (!guruClassName) {
-          return { success: false, error: "403 Forbidden: Guru tidak memiliki kelas yang diampu." };
+          return { success: false, error: "403 Forbidden: Anda tidak memiliki kelas yang diampu." };
         }
         const allowedClasses = guruClassName.split(",").map(c => c.trim().toLowerCase());
         const requestedClass = (data.className || "").trim().toLowerCase();
         
         if (!allowedClasses.includes(requestedClass)) {
-           return { success: false, error: `403 Forbidden: Anda hanya diizinkan membuat akun murid untuk lingkungan kelas Anda: ${guruClassName}` };
+           return { success: false, error: `Maaf, Anda hanya dapat membuat akun murid untuk lingkungan kelas Anda: ${guruClassName}` };
         }
         finalClassName = data.className;
       }

@@ -167,7 +167,7 @@ export async function createExam(examType: string, subject: string, targetClass:
            
            const isValid = inputSubjects.every(c => allowedSubjects.includes(c));
            if (!isValid) {
-              return { success: false, error: `403 Forbidden: Anda hanya diizinkan membuat ujian untuk mata pelajaran: ${user.teacherSubject}` };
+              return { success: false, error: "yahaha mau ngapain loo? 403 gk boleh bikin selain izin gue yaaa" };
            }
            finalSubject = subject.toUpperCase();
         } else {
@@ -223,7 +223,7 @@ export async function updateExam(id: string, data: { examType?: string, subject?
            
            const isValid = inputSubjects.every(c => allowedSubjects.includes(c));
            if (!isValid) {
-              return { success: false, error: `403 Forbidden: Anda hanya diizinkan mengelola ujian untuk mata pelajaran: ${user.teacherSubject}` };
+              return { success: false, error: "yahaha mau ngapain loo? 403 gk boleh bikin selain izin gue yaaa" };
            }
            finalSubject = data.subject.toUpperCase();
         }
