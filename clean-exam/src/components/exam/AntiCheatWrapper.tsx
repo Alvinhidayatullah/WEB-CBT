@@ -24,7 +24,8 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
     return 0;
   });
   const [showWarning, setShowWarning] = useState(false);
-  const MAX_VIOLATIONS = 5;
+  const MAX_VIOLATIONS = 3;
+  const lastViolationTime = React.useRef(0);
 
   useEffect(() => {
     // 1. Detect Visibility Change & Blur (Tab Switch / Minimize)
@@ -36,6 +37,12 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
 
     const handleViolation = () => {
       if (disabledRef.current) return;
+      
+      const now = Date.now();
+      if (now - lastViolationTime.current < 2000) {
+        return; // Prevent double counting on mobile within 2 seconds
+      }
+      lastViolationTime.current = now;
       setViolations((prev) => {
         const nextViolations = prev + 1;
         localStorage.setItem('exam_violations', nextViolations.toString());
