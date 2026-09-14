@@ -159,7 +159,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
 
   return (
     <AntiCheatWrapper onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
-      <div className="min-h-[100dvh] bg-[#030305] flex flex-col relative overflow-hidden selection:bg-blue-500/30 overscroll-y-none">
+      <div className="min-h-[100dvh] bg-[#030305] flex flex-col relative overflow-x-hidden selection:bg-blue-500/30 overscroll-y-none">
         
         {/* Fixed Background from Login */}
         <div className="fixed inset-0 bg-[#030305] -z-20"></div>
@@ -230,7 +230,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
               </div>
               {question.imageUrl && (
                 <div className="mb-10 text-center">
-                  <img src={question.imageUrl} alt="Gambar Soal" className="max-h-80 w-auto inline-block rounded-xl border border-slate-200 shadow-sm object-contain" />
+                  <img src={question.imageUrl} alt="Gambar Soal" className="max-w-full max-h-80 w-auto inline-block rounded-xl border border-slate-200 shadow-sm object-contain" />
                 </div>
               )}
 
@@ -272,7 +272,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                              <span className={`font-bold mr-2 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`}>{opt.label}.</span> 
                              {opt.text}
                            </div>
-                           {opt.img && <img src={opt.img} alt={`Opsi ${opt.label}`} className="max-h-40 w-auto rounded border border-slate-200 object-contain mt-1" />}
+                           {opt.img && <img src={opt.img} alt={`Opsi ${opt.label}`} className="max-w-full max-h-40 w-auto rounded border border-slate-200 object-contain mt-2" />}
                         </span>
                       </label>
                     );
