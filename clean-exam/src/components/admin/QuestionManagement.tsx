@@ -462,9 +462,9 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                       )}
                                     </div>
                                   </td>
-                                  <td className="py-3 px-5 text-right align-middle">
-                                    <div className="flex flex-col gap-2 items-end justify-center">
-                                      <div className="flex gap-2 w-full max-w-[170px] justify-end">
+                                  <td className="py-3 px-5 align-middle">
+                                    <div className="flex flex-col gap-2 items-start justify-center">
+                                      <div className="flex gap-2 w-full max-w-[170px] justify-start">
                                         <button 
                                           onClick={() => { setViewingResult(res); setViewingExam(exam); }}
                                           className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors flex-1"
