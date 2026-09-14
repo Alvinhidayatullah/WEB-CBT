@@ -43,6 +43,7 @@ Jawaban Siswa: ${studentAnswer}
       },
       body: JSON.stringify({
         model: "gemini/gemini-1.5-flash", // Default 9Router Gemini Model
+        stream: false,
         messages: [
           {
             role: "user",
