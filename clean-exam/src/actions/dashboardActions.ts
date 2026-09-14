@@ -447,7 +447,7 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
   }
 }
 
-export async function retryAIGrading(resultId: string) {
+export async function getPendingEssayPayloads(resultId: string) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     const result = await prisma.examResult.findUnique({
@@ -455,9 +455,7 @@ export async function retryAIGrading(resultId: string) {
       include: { exam: { include: { questions: true } } }
     });
 
-    if (!result) {
-      return { success: false, error: "Data tidak ditemukan." };
-    }
+    if (!result) return { success: false, error: "Data tidak ditemukan." };
 
     const answers = JSON.parse(result.answersJson as string);
     const essayPayloads: any[] = [];
@@ -471,6 +469,7 @@ export async function retryAIGrading(resultId: string) {
         const essayMaxW = q.weightA && q.weightA > 0 ? q.weightA : 100;
         totalMaxWeights += essayMaxW;
         essayPayloads.push({
+          questionId: q.id,
           questionText: q.text,
           referenceAnswer: q.essayReference || "",
           studentAnswer: studentAnswer || "",
@@ -490,35 +489,39 @@ export async function retryAIGrading(resultId: string) {
       }
     });
 
-    if (essayPayloads.length === 0) {
-      await prisma.examResult.update({
-        where: { id: resultId },
-        data: { gradingStatus: "GRADED" }
-      });
-      revalidatePath("/", "layout");
-      return { success: true };
+    return { 
+      success: true, 
+      payloads: essayPayloads,
+      totalMaxWeights,
+      totalEarnedWeights
+    };
+  } catch (error) {
+    return { success: false, error: "Gagal memproses data ujian." };
+  }
+}
+
+export async function gradeSingleEssayAction(questionText: string, referenceAnswer: string, studentAnswer: string) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    if (!studentAnswer || studentAnswer.trim() === "") {
+      return { success: true, score: 0, reason: "Kosong (Skor: 0)" };
     }
+    const aiResult = await gradeEssay(questionText, referenceAnswer, studentAnswer);
+    return { success: true, score: aiResult.score, reason: aiResult.reason };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Gagal menghubungi AI Gateway" };
+  }
+}
 
-    let totalEssayScore = 0;
-    let aiFeedbacks: string[] = [];
-
-    const gradingPromises = essayPayloads.map(async (essay) => {
-      const { questionText, referenceAnswer, studentAnswer, weight } = essay;
-      if (!studentAnswer || studentAnswer.trim() === "") {
-        return { score: 0, reason: "Kosong (Skor: 0)", questionText, weight };
-      }
-      const aiResult = await gradeEssay(questionText, referenceAnswer, studentAnswer);
-      return { score: aiResult.score, reason: aiResult.reason, questionText, weight };
-    });
-
-    const gradedResults = await Promise.all(gradingPromises);
-
-    for (const res of gradedResults) {
-      const weightedScore = (res.score / 100) * res.weight;
-      totalEssayScore += weightedScore;
-      aiFeedbacks.push(`Soal: ${res.questionText} - AI Score: ${res.score}/100. Alasan: ${res.reason}`);
-    }
-
+export async function finalizeAIGrading(
+  resultId: string, 
+  totalEarnedWeights: number, 
+  totalMaxWeights: number, 
+  totalEssayScore: number, 
+  aiFeedbacks: string[]
+) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
     const finalTotalEarned = totalEarnedWeights + totalEssayScore;
     const newScore = totalMaxWeights > 0 ? (finalTotalEarned / totalMaxWeights) * 100 : 0;
     const newFinalScore = parseFloat(newScore.toFixed(2));
@@ -528,7 +531,7 @@ export async function retryAIGrading(resultId: string) {
       data: {
         score: newFinalScore,
         essayScore: totalEssayScore,
-        aiFeedback: aiFeedbacks.join("\n\n"),
+        aiFeedback: aiFeedbacks.join("\\n\\n"),
         gradingStatus: "GRADED"
       }
     });
@@ -536,6 +539,6 @@ export async function retryAIGrading(resultId: string) {
     revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
-    return { success: false, error: "Gagal memproses AI." };
+    return { success: false, error: "Gagal menyimpan hasil akhir AI." };
   }
 }

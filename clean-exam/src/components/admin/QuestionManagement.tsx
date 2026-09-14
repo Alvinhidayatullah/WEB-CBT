@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download } from "lucide-react";
-import { createExam, deleteExam, updateExam, getExams, retryAIGrading } from "@/actions/dashboardActions";
+import { createExam, deleteExam, updateExam, getExams, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading } from "@/actions/dashboardActions";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 
@@ -48,19 +48,6 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
 
   React.useEffect(() => {
     setLocalExams(exams);
-  }, [exams]);
-
-  React.useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const freshExams = (await getExams()) as unknown as UIExam[];
-        // Update local exams safely (merge new data without overriding local optimistic state if possible)
-        // Since we want realtime, we just replace it but be careful if user is editing. 
-        // We only update if no exam is currently being edited.
-        setLocalExams(prev => {
-          // simple check: if length differs or if we just want to force update
-          return freshExams;
-        });
       } catch (e) {
         // ignore errors on polling
       }
@@ -84,6 +71,99 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   const [viewingResult, setViewingResult] = useState<any | null>(null);
   const [viewingExam, setViewingExam] = useState<UIExam | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [processingProgress, setProcessingProgress] = useState<string>("");
+  const [autoProcessQueue, setAutoProcessQueue] = useState<string[]>([]);
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const freshExams = (await getExams()) as unknown as UIExam[];
+        setLocalExams(prev => {
+          return freshExams;
+        });
+
+        // Auto-queue check for PENDING exams
+        const pendingResultIds: string[] = [];
+        freshExams.forEach(exam => {
+          if (exam.results) {
+            exam.results.forEach(res => {
+              if (res.gradingStatus === "PENDING") {
+                pendingResultIds.push(res.id);
+              }
+            });
+          }
+        });
+
+        setAutoProcessQueue(pendingResultIds);
+
+      } catch (e) {
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Background Worker Effect
+  React.useEffect(() => {
+    if (processingId !== null || autoProcessQueue.length === 0) return;
+    
+    // Start processing the first item in the queue
+    const nextId = autoProcessQueue[0];
+    handleProcessAI(nextId);
+  }, [autoProcessQueue, processingId]);
+
+  const handleProcessAI = async (resId: string) => {
+    if (processingId !== null) return;
+    setProcessingId(resId);
+    setProcessingProgress("Mengambil data...");
+
+    try {
+      const payloadRes = await getPendingEssayPayloads(resId);
+      if (!payloadRes.success || !payloadRes.payloads) {
+        setProcessingProgress("");
+        setProcessingId(null);
+        return;
+      }
+
+      const { payloads, totalMaxWeights, totalEarnedWeights } = payloadRes;
+      
+      if (payloads.length === 0) {
+        await finalizeAIGrading(resId, totalEarnedWeights || 0, totalMaxWeights || 0, 0, []);
+        setProcessingProgress("");
+        setProcessingId(null);
+        return;
+      }
+
+      let totalEssayScore = 0;
+      let aiFeedbacks: string[] = [];
+
+      for (let i = 0; i < payloads.length; i++) {
+        const essay = payloads[i];
+        setProcessingProgress(`Menilai soal ${i + 1} dari ${payloads.length}...`);
+        
+        const aiRes = await gradeSingleEssayAction(essay.questionText, essay.referenceAnswer, essay.studentAnswer);
+        
+        if (aiRes.success) {
+          const weightedScore = (aiRes.score / 100) * essay.weight;
+          totalEssayScore += weightedScore;
+          aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: ${aiRes.score}/100. Alasan: ${aiRes.reason}`);
+        } else {
+          aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: 0/100. Alasan: Gagal memproses - ${aiRes.error}`);
+        }
+      }
+
+      setProcessingProgress("Menyimpan hasil...");
+      await finalizeAIGrading(resId, totalEarnedWeights || 0, totalMaxWeights || 0, totalEssayScore, aiFeedbacks);
+
+      setProcessingId(null);
+      setProcessingProgress("");
+      
+      // Remove from auto queue locally so it moves to next
+      setAutoProcessQueue(prev => prev.filter(id => id !== resId));
+
+    } catch (err) {
+      setProcessingId(null);
+      setProcessingProgress("");
+    }
+  };
 
   const removeClass = (cls: string) => {
     setTargetClasses(targetClasses.filter(c => c !== cls));
@@ -395,26 +475,12 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                         Detail Jawaban
                                       </button>
                                       <button 
-                                        onClick={async () => {
-                                          setProcessingId(res.id);
-                                          try {
-                                            const aiRes = await retryAIGrading(res.id);
-                                            if (aiRes.success) {
-                                              setProcessingId(null);
-                                            } else {
-                                              alert(aiRes.error);
-                                              setProcessingId(null);
-                                            }
-                                          } catch (err) {
-                                            alert("Gagal menghubungi server.");
-                                            setProcessingId(null);
-                                          }
-                                        }}
-                                        disabled={processingId === res.id}
+                                        onClick={() => handleProcessAI(res.id)}
+                                        disabled={processingId !== null}
                                         className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-[120px] disabled:opacity-50"
                                         title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
                                       >
-                                        {processingId === res.id ? "Memproses..." : "🚀 Nilai Ulang AI"}
+                                        {processingId === res.id ? processingProgress || "Memproses..." : (res.gradingStatus === "PENDING" ? "🚀 Proses AI" : "🚀 Nilai Ulang AI")}
                                       </button>
                                     </div>
                                   </td>

@@ -185,44 +185,9 @@ export async function submitExam(examId: string, answers: Record<string, string>
     });
     
     if (hasEssay && essayPayloads.length > 0) {
-      // PROSES AI PARALLEL (CEPAT & TAHAN BUG)
-      let totalEssayScore = 0;
-      let aiFeedbacks: string[] = [];
-
-      const gradingPromises = essayPayloads.map(async (essay) => {
-        const { questionText, referenceAnswer, studentAnswer, weight } = essay;
-        
-        if (!studentAnswer || studentAnswer.trim() === "") {
-          return { score: 0, reason: "Kosong (Skor: 0)", questionText, weight };
-        }
-
-        const result = await gradeEssay(questionText, referenceAnswer, studentAnswer);
-        return { score: result.score, reason: result.reason, questionText, weight };
-      });
-
-      const gradedResults = await Promise.all(gradingPromises);
-
-      for (const res of gradedResults) {
-        const weightedScore = (res.score / 100) * res.weight;
-        totalEssayScore += weightedScore;
-        aiFeedbacks.push(`Soal: ${res.questionText} - AI Score: ${res.score}/100. Alasan: ${res.reason}`);
-      }
-
-      const finalTotalEarned = totalEarnedWeights + totalEssayScore;
-      const newScore = totalMaxWeights > 0 ? (finalTotalEarned / totalMaxWeights) * 100 : 0;
-      const newFinalScore = parseFloat(newScore.toFixed(2));
-
-      await prisma.examResult.update({
-        where: { id: resultRecord.id },
-        data: {
-          score: newFinalScore,
-          essayScore: totalEssayScore,
-          aiFeedback: aiFeedbacks.join("\n\n"),
-          gradingStatus: "GRADED"
-        }
-      });
-      
-      return { success: true, score: newFinalScore, isPending: false };
+      // AI Grading ditunda dan akan dikerjakan secara background (antrean)
+      // oleh Dasbor Admin untuk menghindari Vercel 10s Timeout.
+      return { success: true, score: finalScore, isPending: true };
     }
 
     return { success: true, score: finalScore, isPending: false };
