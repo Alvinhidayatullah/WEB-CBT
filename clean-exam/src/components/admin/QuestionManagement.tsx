@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download } from "lucide-react";
-import { createExam, deleteExam, updateExam, getExams, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading } from "@/actions/dashboardActions";
+import { createExam, deleteExam, updateExam, getExams, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult } from "@/actions/dashboardActions";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 
@@ -464,16 +464,33 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                   </td>
                                   <td className="py-3 px-5 text-right align-middle">
                                     <div className="flex flex-col gap-2 items-end justify-center">
-                                      <button 
-                                        onClick={() => { setViewingResult(res); setViewingExam(exam); }}
-                                        className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors w-[120px]"
-                                      >
-                                        Detail Jawaban
-                                      </button>
+                                      <div className="flex gap-2 w-full max-w-[170px] justify-end">
+                                        <button 
+                                          onClick={() => { setViewingResult(res); setViewingExam(exam); }}
+                                          className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors flex-1"
+                                        >
+                                          Detail Jawaban
+                                        </button>
+                                        <button 
+                                          onClick={async () => {
+                                            if (!window.confirm(`Hapus nilai atas nama ${res.student.username}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
+                                            const deleteRes = await deleteExamResult(res.id);
+                                            if (deleteRes.success) {
+                                              setLocalExams(prev => prev.map(e => e.id === exam.id ? { ...e, results: e.results?.filter((r: any) => r.id !== res.id) } : e));
+                                            } else {
+                                              alert(deleteRes.error);
+                                            }
+                                          }}
+                                          className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg border border-red-200 transition-colors flex-shrink-0"
+                                          title="Hapus Nilai Murid Ini"
+                                        >
+                                          Hapus
+                                        </button>
+                                      </div>
                                       <button 
                                         onClick={() => handleProcessAI(res.id)}
                                         disabled={processingId !== null}
-                                        className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-[120px] disabled:opacity-50"
+                                        className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-full max-w-[170px] disabled:opacity-50"
                                         title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
                                       >
                                         {processingId === res.id ? processingProgress || "Memproses..." : (res.gradingStatus === "PENDING" ? "🚀 Proses AI" : "🚀 Nilai Ulang AI")}

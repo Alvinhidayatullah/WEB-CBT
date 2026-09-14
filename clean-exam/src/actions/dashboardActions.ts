@@ -543,3 +543,16 @@ export async function finalizeAIGrading(
     return { success: false, error: "Gagal menyimpan hasil akhir AI." };
   }
 }
+
+export async function deleteExamResult(resultId: string) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    await prisma.examResult.delete({
+      where: { id: resultId }
+    });
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Gagal menghapus hasil ujian siswa." };
+  }
+}
