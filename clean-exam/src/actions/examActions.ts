@@ -185,23 +185,27 @@ export async function submitExam(examId: string, answers: Record<string, string>
     });
     
     if (hasEssay && essayPayloads.length > 0) {
-      // PROSES AI REAL-TIME (TIDAK LAGI BACKGROUND QUEUE)
+      // PROSES AI PARALLEL (CEPAT & TAHAN BUG)
       let totalEssayScore = 0;
       let aiFeedbacks: string[] = [];
 
-      for (const essay of essayPayloads) {
+      const gradingPromises = essayPayloads.map(async (essay) => {
         const { questionText, referenceAnswer, studentAnswer, weight } = essay;
         
         if (!studentAnswer || studentAnswer.trim() === "") {
-          aiFeedbacks.push(`Soal: ${questionText} - Kosong (Skor: 0)`);
-          continue;
+          return { score: 0, reason: "Kosong (Skor: 0)", questionText, weight };
         }
 
         const result = await gradeEssay(questionText, referenceAnswer, studentAnswer);
-        const weightedScore = (result.score / 100) * weight;
+        return { score: result.score, reason: result.reason, questionText, weight };
+      });
+
+      const gradedResults = await Promise.all(gradingPromises);
+
+      for (const res of gradedResults) {
+        const weightedScore = (res.score / 100) * res.weight;
         totalEssayScore += weightedScore;
-        
-        aiFeedbacks.push(`Soal: ${questionText} - AI Score: ${result.score}/100. Alasan: ${result.reason}`);
+        aiFeedbacks.push(`Soal: ${res.questionText} - AI Score: ${res.score}/100. Alasan: ${res.reason}`);
       }
 
       await prisma.examResult.update({
