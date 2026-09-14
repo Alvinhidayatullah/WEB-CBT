@@ -225,16 +225,16 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                  <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">Bobot: {(100 / examData.questions.length).toFixed(1).replace(/\.0$/, '')}</span>
               </div>
               
-              <div className="text-lg text-slate-800 leading-relaxed mb-6">
-                {question.text}
-              </div>
-              {question.imageUrl && (
-                <div className="mb-6 text-center">
-                  <img src={question.imageUrl} alt="Gambar Soal" className="max-w-full max-h-80 w-auto inline-block rounded-xl border border-slate-200 shadow-sm object-contain" />
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 mb-8 shadow-sm">
+                <div className="text-lg text-slate-800 leading-relaxed">
+                  {question.text}
                 </div>
-              )}
-              
-              <div className="w-full h-px bg-slate-100 mb-8 mt-2"></div>
+                {question.imageUrl && (
+                  <div className="mt-8 text-center">
+                    <img src={question.imageUrl} alt="Gambar Soal" className="max-w-full max-h-80 w-auto inline-block rounded-xl border border-slate-200 shadow-md object-contain bg-white p-2" />
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-3 flex-1 flex flex-col">
                 {question.type === "ESSAY" ? (
