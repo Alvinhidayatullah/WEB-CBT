@@ -48,12 +48,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
 
   React.useEffect(() => {
     setLocalExams(exams);
-      } catch (e) {
-        // ignore errors on polling
-      }
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  }, [exams]);
 
   const [examType, setExamType] = useState("Ujian Tengah Semester");
   const [subject, setSubject] = useState("");
@@ -142,9 +137,10 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
         const aiRes = await gradeSingleEssayAction(essay.questionText, essay.referenceAnswer, essay.studentAnswer);
         
         if (aiRes.success) {
-          const weightedScore = (aiRes.score / 100) * essay.weight;
+          const score = aiRes.score || 0;
+          const weightedScore = (score / 100) * essay.weight;
           totalEssayScore += weightedScore;
-          aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: ${aiRes.score}/100. Alasan: ${aiRes.reason}`);
+          aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: ${score}/100. Alasan: ${aiRes.reason}`);
         } else {
           aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: 0/100. Alasan: Gagal memproses - ${aiRes.error}`);
         }
