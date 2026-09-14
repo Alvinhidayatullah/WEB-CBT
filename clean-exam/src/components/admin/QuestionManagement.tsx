@@ -400,7 +400,6 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                           try {
                                             const aiRes = await retryAIGrading(res.id);
                                             if (aiRes.success) {
-                                              alert("Penilaian ulang AI berhasil!");
                                               setProcessingId(null);
                                             } else {
                                               alert(aiRes.error);
