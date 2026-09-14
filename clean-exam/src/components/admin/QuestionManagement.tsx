@@ -373,49 +373,53 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                       <span className="text-xs text-blue-600 ml-1">(+ Esai: {res.essayScore})</span>
                                     )}
                                   </td>
-                                  <td className="py-3 px-5 flex flex-col gap-1">
-                                    {res.gradingStatus === "PENDING" ? (
-                                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center">Menunggu AI</span>
-                                    ) : (
-                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center">Selesai</span>
-                                    )}
-                                    {res.isCheated && (
-                                      <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1">Curang</span>
-                                    )}
+                                  <td className="py-3 px-5 align-middle">
+                                    <div className="flex flex-col gap-1 items-start">
+                                      {res.gradingStatus === "PENDING" ? (
+                                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center w-24">Menunggu AI</span>
+                                      ) : (
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center w-24">Selesai</span>
+                                      )}
+                                      {res.isCheated && (
+                                        <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1 w-24">Curang</span>
+                                      )}
+                                    </div>
                                   </td>
-                                  <td className="py-3 px-5 text-right flex flex-col gap-2 items-end justify-center">
-                                    <button 
-                                      onClick={() => { setViewingResult(res); setViewingExam(exam); }}
-                                      className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors w-full"
-                                    >
-                                      Detail Jawaban
-                                    </button>
-                                    <button 
-                                      onClick={async (e) => {
-                                        const btn = e.currentTarget;
-                                        btn.disabled = true;
-                                        btn.innerText = "Memproses...";
-                                        try {
-                                          const aiRes = await retryAIGrading(res.id);
-                                          if (aiRes.success) {
-                                            alert("Penilaian ulang AI berhasil!");
-                                            window.location.reload();
-                                          } else {
-                                            alert(aiRes.error);
+                                  <td className="py-3 px-5 text-right align-middle">
+                                    <div className="flex flex-col gap-2 items-end justify-center">
+                                      <button 
+                                        onClick={() => { setViewingResult(res); setViewingExam(exam); }}
+                                        className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors w-[120px]"
+                                      >
+                                        Detail Jawaban
+                                      </button>
+                                      <button 
+                                        onClick={async (e) => {
+                                          const btn = e.currentTarget;
+                                          btn.disabled = true;
+                                          btn.innerText = "Memproses...";
+                                          try {
+                                            const aiRes = await retryAIGrading(res.id);
+                                            if (aiRes.success) {
+                                              alert("Penilaian ulang AI berhasil!");
+                                              window.location.reload();
+                                            } else {
+                                              alert(aiRes.error);
+                                              btn.disabled = false;
+                                              btn.innerText = "🚀 Nilai Ulang AI";
+                                            }
+                                          } catch (err) {
+                                            alert("Gagal menghubungi server.");
                                             btn.disabled = false;
                                             btn.innerText = "🚀 Nilai Ulang AI";
                                           }
-                                        } catch (err) {
-                                          alert("Gagal menghubungi server.");
-                                          btn.disabled = false;
-                                          btn.innerText = "🚀 Nilai Ulang AI";
-                                        }
-                                      }}
-                                      className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-full disabled:opacity-50"
-                                      title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
-                                    >
-                                      🚀 Nilai Ulang AI
-                                    </button>
+                                        }}
+                                        className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-[120px] disabled:opacity-50"
+                                        title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
+                                      >
+                                        🚀 Nilai Ulang AI
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               );
