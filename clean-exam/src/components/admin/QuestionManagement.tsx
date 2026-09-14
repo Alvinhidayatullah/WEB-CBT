@@ -428,12 +428,12 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                         <table className="w-full text-sm text-left">
                           <thead className="bg-slate-50 text-slate-600 border-b border-slate-200/60">
                             <tr>
-                              <th className="py-5 px-6 font-semibold text-sm uppercase tracking-wider">Siswa</th>
-                              <th className="py-5 px-6 font-semibold text-sm uppercase tracking-wider">Kelas</th>
-                              <th className="py-5 px-6 font-semibold text-sm uppercase tracking-wider">Waktu</th>
-                              <th className="py-5 px-6 font-semibold text-sm uppercase tracking-wider">Nilai</th>
-                              <th className="py-5 px-6 font-semibold text-sm uppercase tracking-wider">Status</th>
-                              <th className="py-5 px-6 font-semibold text-sm uppercase tracking-wider text-center">Aksi</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Siswa</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Kelas</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Waktu</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Nilai</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Status</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-center">Aksi</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 bg-white">
@@ -441,33 +441,33 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                               const timeStr = res.timeSpent ? `${Math.floor(res.timeSpent / 60)}m ${res.timeSpent % 60}s` : "-";
                               return (
                                 <tr key={res.id} className="hover:bg-slate-50 transition-colors">
-                                  <td className="py-4 px-6 font-semibold text-slate-900 text-base">{res.student.username}</td>
-                                  <td className="py-4 px-6 text-slate-600 text-base">{res.student.className || "-"}</td>
-                                  <td className="py-4 px-6 text-slate-600 font-mono text-base">{timeStr}</td>
-                                  <td className="py-4 px-6 font-bold text-slate-900 text-xl">
+                                  <td className="py-3 px-5 font-semibold text-slate-900">{res.student.username}</td>
+                                  <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
+                                  <td className="py-3 px-5 text-slate-600 font-mono text-sm">{timeStr}</td>
+                                  <td className="py-3 px-5 font-bold text-slate-900 text-base">
                                     {res.score} 
                                     {res.essayScore !== null && typeof res.essayScore !== 'undefined' && (
-                                      <span className="text-sm font-semibold text-blue-600 ml-1">(+ Esai: {res.essayScore})</span>
+                                      <span className="text-xs text-blue-600 ml-1">(+ Esai: {res.essayScore})</span>
                                     )}
                                   </td>
-                                  <td className="py-4 px-6 align-middle">
-                                    <div className="flex flex-col gap-1.5 items-start">
+                                  <td className="py-3 px-5 align-middle">
+                                    <div className="flex flex-col gap-1 items-start">
                                       {res.gradingStatus === "PENDING" ? (
-                                        <span className="text-sm bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-md font-semibold text-center w-28">Menunggu AI</span>
+                                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center w-24">Menunggu AI</span>
                                       ) : (
-                                        <span className="text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-md font-semibold text-center w-28">Selesai</span>
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center w-24">Selesai</span>
                                       )}
                                       {res.isCheated && (
-                                        <span className="text-sm bg-red-100 text-red-600 px-3 py-1.5 rounded-md font-semibold text-center w-28">Curang</span>
+                                        <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1 w-24">Curang</span>
                                       )}
                                     </div>
                                   </td>
-                                  <td className="py-4 px-6 text-center align-middle">
+                                  <td className="py-3 px-5 text-center align-middle">
                                     <div className="flex flex-col gap-2 items-center justify-center">
-                                      <div className="flex gap-2 w-full max-w-[210px] justify-center">
+                                      <div className="flex gap-2 w-full max-w-[170px] justify-center">
                                         <button 
                                           onClick={() => { setViewingResult(res); setViewingExam(exam); }}
-                                          className="text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg border border-blue-200 transition-colors flex-1 shadow-sm"
+                                          className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors flex-1"
                                         >
                                           Detail Jawaban
                                         </button>
@@ -481,7 +481,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                               alert(deleteRes.error);
                                             }
                                           }}
-                                          className="text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg border border-red-200 transition-colors flex-shrink-0 shadow-sm"
+                                          className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg border border-red-200 transition-colors flex-shrink-0"
                                           title="Hapus Nilai Murid Ini"
                                         >
                                           Hapus
@@ -490,7 +490,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                       <button 
                                         onClick={() => handleProcessAI(res.id)}
                                         disabled={processingId !== null}
-                                        className="text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-lg border border-purple-200 transition-colors w-full max-w-[210px] disabled:opacity-50 shadow-sm"
+                                        className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-full max-w-[170px] disabled:opacity-50"
                                         title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
                                       >
                                         {processingId === res.id ? processingProgress || "Memproses..." : (res.gradingStatus === "PENDING" ? "🚀 Proses AI" : "🚀 Nilai Ulang AI")}
