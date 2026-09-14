@@ -528,7 +528,7 @@ export async function retryAIGrading(resultId: string) {
       data: {
         score: newFinalScore,
         essayScore: totalEssayScore,
-        aiFeedback: aiFeedbacks.join("\\n\\n"),
+        aiFeedback: aiFeedbacks.join("\n\n"),
         gradingStatus: "GRADED"
       }
     });

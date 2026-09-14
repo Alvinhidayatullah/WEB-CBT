@@ -7,7 +7,7 @@ if (!gatewayUrl || !gatewayKey) {
 
 export async function gradeEssay(questionText: string, referenceAnswer: string, studentAnswer: string): Promise<{score: number, reason: string}> {
   if (!gatewayUrl || !gatewayKey) {
-    return { score: 0, reason: "AI Gateway config missing." };
+    return { score: 0, reason: "GAGAL: API Key 9Router (AI_GATEWAY_KEY) atau URL belum dipasang di Vercel/Lingkungan Anda." };
   }
 
   const prompt = `Anda adalah sistem penilai ujian CBT yang tegas dan akurat.

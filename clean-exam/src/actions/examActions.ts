@@ -217,7 +217,7 @@ export async function submitExam(examId: string, answers: Record<string, string>
         data: {
           score: newFinalScore,
           essayScore: totalEssayScore,
-          aiFeedback: aiFeedbacks.join("\\n\\n"),
+          aiFeedback: aiFeedbacks.join("\n\n"),
           gradingStatus: "GRADED"
         }
       });
