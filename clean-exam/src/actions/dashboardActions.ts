@@ -455,8 +455,8 @@ export async function retryAIGrading(resultId: string) {
       include: { exam: { include: { questions: true } } }
     });
 
-    if (!result || result.gradingStatus !== "PENDING") {
-      return { success: false, error: "Data tidak valid atau sudah dinilai." };
+    if (!result) {
+      return { success: false, error: "Data tidak ditemukan." };
     }
 
     const answers = JSON.parse(result.answersJson as string);
