@@ -375,31 +375,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                   </td>
                                   <td className="py-3 px-5 flex flex-col gap-1">
                                     {res.gradingStatus === "PENDING" ? (
-                                      <div className="flex flex-col gap-1">
-                                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center">Menunggu AI</span>
-                                        <button 
-                                          onClick={async () => {
-                                            const btn = document.activeElement as HTMLButtonElement;
-                                            if (btn) btn.disabled = true;
-                                            try {
-                                              const aiRes = await retryAIGrading(res.id);
-                                              if (aiRes.success) {
-                                                alert("Penilaian ulang AI berhasil!");
-                                                window.location.reload();
-                                              } else {
-                                                alert(aiRes.error);
-                                                if (btn) btn.disabled = false;
-                                              }
-                                            } catch (e) {
-                                              alert("Gagal menghubungi server.");
-                                              if (btn) btn.disabled = false;
-                                            }
-                                          }}
-                                          className="text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-1 rounded cursor-pointer hover:bg-blue-100 transition-colors text-center disabled:opacity-50"
-                                        >
-                                          🚀 Proses AI (Manual)
-                                        </button>
-                                      </div>
+                                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center">Menunggu AI</span>
                                     ) : (
                                       <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center">Selesai</span>
                                     )}
@@ -407,12 +383,38 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                       <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1">Curang</span>
                                     )}
                                   </td>
-                                  <td className="py-3 px-5 text-right">
+                                  <td className="py-3 px-5 text-right flex flex-col gap-2 items-end justify-center">
                                     <button 
                                       onClick={() => { setViewingResult(res); setViewingExam(exam); }}
-                                      className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors"
+                                      className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors w-full"
                                     >
                                       Detail Jawaban
+                                    </button>
+                                    <button 
+                                      onClick={async (e) => {
+                                        const btn = e.currentTarget;
+                                        btn.disabled = true;
+                                        btn.innerText = "Memproses...";
+                                        try {
+                                          const aiRes = await retryAIGrading(res.id);
+                                          if (aiRes.success) {
+                                            alert("Penilaian ulang AI berhasil!");
+                                            window.location.reload();
+                                          } else {
+                                            alert(aiRes.error);
+                                            btn.disabled = false;
+                                            btn.innerText = "🚀 Nilai Ulang AI";
+                                          }
+                                        } catch (err) {
+                                          alert("Gagal menghubungi server.");
+                                          btn.disabled = false;
+                                          btn.innerText = "🚀 Nilai Ulang AI";
+                                        }
+                                      }}
+                                      className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-full disabled:opacity-50"
+                                      title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
+                                    >
+                                      🚀 Nilai Ulang AI
                                     </button>
                                   </td>
                                 </tr>

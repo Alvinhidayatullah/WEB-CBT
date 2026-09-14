@@ -208,17 +208,24 @@ export async function submitExam(examId: string, answers: Record<string, string>
         aiFeedbacks.push(`Soal: ${res.questionText} - AI Score: ${res.score}/100. Alasan: ${res.reason}`);
       }
 
+      const finalTotalEarned = totalEarnedWeights + totalEssayScore;
+      const newScore = totalMaxWeights > 0 ? (finalTotalEarned / totalMaxWeights) * 100 : 0;
+      const newFinalScore = parseFloat(newScore.toFixed(2));
+
       await prisma.examResult.update({
         where: { id: resultRecord.id },
         data: {
+          score: newFinalScore,
           essayScore: totalEssayScore,
           aiFeedback: aiFeedbacks.join("\\n\\n"),
           gradingStatus: "GRADED"
         }
       });
+      
+      return { success: true, score: newFinalScore, isPending: false };
     }
 
-    return { success: true, score: finalScore, isPending: hasEssay };
+    return { success: true, score: finalScore, isPending: false };
   } catch (error) {
     // Check if unique constraint error
     if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'P2002') {

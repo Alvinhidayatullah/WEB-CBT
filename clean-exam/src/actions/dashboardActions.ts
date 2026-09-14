@@ -462,16 +462,31 @@ export async function retryAIGrading(resultId: string) {
     const answers = JSON.parse(result.answersJson as string);
     const essayPayloads: any[] = [];
     
+    let totalMaxWeights = 0;
+    let totalEarnedWeights = 0;
+
     result.exam.questions.forEach(q => {
+      const studentAnswer = answers[q.id];
       if (q.type === "ESSAY") {
-        const studentAnswer = answers[q.id];
         const essayMaxW = q.weightA && q.weightA > 0 ? q.weightA : 100;
+        totalMaxWeights += essayMaxW;
         essayPayloads.push({
           questionText: q.text,
           referenceAnswer: q.essayReference || "",
           studentAnswer: studentAnswer || "",
           weight: essayMaxW
         });
+      } else {
+        const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
+        const questionMax = maxW > 0 ? maxW : 100;
+        totalMaxWeights += questionMax;
+
+        let earned = 0;
+        if (studentAnswer === "A") earned = q.weightA || 0;
+        else if (studentAnswer === "B") earned = q.weightB || 0;
+        else if (studentAnswer === "C") earned = q.weightC || 0;
+        else if (studentAnswer === "D") earned = q.weightD || 0;
+        totalEarnedWeights += earned;
       }
     });
 
@@ -504,9 +519,14 @@ export async function retryAIGrading(resultId: string) {
       aiFeedbacks.push(`Soal: ${res.questionText} - AI Score: ${res.score}/100. Alasan: ${res.reason}`);
     }
 
+    const finalTotalEarned = totalEarnedWeights + totalEssayScore;
+    const newScore = totalMaxWeights > 0 ? (finalTotalEarned / totalMaxWeights) * 100 : 0;
+    const newFinalScore = parseFloat(newScore.toFixed(2));
+
     await prisma.examResult.update({
       where: { id: resultId },
       data: {
+        score: newFinalScore,
         essayScore: totalEssayScore,
         aiFeedback: aiFeedbacks.join("\\n\\n"),
         gradingStatus: "GRADED"
