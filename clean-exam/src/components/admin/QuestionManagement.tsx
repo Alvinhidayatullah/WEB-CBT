@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download } from "lucide-react";
+import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download, Bot } from "lucide-react";
 import { createExam, deleteExam, updateExam, getExams, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult } from "@/actions/dashboardActions";
 import Link from "next/link";
 import * as XLSX from "xlsx";
@@ -463,37 +463,42 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                     </div>
                                   </td>
                                   <td className="py-3 px-5 align-middle">
-                                    <div className="flex flex-col gap-2 items-start justify-center">
-                                      <div className="flex gap-2 w-full max-w-[170px] justify-start">
-                                        <button 
-                                          onClick={() => { setViewingResult(res); setViewingExam(exam); }}
-                                          className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors flex-1"
-                                        >
-                                          Detail Jawaban
-                                        </button>
-                                        <button 
-                                          onClick={async () => {
-                                            if (!window.confirm(`Hapus nilai atas nama ${res.student.username}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
-                                            const deleteRes = await deleteExamResult(res.id);
-                                            if (deleteRes.success) {
-                                              setLocalExams(prev => prev.map(e => e.id === exam.id ? { ...e, results: e.results?.filter((r: any) => r.id !== res.id) } : e));
-                                            } else {
-                                              alert(deleteRes.error);
-                                            }
-                                          }}
-                                          className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg border border-red-200 transition-colors flex-shrink-0"
-                                          title="Hapus Nilai Murid Ini"
-                                        >
-                                          Hapus
-                                        </button>
-                                      </div>
+                                    <div className="flex gap-2 items-center justify-start flex-wrap max-w-[350px]">
+                                      <button 
+                                        onClick={() => { setViewingResult(res); setViewingExam(exam); }}
+                                        className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors whitespace-nowrap"
+                                      >
+                                        Detail Jawaban
+                                      </button>
+                                      <button 
+                                        onClick={async () => {
+                                          if (!window.confirm(`Hapus nilai atas nama ${res.student.username}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
+                                          const deleteRes = await deleteExamResult(res.id);
+                                          if (deleteRes.success) {
+                                            setLocalExams(prev => prev.map(e => e.id === exam.id ? { ...e, results: e.results?.filter((r: any) => r.id !== res.id) } : e));
+                                          } else {
+                                            alert(deleteRes.error);
+                                          }
+                                        }}
+                                        className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors whitespace-nowrap"
+                                        title="Hapus Nilai Murid Ini"
+                                      >
+                                        Hapus
+                                      </button>
                                       <button 
                                         onClick={() => handleProcessAI(res.id)}
                                         disabled={processingId !== null}
-                                        className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-full max-w-[170px] disabled:opacity-50"
+                                        className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors disabled:opacity-50 whitespace-nowrap"
                                         title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
                                       >
-                                        {processingId === res.id ? processingProgress || "Memproses..." : (res.gradingStatus === "PENDING" ? "🚀 Proses AI" : "🚀 Nilai Ulang AI")}
+                                        {processingId === res.id ? (
+                                          processingProgress || "Memproses..."
+                                        ) : (
+                                          <>
+                                            <Bot className="w-3.5 h-3.5" />
+                                            {res.gradingStatus === "PENDING" ? "Proses AI" : "Nilai Ulang AI"}
+                                          </>
+                                        )}
                                       </button>
                                     </div>
                                   </td>
