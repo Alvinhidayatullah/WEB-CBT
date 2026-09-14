@@ -529,7 +529,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                       {viewingResult.aiFeedback.split(/(?:\\n\\n|\n\n)/).map((feedback: string, i: number) => {
                          if (!feedback.trim()) return null;
                          
-                         const match = feedback.match(/^Soal:\s*(.*?)\s*-\s*AI Score:\s*([\w\d]+\/100)\.\s*Alasan:\s*(.*)$/s);
+                         const match = feedback.match(/^Soal:\s*([\s\S]*?)\s*-\s*AI Score:\s*([\w\d]+\/100)\.\s*Alasan:\s*([\s\S]*)$/);
                          
                          if (match) {
                            return (
