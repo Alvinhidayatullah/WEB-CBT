@@ -159,7 +159,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
 
   return (
     <AntiCheatWrapper onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
-      <div className="min-h-[100dvh] bg-[#030305] flex flex-col relative overflow-x-hidden selection:bg-blue-500/30 overscroll-y-none">
+      <div className="min-h-[100dvh] bg-[#030305] flex flex-col relative overflow-x-hidden selection:bg-blue-500/30">
         
         {/* Fixed Background from Login */}
         <div className="fixed inset-0 bg-[#030305] -z-20"></div>
@@ -225,14 +225,16 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                  <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">Bobot: {(100 / examData.questions.length).toFixed(1).replace(/\.0$/, '')}</span>
               </div>
               
-              <div className="text-lg text-slate-800 leading-relaxed mb-4">
+              <div className="text-lg text-slate-800 leading-relaxed mb-6">
                 {question.text}
               </div>
               {question.imageUrl && (
-                <div className="mb-10 text-center">
+                <div className="mb-6 text-center">
                   <img src={question.imageUrl} alt="Gambar Soal" className="max-w-full max-h-80 w-auto inline-block rounded-xl border border-slate-200 shadow-sm object-contain" />
                 </div>
               )}
+              
+              <div className="w-full h-px bg-slate-100 mb-8 mt-2"></div>
 
               <div className="space-y-3 flex-1 flex flex-col">
                 {question.type === "ESSAY" ? (
