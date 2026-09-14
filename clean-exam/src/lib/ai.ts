@@ -42,7 +42,7 @@ Jawaban Siswa: ${studentAnswer}
         "Authorization": `Bearer ${gatewayKey}`,
       },
       body: JSON.stringify({
-        model: "gemini/gemini-1.5-flash", // Default 9Router Gemini Model
+        model: process.env.AI_GATEWAY_MODEL || "test-cbt", // Default 9Router model as tested via curl
         stream: false,
         messages: [
           {
