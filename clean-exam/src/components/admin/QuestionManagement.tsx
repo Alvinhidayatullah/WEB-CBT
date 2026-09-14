@@ -433,7 +433,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Waktu</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Nilai</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Status</th>
-                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Aksi</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-right">Aksi</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 bg-white">
@@ -462,8 +462,8 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                       )}
                                     </div>
                                   </td>
-                                  <td className="py-3 px-5 align-middle">
-                                    <div className="flex gap-2 items-center justify-start flex-wrap max-w-[350px]">
+                                  <td className="py-3 px-5 align-middle text-right">
+                                    <div className="flex gap-2 items-center justify-end flex-wrap">
                                       <button 
                                         onClick={() => { setViewingResult(res); setViewingExam(exam); }}
                                         className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors whitespace-nowrap"
