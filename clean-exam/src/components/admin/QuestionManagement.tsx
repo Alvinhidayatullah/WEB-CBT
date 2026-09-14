@@ -433,7 +433,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Waktu</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Nilai</th>
                               <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Status</th>
-                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-right">Aksi</th>
+                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Aksi</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 bg-white">
