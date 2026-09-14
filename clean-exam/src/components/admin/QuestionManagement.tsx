@@ -83,6 +83,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   // View Details State
   const [viewingResult, setViewingResult] = useState<any | null>(null);
   const [viewingExam, setViewingExam] = useState<UIExam | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const removeClass = (cls: string) => {
     setTargetClasses(targetClasses.filter(c => c !== cls));
@@ -394,10 +395,8 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                         Detail Jawaban
                                       </button>
                                       <button 
-                                        onClick={async (e) => {
-                                          const btn = e.currentTarget;
-                                          btn.disabled = true;
-                                          btn.innerText = "Memproses...";
+                                        onClick={async () => {
+                                          setProcessingId(res.id);
                                           try {
                                             const aiRes = await retryAIGrading(res.id);
                                             if (aiRes.success) {
@@ -405,19 +404,18 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                               window.location.reload();
                                             } else {
                                               alert(aiRes.error);
-                                              btn.disabled = false;
-                                              btn.innerText = "🚀 Nilai Ulang AI";
+                                              setProcessingId(null);
                                             }
                                           } catch (err) {
                                             alert("Gagal menghubungi server.");
-                                            btn.disabled = false;
-                                            btn.innerText = "🚀 Nilai Ulang AI";
+                                            setProcessingId(null);
                                           }
                                         }}
+                                        disabled={processingId === res.id}
                                         className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors w-[120px] disabled:opacity-50"
                                         title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
                                       >
-                                        🚀 Nilai Ulang AI
+                                        {processingId === res.id ? "Memproses..." : "🚀 Nilai Ulang AI"}
                                       </button>
                                     </div>
                                   </td>
