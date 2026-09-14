@@ -80,7 +80,10 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     return result;
   };
   
-  const [token, setToken] = useState(generateRandomToken());
+  const [token, setToken] = useState("");
+  React.useEffect(() => {
+    setToken(generateRandomToken());
+  }, []);
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
