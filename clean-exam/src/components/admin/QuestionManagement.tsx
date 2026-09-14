@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download } from "lucide-react";
-import { createExam, deleteExam, updateExam, getExams } from "@/actions/dashboardActions";
+import { createExam, deleteExam, updateExam, getExams, retryAIGrading } from "@/actions/dashboardActions";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 
@@ -375,7 +375,31 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                   </td>
                                   <td className="py-3 px-5 flex flex-col gap-1">
                                     {res.gradingStatus === "PENDING" ? (
-                                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center">Menunggu AI</span>
+                                      <div className="flex flex-col gap-1">
+                                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center">Menunggu AI</span>
+                                        <button 
+                                          onClick={async () => {
+                                            const btn = document.activeElement as HTMLButtonElement;
+                                            if (btn) btn.disabled = true;
+                                            try {
+                                              const aiRes = await retryAIGrading(res.id);
+                                              if (aiRes.success) {
+                                                alert("Penilaian ulang AI berhasil!");
+                                                window.location.reload();
+                                              } else {
+                                                alert(aiRes.error);
+                                                if (btn) btn.disabled = false;
+                                              }
+                                            } catch (e) {
+                                              alert("Gagal menghubungi server.");
+                                              if (btn) btn.disabled = false;
+                                            }
+                                          }}
+                                          className="text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-1 rounded cursor-pointer hover:bg-blue-100 transition-colors text-center disabled:opacity-50"
+                                        >
+                                          🚀 Proses AI (Manual)
+                                        </button>
+                                      </div>
                                     ) : (
                                       <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center">Selesai</span>
                                     )}

@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
+import { gradeEssay } from "@/lib/ai";
 import { redirect } from "next/navigation";
 
 async function checkAuth(allowedRoles: string[]) {
@@ -443,5 +444,78 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
     return { success: true, count: formattedQuestions.length };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
+  }
+}
+
+export async function retryAIGrading(resultId: string) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    const result = await prisma.examResult.findUnique({
+      where: { id: resultId },
+      include: { exam: { include: { questions: true } } }
+    });
+
+    if (!result || result.gradingStatus !== "PENDING") {
+      return { success: false, error: "Data tidak valid atau sudah dinilai." };
+    }
+
+    const answers = JSON.parse(result.answersJson as string);
+    const essayPayloads: any[] = [];
+    
+    result.exam.questions.forEach(q => {
+      if (q.type === "ESSAY") {
+        const studentAnswer = answers[q.id];
+        const essayMaxW = q.weightA && q.weightA > 0 ? q.weightA : 100;
+        essayPayloads.push({
+          questionText: q.text,
+          referenceAnswer: q.essayReference || "",
+          studentAnswer: studentAnswer || "",
+          weight: essayMaxW
+        });
+      }
+    });
+
+    if (essayPayloads.length === 0) {
+      await prisma.examResult.update({
+        where: { id: resultId },
+        data: { gradingStatus: "GRADED" }
+      });
+      revalidatePath("/", "layout");
+      return { success: true };
+    }
+
+    let totalEssayScore = 0;
+    let aiFeedbacks: string[] = [];
+
+    const gradingPromises = essayPayloads.map(async (essay) => {
+      const { questionText, referenceAnswer, studentAnswer, weight } = essay;
+      if (!studentAnswer || studentAnswer.trim() === "") {
+        return { score: 0, reason: "Kosong (Skor: 0)", questionText, weight };
+      }
+      const aiResult = await gradeEssay(questionText, referenceAnswer, studentAnswer);
+      return { score: aiResult.score, reason: aiResult.reason, questionText, weight };
+    });
+
+    const gradedResults = await Promise.all(gradingPromises);
+
+    for (const res of gradedResults) {
+      const weightedScore = (res.score / 100) * res.weight;
+      totalEssayScore += weightedScore;
+      aiFeedbacks.push(`Soal: ${res.questionText} - AI Score: ${res.score}/100. Alasan: ${res.reason}`);
+    }
+
+    await prisma.examResult.update({
+      where: { id: resultId },
+      data: {
+        essayScore: totalEssayScore,
+        aiFeedback: aiFeedbacks.join("\\n\\n"),
+        gradingStatus: "GRADED"
+      }
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Gagal memproses AI." };
   }
 }
