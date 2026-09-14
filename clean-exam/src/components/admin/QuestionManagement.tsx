@@ -523,9 +523,38 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
             
             <div className="p-6 overflow-y-auto space-y-6">
               {viewingResult.aiFeedback && (
-                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl mb-6">
-                    <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">🤖 Feedback AI Gemini</h4>
-                    <pre className="text-sm text-blue-800 whitespace-pre-wrap font-sans">{viewingResult.aiFeedback}</pre>
+                 <div className="mb-6 space-y-3">
+                    <h4 className="font-bold text-blue-900 flex items-center gap-2">🤖 Evaluasi Cerdas AI</h4>
+                    <div className="grid gap-3">
+                      {viewingResult.aiFeedback.split(/(?:\\n\\n|\n\n)/).map((feedback: string, i: number) => {
+                         if (!feedback.trim()) return null;
+                         
+                         const match = feedback.match(/^Soal:\s*(.*?)\s*-\s*AI Score:\s*([\w\d]+\/100)\.\s*Alasan:\s*(.*)$/s);
+                         
+                         if (match) {
+                           return (
+                             <div key={i} className="p-4 bg-blue-50/50 hover:bg-blue-50 border border-blue-100 rounded-xl flex flex-col gap-2 transition-colors">
+                               <p className="text-sm font-medium text-slate-700 leading-relaxed"><span className="font-bold text-slate-400 mr-1">Q:</span> {match[1]}</p>
+                               <div className="flex items-start gap-3 mt-1 pt-2 border-t border-blue-100/50">
+                                 <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold bg-blue-600 text-white whitespace-nowrap shadow-sm">
+                                   Skor: {match[2]}
+                                 </span>
+                                 <p className="text-sm text-slate-600 leading-relaxed">
+                                   <span className="font-semibold text-blue-800 mr-1">Alasan:</span> 
+                                   {match[3]}
+                                 </p>
+                               </div>
+                             </div>
+                           )
+                         }
+                         
+                         return (
+                           <div key={i} className="p-4 bg-blue-50/50 border border-blue-100 rounded-xl text-sm text-slate-700 whitespace-pre-wrap">
+                             {feedback}
+                           </div>
+                         )
+                      })}
+                    </div>
                  </div>
               )}
               

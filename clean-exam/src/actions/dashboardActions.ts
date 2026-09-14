@@ -532,7 +532,7 @@ export async function finalizeAIGrading(
       data: {
         score: newFinalScore,
         essayScore: totalEssayScore,
-        aiFeedback: aiFeedbacks.join("\\n\\n"),
+        aiFeedback: aiFeedbacks.join("\n\n"),
         gradingStatus: "GRADED"
       }
     });
