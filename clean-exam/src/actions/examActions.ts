@@ -72,6 +72,11 @@ export async function getExamData(examId: string) {
             optionB: true,
             optionC: true,
             optionD: true,
+            imageUrl: true,
+            optionAImg: true,
+            optionBImg: true,
+            optionCImg: true,
+            optionDImg: true,
             // DO NOT select correctOption to prevent cheating on client
           }
         }
