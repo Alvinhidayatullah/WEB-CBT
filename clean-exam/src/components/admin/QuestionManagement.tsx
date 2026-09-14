@@ -401,7 +401,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                             const aiRes = await retryAIGrading(res.id);
                                             if (aiRes.success) {
                                               alert("Penilaian ulang AI berhasil!");
-                                              window.location.reload();
+                                              setProcessingId(null);
                                             } else {
                                               alert(aiRes.error);
                                               setProcessingId(null);
