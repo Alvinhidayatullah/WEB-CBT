@@ -24,15 +24,26 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
   const sortUsers = (userList: UIUser[]) => {
     const roleOrder: Record<string, number> = { SUPER_ADMIN: 1, GURU: 2, MURID: 3 };
     return [...userList].sort((a, b) => {
+      // 1. Urutkan berdasarkan Role (SUPER_ADMIN -> GURU -> MURID)
       if (roleOrder[a.role] !== roleOrder[b.role]) {
         return (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
       }
+      
+      // 2. Jika murid, urutkan berdasarkan Kelas (angka dalam string akan diurutkan secara numerik, misal: 7 sebelum 10)
       if (a.role === "MURID") {
         const classA = a.className || "";
         const classB = b.className || "";
-        return classA.localeCompare(classB);
+        const classCompare = classA.localeCompare(classB, undefined, { numeric: true, sensitivity: 'base' });
+        
+        if (classCompare !== 0) {
+          return classCompare;
+        }
       }
-      return 0;
+      
+      // 3. Terakhir, urutkan berdasarkan Username (Alfabetikal A-Z)
+      const userA = a.username || "";
+      const userB = b.username || "";
+      return userA.localeCompare(userB, undefined, { numeric: true, sensitivity: 'base' });
     });
   };
 
