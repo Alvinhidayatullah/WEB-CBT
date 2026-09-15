@@ -1,0 +1,13 @@
+
+> secure-cbt@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.3.9
+   - Local:        http://localhost:3000
+   - Network:      http://10.159.194.221:3000
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 2.6s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 2.2s (178 modules)

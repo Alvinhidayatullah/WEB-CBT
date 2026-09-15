@@ -158,6 +158,8 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     } catch (err) {
       setProcessingId(null);
       setProcessingProgress("");
+      // Prevent infinite loop by removing the failing ID from the auto-queue
+      setAutoProcessQueue(prev => prev.filter(id => id !== resId));
     }
   };
 
