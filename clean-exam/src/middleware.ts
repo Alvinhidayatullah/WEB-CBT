@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/auth';
 // --- SECURITY GATEWAY (WAF Mini) ---
 // Simple in-memory rate limiting (Per-Isolate)
 const rateLimitMap = new Map<string, { count: number, timestamp: number }>();
-const RATE_LIMIT_MAX = 50; // max requests
+const RATE_LIMIT_MAX = 500; // max requests
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 
 export async function middleware(request: NextRequest) {
