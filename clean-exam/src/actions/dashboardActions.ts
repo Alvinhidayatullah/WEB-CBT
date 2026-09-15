@@ -152,6 +152,61 @@ export async function getExams() {
   }
 }
 
+export async function getPendingResultIds() {
+  try {
+    const session = await getSession();
+    if (!session) return [];
+    const userId = session?.userId as string;
+    
+    let userRole = session?.userRole;
+    let userClassName = null;
+    let userTeacherSubject = null;
+
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        userRole = user.role;
+        userClassName = user.className;
+        userTeacherSubject = user.teacherSubject;
+      }
+    }
+
+    let exams = await prisma.exam.findMany({
+      select: { 
+        id: true, 
+        targetClass: true, 
+        subject: true, 
+        results: { where: { gradingStatus: "PENDING" }, select: { id: true } } 
+      },
+    });
+    
+    if (userRole === "GURU") {
+       const allowedClasses = userClassName ? userClassName.split(",").map(c => c.trim().toLowerCase()) : [];
+       const allowedSubjects = userTeacherSubject ? userTeacherSubject.split(",").map(s => s.trim().toLowerCase()) : [];
+       
+       exams = exams.filter(exam => {
+         const examSubject = exam.subject.trim().toLowerCase();
+         if (allowedSubjects.length > 0 && !allowedSubjects.includes(examSubject)) return false;
+         
+         if (exam.targetClass === "Semua Kelas") return true;
+         if (allowedClasses.length === 0) return true;
+         
+         const examClasses = exam.targetClass.split(",").map(c => c.trim().toLowerCase());
+         return examClasses.some(c => allowedClasses.includes(c));
+       });
+    }
+
+    const pendingIds: string[] = [];
+    exams.forEach(exam => {
+      exam.results.forEach(res => pendingIds.push(res.id));
+    });
+
+    return pendingIds;
+  } catch {
+    return [];
+  }
+}
+
 export async function createExam(examType: string, subject: string, targetClass: string, duration: number = 60) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);

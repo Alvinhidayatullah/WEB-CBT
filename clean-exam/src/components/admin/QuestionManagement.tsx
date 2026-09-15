@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download, Bot } from "lucide-react";
-import { createExam, deleteExam, updateExam, getExams, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult } from "@/actions/dashboardActions";
+import { createExam, deleteExam, updateExam, getExams, getPendingResultIds, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult } from "@/actions/dashboardActions";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 
@@ -65,56 +65,75 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   // View Details State
   const [viewingResult, setViewingResult] = useState<any | null>(null);
   const [viewingExam, setViewingExam] = useState<UIExam | null>(null);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [processingProgress, setProcessingProgress] = useState<string>("");
+  const [activeBatch, setActiveBatch] = useState<Set<string>>(new Set());
+  const [processingProgress, setProcessingProgress] = useState<Record<string, string>>({});
   const [autoProcessQueue, setAutoProcessQueue] = useState<string[]>([]);
+  
+  // Polling super ringan setiap 10 detik HANYA untuk mengambil ID yang PENDING
   React.useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const freshExams = (await getExams()) as unknown as UIExam[];
-        setLocalExams(prev => {
-          return freshExams;
+        const pendingIds = await getPendingResultIds();
+        
+        // Hanya update antrean untuk ID yang belum ada di autoProcessQueue dan activeBatch
+        setAutoProcessQueue(prev => {
+          const newIds = pendingIds.filter(id => !prev.includes(id) && !activeBatch.has(id));
+          if (newIds.length > 0) return [...prev, ...newIds];
+          return prev;
         });
-
-        // Auto-queue check for PENDING exams
-        const pendingResultIds: string[] = [];
-        freshExams.forEach(exam => {
-          if (exam.results) {
-            exam.results.forEach(res => {
-              if (res.gradingStatus === "PENDING") {
-                pendingResultIds.push(res.id);
-              }
-            });
-          }
-        });
-
-        setAutoProcessQueue(pendingResultIds);
-
       } catch (e) {
+        console.error(e);
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeBatch]);
 
-  // Background Worker Effect
+  // Background Worker Effect dengan Controlled Concurrency (Batch processing)
   React.useEffect(() => {
-    if (processingId !== null || autoProcessQueue.length === 0) return;
-    
-    // Start processing the first item in the queue
-    const nextId = autoProcessQueue[0];
-    handleProcessAI(nextId);
-  }, [autoProcessQueue, processingId]);
+    const processBatch = async () => {
+      // Kita batasi maksimum 3 proses bersamaan
+      if (activeBatch.size >= 3 || autoProcessQueue.length === 0) return;
+      
+      // Ambil tugas yang bisa dijalankan (sampai kuota 3 penuh)
+      const availableSlots = 3 - activeBatch.size;
+      const nextIds = autoProcessQueue.slice(0, availableSlots);
+      if (nextIds.length === 0) return;
+
+      // Masukkan ke batch aktif dan keluarkan dari antrean
+      setActiveBatch(prev => {
+        const newBatch = new Set(prev);
+        nextIds.forEach(id => newBatch.add(id));
+        return newBatch;
+      });
+      setAutoProcessQueue(prev => prev.slice(nextIds.length));
+
+      // Jalankan secara paralel tanpa menunggu satu sama lain
+      nextIds.forEach(id => {
+        handleProcessAI(id).finally(() => {
+          // Setelah selesai atau gagal, keluarkan dari batch aktif
+          setActiveBatch(prev => {
+            const newBatch = new Set(prev);
+            newBatch.delete(id);
+            return newBatch;
+          });
+          // Refresh data layar (karena polling otomatis di atas tidak refresh data lengkap)
+          getExams().then(freshExams => setLocalExams(freshExams as unknown as UIExam[]));
+        });
+      });
+    };
+
+    processBatch();
+  }, [autoProcessQueue, activeBatch]);
 
   const handleProcessAI = async (resId: string) => {
-    if (processingId !== null) return;
-    setProcessingId(resId);
-    setProcessingProgress("Mengambil data...");
+    // Prevent double processing (activeBatch checked in processBatch, but just in case for manual clicks)
+    setProcessingProgress(prev => ({ ...prev, [resId]: "Mengambil data..." }));
+    setActiveBatch(prev => new Set(prev).add(resId));
 
     try {
       const payloadRes = await getPendingEssayPayloads(resId);
       if (!payloadRes.success || !payloadRes.payloads) {
-        setProcessingProgress("");
-        setProcessingId(null);
+        setProcessingProgress(prev => { const n = {...prev}; delete n[resId]; return n; });
         return;
       }
 
@@ -122,8 +141,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       
       if (payloads.length === 0) {
         await finalizeAIGrading(resId, totalEarnedWeights || 0, totalMaxWeights || 0, 0, []);
-        setProcessingProgress("");
-        setProcessingId(null);
+        setProcessingProgress(prev => { const n = {...prev}; delete n[resId]; return n; });
         return;
       }
 
@@ -132,7 +150,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
 
       for (let i = 0; i < payloads.length; i++) {
         const essay = payloads[i];
-        setProcessingProgress(`Menilai soal ${i + 1} dari ${payloads.length}...`);
+        setProcessingProgress(prev => ({ ...prev, [resId]: `Menilai ${i + 1}/${payloads.length}...` }));
         
         const aiRes = await gradeSingleEssayAction(essay.questionText, essay.referenceAnswer, essay.studentAnswer);
         
@@ -146,20 +164,14 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
         }
       }
 
-      setProcessingProgress("Menyimpan hasil...");
+      setProcessingProgress(prev => ({ ...prev, [resId]: "Menyimpan hasil..." }));
       await finalizeAIGrading(resId, totalEarnedWeights || 0, totalMaxWeights || 0, totalEssayScore, aiFeedbacks);
 
-      setProcessingId(null);
-      setProcessingProgress("");
-      
-      // Remove from auto queue locally so it moves to next
-      setAutoProcessQueue(prev => prev.filter(id => id !== resId));
-
     } catch (err) {
-      setProcessingId(null);
-      setProcessingProgress("");
-      // Prevent infinite loop by removing the failing ID from the auto-queue
-      setAutoProcessQueue(prev => prev.filter(id => id !== resId));
+      console.error(err);
+    } finally {
+      setProcessingProgress(prev => { const n = {...prev}; delete n[resId]; return n; });
+      setActiveBatch(prev => { const n = new Set(prev); n.delete(resId); return n; });
     }
   };
 
@@ -489,12 +501,12 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                       </button>
                                       <button 
                                         onClick={() => handleProcessAI(res.id)}
-                                        disabled={processingId !== null}
+                                        disabled={activeBatch.has(res.id)}
                                         className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors disabled:opacity-50 whitespace-nowrap"
                                         title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
                                       >
-                                        {processingId === res.id ? (
-                                          processingProgress || "Memproses..."
+                                        {activeBatch.has(res.id) ? (
+                                          processingProgress[res.id] || "Memproses..."
                                         ) : (
                                           <>
                                             <Bot className="w-3.5 h-3.5" />
