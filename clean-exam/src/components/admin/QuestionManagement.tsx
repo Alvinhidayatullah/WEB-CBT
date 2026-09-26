@@ -188,7 +188,6 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       setLocalExams([res.exam, ...localExams]);
       setSubject("");
       setTargetClasses([]);
-      setClassInput("");
       setDuration(60);
     } else {
       alert(res.error || "Gagal membuat sesi ujian");
