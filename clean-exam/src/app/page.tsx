@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
@@ -48,8 +49,8 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none"></div>
 
         <div className="text-center pt-12 pb-8 relative z-10 border-b border-white/5">
-          <div className="mx-auto w-14 h-14 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl flex items-center justify-center mb-6 shadow-lg backdrop-blur-md">
-            <Lock className="w-6 h-6 text-slate-200" strokeWidth={1.5} />
+          <div className="mx-auto w-24 h-24 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl flex items-center justify-center mb-6 shadow-lg backdrop-blur-md overflow-hidden p-2">
+            <Image src="/logo-yasda.png" alt="Logo Yasda" width={100} height={100} className="w-full h-full object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
             Secure<span className="text-blue-500 font-light">CBT</span>
