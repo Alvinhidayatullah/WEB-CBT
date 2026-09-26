@@ -4,7 +4,7 @@
 
 SecureCBT is a powerful, secure, and modern Next.js application designed to facilitate Computer Based Tests (CBT) for schools and institutions. Built with the Next.js App Router and Prisma (PostgreSQL), SecureCBT ensures high performance, seamless user experience, and rigorous cybersecurity standards to maintain academic integrity.
 
-🌍 **Live Demo:** [https://secure-cbt-alpha.vercel.app/](https://secure-cbt-alpha.vercel.app/)
+🌍 **Live Website:** [https://secure-cbt-alpha.vercel.app/](https://secure-cbt-alpha.vercel.app/)
 
 ## ✨ Key Features
 
