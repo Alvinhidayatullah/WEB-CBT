@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SecureCBT | Sistem CBT Modern",
-  description: "Platform Computer Based Test yang aman dan cepat.",
+  title: "SecureCBT | SMK Yasda",
+  description: "Platform Computer Based Test SMK Yasda yang aman dan cepat.",
 };
 
 export default function RootLayout({
