@@ -38,10 +38,10 @@ export default function Home() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#030305] p-4 font-sans selection:bg-blue-500/30">
 
       {/* Dynamic Animated Orbs - Agricultural Neon Theme */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-emerald-600/20 blur-[120px] animate-pulse pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-blue-600/20 blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }}></div>
-      <div className="absolute top-[20%] right-[10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full bg-violet-600/15 blur-[100px] animate-pulse pointer-events-none" style={{ animationDelay: '4s' }}></div>
-      <div className="absolute bottom-[20%] left-[20%] w-[30vw] h-[30vw] max-w-[300px] max-h-[300px] rounded-full bg-emerald-400/10 blur-[90px] animate-pulse pointer-events-none" style={{ animationDelay: '3s' }}></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-emerald-500/40 blur-[100px] animate-pulse pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full bg-blue-500/30 blur-[100px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-[20%] right-[10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full bg-violet-500/20 blur-[90px] animate-pulse pointer-events-none" style={{ animationDelay: '4s' }}></div>
+      <div className="absolute bottom-[20%] left-[20%] w-[30vw] h-[30vw] max-w-[300px] max-h-[300px] rounded-full bg-emerald-400/25 blur-[80px] animate-pulse pointer-events-none" style={{ animationDelay: '3s' }}></div>
 
       {/* Subtle Grid Pattern for texture */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none" />
@@ -54,7 +54,7 @@ export default function Home() {
             <Image src="/logo-yasda.png" alt="Logo Yasda" width={112} height={112} className="w-full h-full object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-            Secure<span className="text-emerald-500 font-light">CBT</span>
+            Secure<span className="text-blue-500 font-light">CBT</span>
           </h1>
           <p className="text-slate-400 text-sm font-medium tracking-wide">
             Sistem Ujian Yang Paling Aman & Mudah
@@ -109,7 +109,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-8 h-12 text-sm font-bold tracking-wide rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50"
+              className="w-full mt-8 h-12 text-sm font-bold tracking-wide rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
             >
               {loading ? "Otentikasi..." : "Masuk"}
             </button>
