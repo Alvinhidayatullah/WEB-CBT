@@ -103,10 +103,27 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
     const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
-    localStorage.removeItem('exam_violations');
-    localStorage.removeItem(startKey);
-    await submitExam(examId, answers, true, timeSpent);
-    router.replace('/student/dashboard');
+    try {
+      const res = await submitExam(examId, answers, true, timeSpent);
+      if (res.success) {
+        localStorage.removeItem('exam_violations');
+        localStorage.removeItem(startKey);
+        router.replace('/student/dashboard');
+      } else {
+        // Retry logic for server overload
+        alert("Sistem sedang padat (High Traffic). Menunggu 3 detik lalu mencoba mengirim ulang secara otomatis...");
+        setTimeout(() => {
+          setIsSubmitting(false);
+          handleAutoSubmit(); // Retry
+        }, 3000);
+      }
+    } catch (err) {
+      alert("Koneksi terputus. Mencoba mengirim ulang dalam 5 detik...");
+      setTimeout(() => {
+        setIsSubmitting(false);
+        handleAutoSubmit(); // Retry
+      }, 5000);
+    }
   };
 
   const handleSubmit = async () => {
@@ -115,15 +132,20 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
        const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
        const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
-       const res = await submitExam(examId, answers, false, timeSpent);
-       if (res.success) {
-         localStorage.removeItem('exam_violations');
-         localStorage.removeItem(startKey);
-         setShowSubmitModal(false);
-         alert(`Ujian selesai! Pekerjaan Anda telah direkam.`);
-         router.replace('/student/dashboard');
-       } else {
-         alert(res.error || "Gagal mengirim ujian.");
+       try {
+         const res = await submitExam(examId, answers, false, timeSpent);
+         if (res.success) {
+           localStorage.removeItem('exam_violations');
+           localStorage.removeItem(startKey);
+           setShowSubmitModal(false);
+           alert(`Ujian selesai! Pekerjaan Anda telah direkam.`);
+           router.replace('/student/dashboard');
+         } else {
+           alert(res.error || "Gagal mengirim ujian. Silakan coba lagi.");
+           setIsSubmitting(false);
+         }
+       } catch (err) {
+         alert("Koneksi terputus atau server penuh. Pekerjaan Anda aman, silakan klik kirim lagi dalam beberapa detik.");
          setIsSubmitting(false);
        }
   };
