@@ -1,11 +1,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { Users, BookOpen, LogOut, FileText } from "lucide-react";
+import { Users, LogOut, FileText } from "lucide-react";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { QuestionManagement } from "@/components/admin/QuestionManagement";
 import { ProfileSettings } from "@/components/admin/ProfileSettings";
 import { getUsers } from "@/actions/userActions";
-import { getExams, getDashboardStats } from "@/actions/dashboardActions";
+import { getExams } from "@/actions/dashboardActions";
 import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";

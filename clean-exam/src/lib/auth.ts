@@ -24,7 +24,7 @@ export async function verifyToken(session: string | undefined = "") {
       algorithms: ["HS256"],
     });
     return payload;
-  } catch (error) {
+  } catch {
     return null; // Token tidak valid atau kadaluwarsa
   }
 }
@@ -49,14 +49,14 @@ export async function getSession() {
       if (!user || user.sessionVersion !== (payload as any).sessionVersion) {
         return null;
       }
-    } catch (dbError) {
+    } catch {
       // If DB fails (e.g. connection limits hit on refresh), DO NOT log the user out.
       // Fallback to trusting the cryptographically signed JWT.
       console.warn("DB Connection failed in getSession, trusting JWT fallback.");
     }
 
     return payload;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

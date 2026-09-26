@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trash2, UserPlus, Download, CheckSquare } from "lucide-react";
+import { Trash2, UserPlus, Download } from "lucide-react";
 import { createUser, deleteUser, bulkDeleteUsers, getUsers } from "@/actions/userActions";
-import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 
 export interface UIUser {
@@ -20,7 +19,6 @@ export interface UIUser {
 }
 
 export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GURU", "SUPER_ADMIN"] }: { initialUsers: UIUser[], allowedRoles?: string[] }) {
-  const router = useRouter();
   const sortUsers = (userList: UIUser[]) => {
     const roleOrder: Record<string, number> = { SUPER_ADMIN: 1, GURU: 2, MURID: 3 };
     return [...userList].sort((a, b) => {
@@ -68,7 +66,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
           // Update local users safely (optimistic updates take precedence if they just clicked, but for a 15s poll this is usually fine)
           setUsers(sortUsers(filtered));
         }
-      } catch (e) {
+      } catch {
         // ignore errors on polling
       }
     }, 15000);

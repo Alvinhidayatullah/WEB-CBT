@@ -81,7 +81,7 @@ ${studentAnswer}
       throw new Error(data.error?.message || "Invalid response format from 9Router Gateway");
     }
 
-    let text = data.choices[0].message.content.trim();
+    const text = data.choices[0].message.content.trim();
     
     // Gunakan Regex untuk mengekstrak hanya bagian JSON (mengabaikan tag <thinking> dsb)
     const match = text.match(/\{[\s\S]*\}/);

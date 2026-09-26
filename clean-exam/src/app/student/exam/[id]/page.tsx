@@ -31,8 +31,8 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
         
         // Timer Logic
         const startKey = `exam_start_${examId}`;
-        let startTimeStr = localStorage.getItem(startKey);
-        let startTime = startTimeStr ? parseInt(startTimeStr) : Date.now();
+        const startTimeStr = localStorage.getItem(startKey);
+        const startTime = startTimeStr ? parseInt(startTimeStr) : Date.now();
         if (!startTimeStr) {
           localStorage.setItem(startKey, startTime.toString());
         }
@@ -117,7 +117,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           handleAutoSubmit(); // Retry
         }, 3000);
       }
-    } catch (err) {
+    } catch {
       alert("Koneksi terputus. Mencoba mengirim ulang dalam 5 detik...");
       setTimeout(() => {
         setIsSubmitting(false);
@@ -144,7 +144,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
            alert(res.error || "Gagal mengirim ujian. Silakan coba lagi.");
            setIsSubmitting(false);
          }
-       } catch (err) {
+       } catch {
          alert("Koneksi terputus atau server penuh. Pekerjaan Anda aman, silakan klik kirim lagi dalam beberapa detik.");
          setIsSubmitting(false);
        }

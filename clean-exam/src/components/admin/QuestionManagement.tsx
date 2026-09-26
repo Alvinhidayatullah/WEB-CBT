@@ -53,7 +53,6 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   const [examType, setExamType] = useState("Ujian Tengah Semester");
   const [subject, setSubject] = useState("");
   const [targetClasses, setTargetClasses] = useState<string[]>([]);
-  const [classInput, setClassInput] = useState("");
   const [duration, setDuration] = useState(60);
   const [loading, setLoading] = useState(false);
   const [expandedExam, setExpandedExam] = useState<string | null>(null);
@@ -146,7 +145,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       }
 
       let totalEssayScore = 0;
-      let aiFeedbacks: string[] = [];
+      const aiFeedbacks: string[] = [];
 
       for (let i = 0; i < payloads.length; i++) {
         const essay = payloads[i];
@@ -598,7 +597,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
               <div className="space-y-4">
                 {viewingExam.questions?.map((q: any, idx: number) => {
                   let answersObj: Record<string, string> = {};
-                  try { if(viewingResult.answersJson) answersObj = JSON.parse(viewingResult.answersJson); } catch (e) {}
+                  try { if(viewingResult.answersJson) answersObj = JSON.parse(viewingResult.answersJson); } catch {}
                   
                   const studentAns = answersObj[q.id] || "Tidak dijawab";
                   const isEssay = q.type === "ESSAY";
