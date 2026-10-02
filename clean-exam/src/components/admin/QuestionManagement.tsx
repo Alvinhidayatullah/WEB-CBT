@@ -423,7 +423,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                       <h4 className="font-bold text-slate-900 text-lg leading-tight">{exam.examType} - {exam.subject}</h4>
                       <div className="text-slate-500 text-sm mt-1 flex flex-wrap gap-2 items-center">
                         <div className="flex flex-wrap gap-1">
-                          {(exam.targetClass === "Semua Kelas" ? ["Semua Kelas"] : exam.targetClass.split(",")).map((cls, idx) => (
+                          {(exam.targetClass === "Semua Kelas" ? ["Semua Kelas"] : String(exam.targetClass).split(",")).map((cls: string, idx: number) => (
                             <span key={idx} className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-700 shadow-sm">Kelas: {cls.trim()}</span>
                           ))}
                         </div>
