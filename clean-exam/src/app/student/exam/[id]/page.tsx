@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { getExamData, submitExam } from '@/actions/examActions';
 import { Loader2 } from 'lucide-react';
 import { use } from 'react';
+import Image from 'next/image';
 
 export default function ExamRoom({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -190,15 +191,18 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
         <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none -z-10" />
 
         {/* Header Minimalis (Tetap Putih) */}
-        <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-8 py-4 flex flex-wrap gap-4 justify-between items-center sticky top-0 z-20 shadow-sm">
-          <div className="flex items-center gap-3">
-             <div className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight">SecureCBT</div>
-             <div className="h-6 w-px bg-slate-200 hidden md:block"></div>
-             <div className="text-slate-600 font-medium text-sm hidden md:block">{examData.title} - Kelas {examData.targetClass}</div>
+        <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-8 py-3 flex flex-wrap gap-3 justify-between items-center sticky top-0 z-20 shadow-sm w-full">
+          <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+             <Image src="/logo-yasda.png" alt="Logo Yasda" width={32} height={32} className="object-contain shrink-0" />
+             <div className="font-extrabold text-lg md:text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight shrink-0 hidden sm:block">SecureCBT</div>
+             <div className="h-6 w-px bg-slate-200 hidden md:block shrink-0"></div>
+             <div className="text-slate-600 font-medium text-xs md:text-sm truncate">
+                {examData.title} - Kelas {examData.targetClass}
+             </div>
           </div>
-          <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="flex items-center w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
              {timeLeft !== null && (
-               <div className={`font-mono text-lg font-bold px-4 py-1.5 rounded-lg border flex items-center gap-2 ${
+               <div className={`w-full sm:w-auto font-mono text-sm md:text-base font-bold px-3 py-1.5 md:px-4 rounded-lg border flex items-center justify-center gap-2 ${
                  timeLeft < 300 
                    ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' 
                    : 'bg-slate-100 text-slate-700 border-slate-200'
@@ -215,14 +219,14 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           
           {/* Navigasi Soal */}
           <aside className="lg:col-span-1 order-2 lg:order-1 relative z-10">
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 lg:sticky lg:top-28 shadow-xl shadow-black/10">
-              <h3 className="font-bold text-slate-800 mb-6 hidden md:block text-lg border-b border-slate-100 pb-4">Navigasi Soal</h3>
-              <div className="flex overflow-x-auto md:grid md:grid-cols-5 gap-3 md:gap-3 pb-2 md:pb-0 scrollbar-hide">
+            <div className="bg-white rounded-3xl border border-slate-100 p-5 lg:p-6 lg:sticky lg:top-28 shadow-xl shadow-black/10">
+              <h3 className="font-bold text-slate-800 mb-4 md:mb-6 hidden lg:block text-lg border-b border-slate-100 pb-4">Navigasi Soal</h3>
+              <div className="flex overflow-x-auto lg:flex-wrap lg:justify-start gap-2 pb-2 md:pb-0 scrollbar-hide">
                 {examData.questions.map((q: any, idx: number) => (
                   <button
                     key={q.id}
                     onClick={() => setCurrentQuestion(idx)}
-                    className={`shrink-0 w-12 h-12 md:w-11 md:h-11 rounded-xl flex items-center justify-center font-bold text-sm transition-all shadow-sm ${
+                    className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm transition-all shadow-sm ${
                       currentQuestion === idx 
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-600 ring-offset-2' 
                         : markedQuestions[q.id]
@@ -240,10 +244,10 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           </aside>
 
           {/* Area Soal */}
-          <section className="lg:col-span-3 order-1 lg:order-2 relative z-10">
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 md:p-10 lg:p-12 shadow-xl shadow-black/10 min-h-[500px] flex flex-col">
-              <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-100">
-                 <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Soal Nomor {currentQuestion + 1}</h2>
+          <section className="lg:col-span-3 order-1 lg:order-2 relative z-10 min-w-0">
+            <div className="bg-white rounded-3xl border border-slate-100 p-5 md:p-10 lg:p-12 shadow-xl shadow-black/10 min-h-[500px] flex flex-col">
+              <div className="flex flex-wrap gap-4 justify-between items-center mb-6 pb-6 border-b border-slate-100">
+                 <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Soal Nomor {currentQuestion + 1}</h2>
                  <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">Bobot: {(100 / examData.questions.length).toFixed(1).replace(/\.0$/, '')}</span>
               </div>
               
