@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
-import { AlertTriangle, ArrowLeft, ShieldAlert } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, ShieldX } from 'lucide-react';
 import { headers } from 'next/headers';
 
 export default async function ForbiddenPage() {
@@ -9,63 +9,73 @@ export default async function ForbiddenPage() {
   const forwardedFor = headersList.get('x-forwarded-for');
   const realIp = headersList.get('x-real-ip');
   
-  // Extract the first IP if there are multiple (e.g., "client, proxy1, proxy2")
   const rawIp = forwardedFor ? forwardedFor.split(',')[0].trim() : realIp;
   const displayIp = rawIp || '127.0.0.1';
 
   return (
-    <div className="min-h-screen bg-[#050507] flex flex-col items-center justify-center relative overflow-hidden selection:bg-red-500/30 p-4">
+    <div className="min-h-screen bg-[#030305] flex flex-col items-center justify-center relative overflow-hidden font-sans p-4">
 
-      {/* Background Gradients & Pulses */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-red-900/20 blur-[150px] rounded-full animate-pulse pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-orange-900/10 blur-[150px] rounded-full pointer-events-none" style={{ animation: 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+      {/* Subtle Enterprise Background (Same as Login/Dashboard) */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-600/10 blur-3xl transform-gpu pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-slate-600/10 blur-3xl transform-gpu pointer-events-none"></div>
+      
+      {/* Clean Grid Pattern */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none" />
 
-      {/* Cyber Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_70%)] pointer-events-none" />
+      {/* Main Glass Card - Enterprise Style */}
+      <div className="z-10 w-full max-w-[460px] bg-[#0a0a0c]/80 backdrop-blur-3xl rounded-[2rem] shadow-2xl border border-white/10 overflow-hidden ring-1 ring-white/5 relative text-center pb-8 pt-12 px-8">
+        
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none"></div>
 
-      {/* Main Glass Card */}
-      <div className="z-10 bg-slate-900/40 backdrop-blur-2xl border border-red-500/20 p-8 md:p-14 rounded-3xl md:rounded-[2.5rem] shadow-[0_0_80px_rgba(220,38,38,0.15)] w-full max-w-lg text-center relative overflow-hidden group">
-
-        {/* Hover Flare */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-red-500/0 via-red-500/5 to-orange-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-
-        {/* Floating Shield Icon */}
-        <div className="relative mx-auto w-28 h-28 bg-red-950/50 rounded-3xl flex items-center justify-center mb-8 border border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.3)] rotate-3 group-hover:rotate-6 transition-transform duration-500">
-          <div className="absolute inset-0 bg-red-500/20 rounded-3xl animate-ping opacity-20" style={{ animationDuration: '3s' }} />
-          <ShieldAlert className="w-14 h-14 text-red-500 relative z-10 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
-          <AlertTriangle className="w-7 h-7 text-orange-400 absolute -bottom-2 -right-2 drop-shadow-md animate-bounce" />
+        {/* Logo and Icon area */}
+        <div className="relative z-10 flex flex-col items-center mb-8">
+           <div className="w-20 h-20 mb-6 drop-shadow-xl relative">
+             <Image src="/logo-yasda.png" alt="Logo Yasda" fill className="object-contain" priority />
+           </div>
+           <div className="w-14 h-14 bg-slate-800/50 rounded-2xl flex items-center justify-center border border-slate-700/50 shadow-inner">
+             <ShieldX className="w-6 h-6 text-slate-300" />
+           </div>
         </div>
 
-        {/* 403 Title */}
-        <h1 className="text-6xl md:text-7xl font-black mb-2 tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-red-400 via-red-500 to-red-800 drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]">
-          403
-        </h1>
-        <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-widest uppercase">
-          Access Denied
-        </h2>
+        {/* Content */}
+        <div className="relative z-10">
+          <h1 className="text-3xl font-extrabold text-white tracking-tight mb-3">
+            Akses Ditolak
+          </h1>
+          <div className="w-12 h-1 bg-blue-600 rounded-full mx-auto mb-6"></div>
+          
+          <p className="text-slate-400 text-sm leading-relaxed mb-6">
+            Maaf, kredensial Anda tidak memiliki izin otorisasi yang cukup untuk mengakses halaman ini.
+          </p>
+          
+          <div className="bg-black/30 border border-white/5 rounded-xl p-4 mb-8 text-left flex flex-col gap-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500 font-medium">Error Code</span>
+              <span className="text-slate-300 font-mono">HTTP_403_FORBIDDEN</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500 font-medium">Trace IP</span>
+              <span className="text-slate-300 font-mono">{displayIp}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500 font-medium">Timestamp</span>
+              <span className="text-slate-300 font-mono">{new Date().toISOString().split('T')[0]}</span>
+            </div>
+          </div>
 
-        {/* Message */}
-        <p className="text-slate-400 mb-10 text-sm md:text-base leading-relaxed font-medium">
-          Profil dikenali. Otoritas tidak mencukupi. Silakan ajukan peningkatan akses.<br />
-          <span className="text-red-400/90 text-[11px] md:text-sm mt-4 block font-mono bg-red-950/40 py-2.5 px-2 rounded-lg border border-red-900/50 shadow-inner">
-            <span className="animate-pulse inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-            ANOMALI DARI IP [{displayIp}] DIREKAM
-          </span>
-        </p>
-
-        {/* Action Button */}
-        <Link href="/">
-          <Button className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white border-0 flex items-center justify-center gap-3 py-7 rounded-2xl font-bold text-lg shadow-[0_0_30px_rgba(239,68,68,0.25)] hover:shadow-[0_0_50px_rgba(239,68,68,0.4)] transition-all duration-300 group/btn relative overflow-hidden">
-            <span className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-in-out" />
-            <ArrowLeft className="w-5 h-5 group-hover/btn:-translate-x-1 transition-transform" />
-            Evakuasi ke Beranda
-          </Button>
-        </Link>
+          {/* Action Button */}
+          <Link href="/">
+            <button className="w-full h-12 flex items-center justify-center gap-2 bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+              <ArrowLeft className="w-4 h-4" />
+              Kembali ke Beranda
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Footer Branding */}
-      <div className="absolute bottom-6 text-slate-600/50 text-[10px] font-mono tracking-[0.3em] uppercase">
-        SecureCBT Security Gateway • OWASP Protected
+      <div className="absolute bottom-6 text-slate-600/40 text-[11px] font-medium tracking-widest uppercase">
+        SecureCBT Enterprise System
       </div>
     </div>
   );
