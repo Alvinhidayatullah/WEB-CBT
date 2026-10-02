@@ -28,9 +28,11 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
   const lastViolationTime = React.useRef(0);
 
   useEffect(() => {
+    let isUnloading = false;
+
     // 1. Detect Visibility Change & Blur (Tab Switch / Minimize)
     const handleVisibilityChange = () => {
-      if (document.hidden) {
+      if (document.hidden && !isUnloading) {
         handleViolation();
       }
     };
@@ -103,6 +105,10 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
 
     // 6. Mencegah Refresh / Tutup Tab
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      isUnloading = true;
+      // Jika pengguna membatalkan reload, kita perlu mereset isUnloading
+      setTimeout(() => { isUnloading = false; }, 2000); 
+      
       e.preventDefault();
       e.returnValue = 'Ujian sedang berlangsung, yakin ingin keluar?';
       return e.returnValue;
