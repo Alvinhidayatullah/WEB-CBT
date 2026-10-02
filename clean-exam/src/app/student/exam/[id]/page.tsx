@@ -305,7 +305,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
               </div>
               
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 mb-8 shadow-sm">
-                <div className="text-lg text-slate-800 leading-relaxed">
+                <div className="text-lg text-slate-800 leading-relaxed whitespace-pre-wrap">
                   {question.text}
                 </div>
                 {question.imageUrl && (
@@ -349,7 +349,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                           onChange={() => handleSelect(opt.originalValue)}
                         />
                         <span className={`text-base leading-relaxed flex flex-col gap-2 ${isSelected ? 'text-blue-900 font-semibold' : 'text-slate-700'}`}>
-                           <div>
+                           <div className="whitespace-pre-wrap">
                              <span className={`font-bold mr-2 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`}>{opt.label}.</span> 
                              {opt.text}
                            </div>

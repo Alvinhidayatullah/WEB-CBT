@@ -694,7 +694,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                   
                   return (
                     <div key={q.id} className={`p-4 border rounded-xl ${!isEssay && studentAns !== "Tidak dijawab" ? (isCorrect ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30') : 'border-slate-200 bg-slate-50/50'}`}>
-                      <p className="font-medium text-slate-900 mb-2">
+                      <p className="font-medium text-slate-900 mb-2 whitespace-pre-wrap">
                         <span className="font-bold text-blue-600 mr-2">{idx + 1}.</span>
                         <span className="text-xs bg-slate-200 px-2 py-0.5 rounded mr-2 font-bold">{isEssay ? 'ESAI' : 'PG'}</span>
                         {q.text}
@@ -704,7 +704,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                         <div>
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Jawaban Siswa:</span>
                           <div className="flex items-start justify-between gap-4">
-                            <p className={`text-slate-800 ${isEssay ? 'italic' : 'font-bold'}`}>{displayAnswer}</p>
+                            <p className={`text-slate-800 whitespace-pre-wrap ${isEssay ? 'italic' : 'font-bold'}`}>{displayAnswer}</p>
                             {!isEssay && studentAns !== "Tidak dijawab" && (
                               <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-md ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                 {isCorrect ? 'BENAR' : 'SALAH'}
