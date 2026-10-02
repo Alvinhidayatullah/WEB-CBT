@@ -260,12 +260,12 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           <aside className="lg:col-span-1 order-2 lg:order-1 relative z-10">
             <div className="bg-white rounded-3xl border border-slate-100 p-5 lg:p-6 lg:sticky lg:top-28 shadow-xl shadow-black/10">
               <h3 className="font-bold text-slate-800 mb-4 md:mb-6 hidden lg:block text-lg border-b border-slate-100 pb-4">Navigasi Soal</h3>
-              <div className="flex overflow-x-auto lg:flex-wrap lg:justify-start gap-2 pb-2 md:pb-0 scrollbar-hide">
+              <div className="flex overflow-x-auto lg:grid lg:grid-cols-5 gap-2 lg:gap-2 xl:gap-3 pb-2 md:pb-0 scrollbar-hide">
                 {examData.questions.map((q: any, idx: number) => (
                   <button
                     key={q.id}
                     onClick={() => setCurrentQuestion(idx)}
-                    className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm transition-all shadow-sm ${
+                    className={`shrink-0 w-11 h-11 lg:w-full lg:aspect-square lg:h-auto rounded-xl flex items-center justify-center font-bold text-sm transition-all shadow-sm ${
                       currentQuestion === idx 
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-600 ring-offset-2' 
                         : markedQuestions[q.id]
