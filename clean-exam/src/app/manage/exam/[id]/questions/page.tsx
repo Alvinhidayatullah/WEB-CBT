@@ -274,7 +274,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Kelola Soal</h1>
-              <p className="text-slate-500 text-sm">{exam.examType} - {exam.subject}</p>
+              <p className="text-slate-500 text-sm">{exam.examType} - {exam.subject} - Kelas {exam.targetClass}</p>
             </div>
             <div className="flex gap-2 mt-4 md:mt-0">
               <input type="file" accept=".xlsx, .xls" className="hidden" ref={fileInputRef} onChange={handleImportExcel} />
