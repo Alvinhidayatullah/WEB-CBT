@@ -86,11 +86,35 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
       }
     };
 
+    // 5. Mencegah tombol Back / Swipe Back di Mobile
+    // Push dummy state untuk menjebak tombol back
+    window.history.pushState(null, document.title, window.location.href);
+    
+    const handlePopState = (e: PopStateEvent) => {
+      const leave = window.confirm("Peringatan: Apakah Anda yakin ingin meninggalkan halaman ujian? Pekerjaan Anda bisa hilang atau langsung diselesaikan!");
+      if (leave) {
+        window.removeEventListener('popstate', handlePopState);
+        window.history.back();
+      } else {
+        // Jika batal keluar, pasang lagi jebakan state-nya
+        window.history.pushState(null, document.title, window.location.href);
+      }
+    };
+
+    // 6. Mencegah Refresh / Tutup Tab
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'Ujian sedang berlangsung, yakin ingin keluar?';
+      return e.returnValue;
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('copy', handleCopyPaste);
     document.addEventListener('paste', handleCopyPaste);
     document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -98,6 +122,8 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
       document.removeEventListener('copy', handleCopyPaste);
       document.removeEventListener('paste', handleCopyPaste);
       document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [router, onAutoSubmit]);
 
