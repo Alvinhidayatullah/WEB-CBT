@@ -392,10 +392,24 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
         <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
           <FolderEdit className="w-5 h-5 text-indigo-600" /> Daftar Ujian Aktif
         </h3>
-        <div className="space-y-4">
-          {localExams.map((exam) => {
-            const isExpanded = expandedExam === exam.id;
-            return (
+        <div className="space-y-8">
+          {Object.entries(
+            localExams.reduce((groups: any, exam) => {
+              const type = exam.examType || "Lainnya";
+              if (!groups[type]) groups[type] = [];
+              groups[type].push(exam);
+              return groups;
+            }, {})
+          ).map(([type, examsOfType]: [string, any]) => (
+            <div key={type} className="space-y-4">
+              <h4 className="font-semibold text-slate-800 text-lg flex items-center gap-2 border-b border-slate-200 pb-2">
+                <span className="w-1.5 h-5 bg-indigo-500 rounded-full"></span>
+                {type}
+              </h4>
+              <div className="space-y-4">
+                {examsOfType.map((exam: any) => {
+                  const isExpanded = expandedExam === exam.id;
+                  return (
               <div key={exam.id} className="border border-slate-200/80 rounded-xl bg-white shadow-sm overflow-hidden transition-all hover:border-slate-300">
                 <div 
                   className="bg-slate-50 p-4 md:p-5 flex flex-col md:flex-row justify-between items-start md:items-center cursor-pointer gap-4 md:gap-0"
@@ -584,6 +598,9 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
               </div>
             );
           })}
+              </div>
+            </div>
+          ))}
           {localExams.length === 0 && (
             <div className="text-center py-10 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
               <p className="text-slate-500 text-sm">Belum ada sesi ujian yang dibuat.</p>
