@@ -71,8 +71,22 @@ export default async function ForbiddenPage() {
       </div>
 
       {/* Footer Branding */}
-      <div className="absolute bottom-6 text-slate-600/40 text-[11px] font-medium tracking-widest uppercase">
-        SecureCBT Enterprise System
+      <div className="absolute bottom-6 text-[11px] font-bold tracking-widest uppercase">
+        <span 
+          className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500"
+          style={{
+            animation: 'shimmer 4s linear infinite',
+            backgroundSize: '200% auto'
+          }}
+        >
+          SMK YASDA - IT Security
+        </span>
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+          }
+        `}} />
       </div>
     </div>
   );
