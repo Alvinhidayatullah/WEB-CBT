@@ -47,11 +47,12 @@ export default async function AdminDashboard() {
   const totalStudents = users.filter((u: any) => u.role === "MURID").length;
   const totalRealUsers = users.length;
   
-  const availableClasses = Array.from(new Set(
+  const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+  const availableClasses = (Array.from(new Set(
     users.filter((u: any) => u.role === "MURID")
          .map((u: any) => u.className)
          .filter((c: any) => typeof c === 'string' && c.trim() !== '')
-  )) as string[];
+  )) as string[]).sort(collator.compare);
 
   return (
     <div className="min-h-screen bg-slate-50/50 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/50 via-slate-50 to-slate-50">

@@ -41,7 +41,8 @@ export default async function TeacherDashboard() {
   const rawExams = await getExams();
   const exams = JSON.parse(JSON.stringify(rawExams));
   
-  const availableClasses = userClasses !== "-" ? userClasses.split(",").map(c => c.trim()) : [];
+  const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+  const availableClasses = (userClasses !== "-" ? userClasses.split(",").map(c => c.trim()) : []).sort(collator.compare);
   
   return (
     <div className="min-h-screen bg-slate-50/50 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/50 via-slate-50 to-slate-50">
