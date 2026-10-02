@@ -90,12 +90,24 @@ export async function getExamData(examId: string) {
       return null;
     }
 
-    // Fisher-Yates Shuffle
-    const shuffledQuestions = [...exam.questions];
-    for (let i = shuffledQuestions.length - 1; i > 0; i--) {
+    // Pisahkan PG dan Essay
+    const pgQuestions = exam.questions.filter((q: any) => q.type !== 'ESSAY');
+    const essayQuestions = exam.questions.filter((q: any) => q.type === 'ESSAY');
+
+    // Fisher-Yates Shuffle khusus PG
+    for (let i = pgQuestions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+      [pgQuestions[i], pgQuestions[j]] = [pgQuestions[j], pgQuestions[i]];
     }
+
+    // Fisher-Yates Shuffle khusus Essay
+    for (let i = essayQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [essayQuestions[i], essayQuestions[j]] = [essayQuestions[j], essayQuestions[i]];
+    }
+
+    // Gabungkan kembali: PG terlebih dahulu, lalu Essay
+    const shuffledQuestions = [...pgQuestions, ...essayQuestions];
 
     return {
       id: exam.id,
