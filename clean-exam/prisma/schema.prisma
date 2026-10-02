@@ -29,6 +29,7 @@ model Exam {
   token       String     @unique @default(uuid()) // Token akses ujian
   duration    Int        @default(60) // Durasi ujian dalam menit
   isActive    Boolean    @default(true)
+  isAIGradingEnabled Boolean @default(true) // Toggle AI
   createdAt   DateTime   @default(now())
   updatedAt   DateTime     @updatedAt
   questions   Question[]

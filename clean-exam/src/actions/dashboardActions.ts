@@ -207,7 +207,7 @@ export async function getPendingResultIds() {
   }
 }
 
-export async function createExam(examType: string, subject: string, targetClass: string, duration: number = 60) {
+export async function createExam(examType: string, subject: string, targetClass: string, duration: number = 60, isAIGradingEnabled: boolean = true) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
@@ -262,7 +262,8 @@ export async function createExam(examType: string, subject: string, targetClass:
         subject: finalSubject, 
         targetClass: finalTargetClass,
         token: examToken,
-        duration
+        duration,
+        isAIGradingEnabled
       } 
     });
     return { success: true, exam: newExam };
@@ -271,7 +272,7 @@ export async function createExam(examType: string, subject: string, targetClass:
   }
 }
 
-export async function updateExam(id: string, data: { examType?: string, subject?: string, targetClass?: string, duration?: number }) {
+export async function updateExam(id: string, data: { examType?: string, subject?: string, targetClass?: string, duration?: number, isAIGradingEnabled?: boolean }) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     const session = await getSession();
@@ -313,7 +314,8 @@ export async function updateExam(id: string, data: { examType?: string, subject?
         ...(data.examType && { examType: data.examType }),
         ...(finalSubject && { subject: finalSubject }),
         ...(finalTargetClass && { targetClass: finalTargetClass }),
-        ...(data.duration && { duration: data.duration })
+        ...(data.duration && { duration: data.duration }),
+        ...(data.isAIGradingEnabled !== undefined && { isAIGradingEnabled: data.isAIGradingEnabled })
       }
     });
     return { success: true, exam: updated };

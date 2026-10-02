@@ -139,8 +139,9 @@ export async function submitExam(examId: string, answers: Record<string, string>
       return { success: false, error: "Anda tidak memiliki akses ke ujian ini." };
     }
 
-    let totalEarnedWeights = 0;
-    let totalMaxWeights = 0;
+    let totalEarnedPG = 0;
+    let totalMaxPG = 0;
+    let totalMaxEssay = 0;
     
     // Untuk job AI
     let hasEssay = false;
@@ -151,7 +152,7 @@ export async function submitExam(examId: string, answers: Record<string, string>
       if (q.type === "ESSAY") {
         hasEssay = true;
         const essayMaxW = q.weightA && q.weightA > 0 ? q.weightA : 100;
-        totalMaxWeights += essayMaxW;
+        totalMaxEssay += essayMaxW;
         
         essayPayloads.push({
           questionText: q.text,
@@ -162,7 +163,7 @@ export async function submitExam(examId: string, answers: Record<string, string>
       } else {
         const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
         const questionMax = maxW > 0 ? maxW : 100; // Default 100 jika lupa set bobot
-        totalMaxWeights += questionMax;
+        totalMaxPG += questionMax;
 
         let earned = 0;
         if (studentAnswer === "A") earned = q.weightA || 0;
@@ -170,12 +171,19 @@ export async function submitExam(examId: string, answers: Record<string, string>
         else if (studentAnswer === "C") earned = q.weightC || 0;
         else if (studentAnswer === "D") earned = q.weightD || 0;
 
-        totalEarnedWeights += earned;
+        totalEarnedPG += earned;
       }
     });
 
-    const score = totalMaxWeights > 0 ? (totalEarnedWeights / totalMaxWeights) * 100 : 0;
-    const finalScore = parseFloat(score.toFixed(2));
+    // Kalkulasi skor PG (Maksimal 60 jika ada essay, 100 jika full PG)
+    const pgWeight = hasEssay ? 60 : 100;
+    const pgScore = totalMaxPG > 0 ? (totalEarnedPG / totalMaxPG) * pgWeight : 0;
+    const finalScore = parseFloat(pgScore.toFixed(2));
+
+    let finalGradingStatus = "GRADED";
+    if (hasEssay) {
+      finalGradingStatus = exam.isAIGradingEnabled ? "PENDING" : "MANUAL_REVIEW";
+    }
 
     const resultRecord = await prisma.examResult.create({
       data: {
@@ -185,17 +193,17 @@ export async function submitExam(examId: string, answers: Record<string, string>
         isCheated: isCheated,
         timeSpent: timeSpent,
         answersJson: JSON.stringify(answers),
-        gradingStatus: hasEssay ? "PENDING" : "GRADED"
+        gradingStatus: finalGradingStatus
       }
     });
     
     if (hasEssay && essayPayloads.length > 0) {
       // AI Grading ditunda dan akan dikerjakan secara background (antrean)
       // oleh Dasbor Admin untuk menghindari Vercel 10s Timeout.
-      return { success: true, score: finalScore, isPending: true };
+      return { success: true, score: finalScore, isPending: true, gradingStatus: finalGradingStatus };
     }
 
-    return { success: true, score: finalScore, isPending: false };
+    return { success: true, score: finalScore, isPending: false, gradingStatus: finalGradingStatus };
   } catch (error) {
     // Check if unique constraint error
     if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'P2002') {

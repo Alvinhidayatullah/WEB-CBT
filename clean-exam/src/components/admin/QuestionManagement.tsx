@@ -39,6 +39,7 @@ export interface UIExam {
   token: string;
   duration: number;
   isActive: boolean;
+  isAIGradingEnabled: boolean;
   questions?: UIQuestion[];
   results?: UIExamResult[];
 }
@@ -54,6 +55,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   const [subject, setSubject] = useState("");
   const [targetClasses, setTargetClasses] = useState<string[]>([]);
   const [duration, setDuration] = useState(60);
+  const [isAIGradingEnabled, setIsAIGradingEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [expandedExam, setExpandedExam] = useState<string | null>(null);
 
@@ -183,12 +185,13 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     if (!subject.trim()) return;
     setLoading(true);
     const finalTargetClass = targetClasses.length > 0 ? targetClasses.join(", ") : "Semua Kelas";
-    const res = await createExam(examType, subject, finalTargetClass, duration);
+    const res = await createExam(examType, subject, finalTargetClass, duration, isAIGradingEnabled);
     if (res.success && res.exam) {
       setLocalExams([res.exam, ...localExams]);
       setSubject("");
       setTargetClasses([]);
       setDuration(60);
+      setIsAIGradingEnabled(true);
     } else {
       alert(res.error || "Gagal membuat sesi ujian");
     }
@@ -234,7 +237,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       "Nilai PG & Total": res.score,
       "Nilai Esai (AI)": res.essayScore !== null ? res.essayScore : "-",
       "Ulasan AI": res.aiFeedback || "-",
-      "Status Ujian": res.gradingStatus === "PENDING" ? "Menunggu AI" : "Selesai",
+      "Status Ujian": res.gradingStatus === "PENDING" ? "Menunggu AI" : res.gradingStatus === "MANUAL_REVIEW" ? "Menunggu Koreksi Guru" : "Selesai",
       "Indikasi Curang": res.isCheated ? "Ya" : "Tidak"
     }));
 
@@ -332,6 +335,17 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                 onChange={(e) => setDuration(parseInt(e.target.value) || 60)}
                 required
               />
+            </div>
+            <div className="md:col-span-1 flex items-end">
+              <label className="flex items-center gap-2 cursor-pointer mb-2">
+                <input 
+                  type="checkbox" 
+                  checked={isAIGradingEnabled}
+                  onChange={(e) => setIsAIGradingEnabled(e.target.checked)}
+                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-slate-700">Gunakan Asisten AI (Auto-Grading)</span>
+              </label>
             </div>
             <div className="md:col-span-3 flex justify-end border-t border-slate-100 pt-5 mt-2">
               <Button type="submit" disabled={loading || !subject.trim()} className="w-full md:w-auto font-medium shadow-sm">
@@ -466,6 +480,8 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                     <div className="flex flex-col gap-1 items-start">
                                       {res.gradingStatus === "PENDING" ? (
                                         <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center w-24">Menunggu AI</span>
+                                      ) : res.gradingStatus === "MANUAL_REVIEW" ? (
+                                        <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded font-semibold text-center w-24">Perlu Koreksi</span>
                                       ) : (
                                         <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center w-24">Selesai</span>
                                       )}
@@ -497,21 +513,23 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                       >
                                         Hapus
                                       </button>
-                                      <button 
-                                        onClick={() => handleProcessAI(res.id)}
-                                        disabled={activeBatch.has(res.id)}
-                                        className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors disabled:opacity-50 whitespace-nowrap"
-                                        title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
-                                      >
-                                        {activeBatch.has(res.id) ? (
-                                          processingProgress[res.id] || "Memproses..."
-                                        ) : (
-                                          <>
-                                            <Bot className="w-3.5 h-3.5" />
-                                            {res.gradingStatus === "PENDING" ? "Proses AI" : "Nilai Ulang AI"}
-                                          </>
-                                        )}
-                                      </button>
+                                      {res.gradingStatus !== "MANUAL_REVIEW" && (
+                                        <button 
+                                          onClick={() => handleProcessAI(res.id)}
+                                          disabled={activeBatch.has(res.id)}
+                                          className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                          title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
+                                        >
+                                          {activeBatch.has(res.id) ? (
+                                            processingProgress[res.id] || "Memproses..."
+                                          ) : (
+                                            <>
+                                              <Bot className="w-3.5 h-3.5" />
+                                              {res.gradingStatus === "PENDING" ? "Proses AI" : "Nilai Ulang AI"}
+                                            </>
+                                          )}
+                                        </button>
+                                      )}
                                     </div>
                                   </td>
                                 </tr>
