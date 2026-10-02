@@ -301,7 +301,21 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
             <div className="bg-white rounded-3xl border border-slate-100 p-5 md:p-10 lg:p-12 shadow-xl shadow-black/10 min-h-[500px] flex flex-col">
               <div className="flex flex-wrap gap-4 justify-between items-center mb-6 pb-6 border-b border-slate-100">
                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Soal Nomor {currentQuestion + 1}</h2>
-                 <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">Bobot: {(100 / examData.questions.length).toFixed(1).replace(/\.0$/, '')}</span>
+                 <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">
+                   Bobot: {
+                     (() => {
+                       const totalEssay = examData.questions.filter((q: any) => q.type === 'ESSAY').length;
+                       const totalPG = examData.questions.length - totalEssay;
+                       const isEssay = question.type === 'ESSAY';
+                       
+                       if (totalEssay === 0) return (100 / totalPG).toFixed(1).replace(/\.0$/, '');
+                       
+                       return isEssay 
+                         ? (40 / totalEssay).toFixed(1).replace(/\.0$/, '') 
+                         : (60 / totalPG).toFixed(1).replace(/\.0$/, '');
+                     })()
+                   }
+                 </span>
               </div>
               
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 mb-8 shadow-sm">
