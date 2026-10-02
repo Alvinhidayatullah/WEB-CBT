@@ -176,6 +176,23 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
        }
   };
 
+  const getRemainingTime = () => {
+    if (!examData) return 0;
+    const startKey = `exam_start_${examId}`;
+    const startTimeStr = localStorage.getItem(startKey);
+    if (!startTimeStr) return initialTimeLeft || 0;
+    const startTime = parseInt(startTimeStr);
+    const durationMs = (examData.duration || 60) * 60 * 1000;
+    const endTime = startTime + durationMs;
+    return Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -394,7 +411,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
               
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col items-center justify-center mb-8">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Sisa Waktu</span>
-                <span className="text-4xl font-mono font-black text-slate-800 tracking-tight">{timeLeft !== null ? formatTime(timeLeft) : '00:00'}</span>
+                <span className="text-4xl font-mono font-black text-slate-800 tracking-tight">{formatTime(getRemainingTime())}</span>
               </div>
 
               <div className="flex flex-col gap-3">
