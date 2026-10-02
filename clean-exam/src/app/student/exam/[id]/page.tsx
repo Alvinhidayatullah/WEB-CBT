@@ -112,13 +112,13 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
       if (res.success) {
         localStorage.removeItem('exam_violations');
         localStorage.removeItem(startKey);
-        router.replace('/student/dashboard');
+        window.location.href = '/student/dashboard';
       } else {
         if (res.error?.includes("sudah mensubmit") || res.error?.includes("tidak ditemukan") || res.error?.includes("tidak memiliki akses")) {
             localStorage.removeItem('exam_violations');
             localStorage.removeItem(startKey);
             alert(res.error);
-            router.replace('/student/dashboard');
+            window.location.href = '/student/dashboard';
             return;
         }
         // Retry logic for server overload or general errors
@@ -150,13 +150,13 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
            localStorage.removeItem(startKey);
            setShowSubmitModal(false);
            alert(`Ujian selesai! Pekerjaan Anda telah direkam.`);
-           router.replace('/student/dashboard');
+           window.location.href = '/student/dashboard';
          } else {
            if (res.error?.includes("sudah mensubmit") || res.error?.includes("tidak ditemukan")) {
                localStorage.removeItem('exam_violations');
                localStorage.removeItem(startKey);
                alert(res.error);
-               router.replace('/student/dashboard');
+               window.location.href = '/student/dashboard';
                return;
            }
            alert(res.error || "Gagal mengirim ujian. Silakan coba lagi.");
