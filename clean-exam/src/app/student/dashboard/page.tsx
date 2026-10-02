@@ -50,10 +50,10 @@ export default function StudentDashboard() {
       {/* Fixed Background to prevent white space on scroll */}
       <div className="fixed inset-0 bg-[#030305] -z-20"></div>
       
-      {/* Dynamic Animated Orbs - Optimized */}
-      <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-600/15 blur-3xl transform-gpu pointer-events-none -z-10"></div>
-      <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-indigo-600/15 blur-3xl transform-gpu pointer-events-none -z-10"></div>
-      <div className="fixed top-[20%] right-[10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full bg-violet-600/15 blur-3xl transform-gpu pointer-events-none -z-10"></div>
+      {/* Dynamic Animated Orbs - Ultra Optimized (Radial Gradients) */}
+      <div className="fixed top-[-20%] left-[-20%] w-[70vw] h-[70vw] max-w-[600px] max-h-[600px] bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.1)_0%,transparent_60%)] pointer-events-none -z-10"></div>
+      <div className="fixed bottom-[-20%] right-[-20%] w-[70vw] h-[70vw] max-w-[600px] max-h-[600px] bg-[radial-gradient(circle_at_center,rgba(79,70,229,0.1)_0%,transparent_60%)] pointer-events-none -z-10"></div>
+      <div className="fixed top-[20%] right-[-10%] w-[60vw] h-[60vw] max-w-[500px] max-h-[500px] bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.1)_0%,transparent_60%)] pointer-events-none -z-10"></div>
 
       {/* Subtle Grid Pattern */}
       <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none -z-10" />
@@ -65,7 +65,7 @@ export default function StudentDashboard() {
           <p className="text-slate-400 text-sm font-medium tracking-wide">Masukkan Token Ujian dari Guru</p>
         </div>
 
-        <div className="w-full shadow-2xl border border-white/10 bg-[#0a0a0c]/80 backdrop-blur-3xl rounded-[2rem] overflow-hidden ring-1 ring-white/5 p-6 md:p-8 relative">
+        <div className="w-full shadow-2xl border border-white/10 bg-[#0a0a0c]/90 md:bg-[#0a0a0c]/80 backdrop-blur-md md:backdrop-blur-xl rounded-[2rem] overflow-hidden ring-1 ring-white/5 p-6 md:p-8 relative">
           <form onSubmit={handleJoinExamClick} className="space-y-6">
                 <div className="flex justify-center mb-5">
                   <div className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 p-4 rounded-2xl border border-blue-500/30">

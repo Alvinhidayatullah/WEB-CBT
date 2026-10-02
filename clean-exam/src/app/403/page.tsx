@@ -15,15 +15,15 @@ export default async function ForbiddenPage() {
   return (
     <div className="min-h-screen bg-[#030305] flex flex-col items-center justify-center relative overflow-hidden font-sans p-4">
 
-      {/* Subtle Enterprise Background (Same as Login/Dashboard) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-600/10 blur-3xl transform-gpu pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-slate-600/10 blur-3xl transform-gpu pointer-events-none"></div>
+      {/* Subtle Enterprise Background - Ultra Optimized */}
+      <div className="absolute top-[-20%] left-[-20%] w-[70vw] h-[70vw] max-w-[600px] max-h-[600px] bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.08)_0%,transparent_60%)] pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-20%] w-[70vw] h-[70vw] max-w-[600px] max-h-[600px] bg-[radial-gradient(circle_at_center,rgba(71,85,105,0.1)_0%,transparent_60%)] pointer-events-none"></div>
 
       {/* Clean Grid Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none" />
 
       {/* Main Glass Card - Enterprise Style */}
-      <div className="z-10 w-full max-w-[460px] bg-[#0a0a0c]/80 backdrop-blur-3xl rounded-[2rem] shadow-2xl border border-white/10 overflow-hidden ring-1 ring-white/5 relative text-center pb-8 pt-12 px-8">
+      <div className="z-10 w-full max-w-[460px] bg-[#0a0a0c]/90 md:bg-[#0a0a0c]/80 backdrop-blur-md md:backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/10 overflow-hidden ring-1 ring-white/5 relative text-center pb-8 pt-12 px-8">
 
         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none"></div>
 
