@@ -146,6 +146,17 @@ export async function getExams() {
        });
     }
 
+    // Urutkan soal di setiap ujian: PG terlebih dahulu, lalu ESSAY
+    exams.forEach(exam => {
+      if (exam.questions && Array.isArray(exam.questions)) {
+        exam.questions.sort((a, b) => {
+          if (a.type !== 'ESSAY' && b.type === 'ESSAY') return -1;
+          if (a.type === 'ESSAY' && b.type !== 'ESSAY') return 1;
+          return 0; // Pertahankan urutan asli jika tipenya sama
+        });
+      }
+    });
+
     return exams;
   } catch {
     return [];
