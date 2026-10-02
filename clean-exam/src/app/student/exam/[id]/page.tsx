@@ -62,7 +62,6 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [markedQuestions, setMarkedQuestions] = useState<Record<string, boolean>>({});
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [shuffledOptions, setShuffledOptions] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadExam() {
@@ -91,30 +90,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
     loadExam();
   }, [examId]);
 
-  useEffect(() => {
-    if (!examData || !examData.questions || examData.questions.length === 0) return;
-    const q = examData.questions[currentQuestion];
-    if (q.type === 'ESSAY') return;
 
-    const opts = [
-      { originalValue: "A", text: q.optionA, img: q.optionAImg },
-      { originalValue: "B", text: q.optionB, img: q.optionBImg },
-      { originalValue: "C", text: q.optionC, img: q.optionCImg },
-      { originalValue: "D", text: q.optionD, img: q.optionDImg },
-    ];
-    
-    for (let i = opts.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [opts[i], opts[j]] = [opts[j], opts[i]];
-    }
-    
-    const visualOpts = opts.map((opt, idx) => ({
-      ...opt,
-      label: String.fromCharCode(65 + idx)
-    }));
-    
-    setShuffledOptions(visualOpts);
-  }, [currentQuestion, examData]);
 
   const handleSelect = (optionValue: string) => {
     if (!examData) return;
@@ -339,7 +315,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                     onChange={(e) => handleSelect(e.target.value)}
                   />
                 ) : (
-                  shuffledOptions.map((opt, idx) => {
+                  question.shuffledOptions?.map((opt: any, idx: number) => {
                      const isSelected = answers[qId] === opt.originalValue;
                      return (
                       <label 

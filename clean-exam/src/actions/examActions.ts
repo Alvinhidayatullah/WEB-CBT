@@ -106,8 +106,32 @@ export async function getExamData(examId: string) {
       [essayQuestions[i], essayQuestions[j]] = [essayQuestions[j], essayQuestions[i]];
     }
 
-    // Gabungkan kembali: PG terlebih dahulu, lalu Essay
-    const shuffledQuestions = [...pgQuestions, ...essayQuestions];
+    // Gabungkan kembali: PG terlebih dahulu, lalu Essay, dan persiapkan opsi yang diacak untuk PG
+    const shuffledQuestions = [...pgQuestions, ...essayQuestions].map(q => {
+      if (q.type === 'ESSAY') return q;
+      
+      const opts = [
+        { originalValue: "A", text: q.optionA, img: q.optionAImg },
+        { originalValue: "B", text: q.optionB, img: q.optionBImg },
+        { originalValue: "C", text: q.optionC, img: q.optionCImg },
+        { originalValue: "D", text: q.optionD, img: q.optionDImg },
+      ];
+      
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      
+      const visualOpts = opts.map((opt, idx) => ({
+        ...opt,
+        label: String.fromCharCode(65 + idx)
+      }));
+
+      return {
+        ...q,
+        shuffledOptions: visualOpts
+      };
+    });
 
     return {
       id: exam.id,
