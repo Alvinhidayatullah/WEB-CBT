@@ -305,7 +305,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
               </div>
               
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 mb-8 shadow-sm">
-                <div className="text-lg text-slate-800 leading-relaxed whitespace-pre-wrap">
+                <div className="text-[17px] text-slate-800 leading-snug whitespace-pre-wrap">
                   {question.text}
                 </div>
                 {question.imageUrl && (

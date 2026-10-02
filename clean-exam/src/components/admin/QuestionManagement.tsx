@@ -694,7 +694,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                   
                   return (
                     <div key={q.id} className={`p-4 border rounded-xl ${!isEssay && studentAns !== "Tidak dijawab" ? (isCorrect ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30') : 'border-slate-200 bg-slate-50/50'}`}>
-                      <p className="font-medium text-slate-900 mb-2 whitespace-pre-wrap">
+                      <p className="font-medium text-slate-900 mb-2 leading-snug whitespace-pre-wrap">
                         <span className="font-bold text-blue-600 mr-2">{idx + 1}.</span>
                         <span className="text-xs bg-slate-200 px-2 py-0.5 rounded mr-2 font-bold">{isEssay ? 'ESAI' : 'PG'}</span>
                         {q.text}
