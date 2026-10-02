@@ -1,116 +1,88 @@
 # Product Requirements Document (PRD)
-
-**Product Name:** Secure-CBT  
-**Vendor/Developer:** Elite Sentinel Cybercorp  
-**Version:** 1.4 (Beta - AI Gateway & Proxy Integration)  
-**Document Status:** Final  
+**Project Name:** SecureCBT | SMK Yasda  
+**Version:** 1.0.0  
+**Last Updated:** Oktober 2026
 
 ---
 
 ## 1. Pendahuluan
+### 1.1 Latar Belakang
+Ujian berbasis komputer (CBT) di lingkungan sekolah menengah vokasi, khususnya SMK Yasda, membutuhkan sistem yang tidak hanya aman dari kecurangan, tetapi juga efisien dalam proses penilaian. Terutama ketika menghadapi jumlah pengguna massal (misal: 500 peserta serentak) dan jenis soal subjektif seperti Esai.
 
-### 1.1 Tujuan Produk
-Secure-CBT adalah platform *Computer-Based Test* (Ujian Berbasis Komputer) modern yang dirancang untuk menjadi sangat aman, cepat, dan mudah digunakan. Sistem ini dibangun khusus untuk institusi pendidikan agar dapat menyelenggarakan ujian dengan fitur anti-kecurangan yang ketat, dukungan unggah media (gambar) yang ringan, manajemen data masif via Excel, dan sistem penilaian esai yang otomatis dan fleksibel dengan bantuan AI.
-
-### 1.2 Target Pengguna (Personas)
-1. **SUPER_ADMIN**: Pemilik sistem atau administrator IT. Memiliki hak penuh atas seluruh manajemen data pengguna dan sistem.
-2. **GURU (Teacher)**: Tenaga pendidik yang bertugas membuat soal, mengunggah gambar pendukung, mendistribusikan token ujian, mengatur parameter rubrik AI, dan memonitor hasil ujian.
-3. **MURID (Student)**: Peserta ujian yang mengakses portal ujian menggunakan token unik.
+### 1.2 Tujuan
+Membangun platform ujian CBT (*Computer Based Test*) yang cepat, aman, tangguh untuk jumlah pengguna masif, dan terintegrasi dengan kecerdasan buatan (AI) lokal (9Router) untuk melakukan penilaian esai secara otomatis.
 
 ---
 
-## 2. Arsitektur & Teknologi (Tech Stack)
-
-* **Frontend & Backend Framework:** Next.js 15 (App Router)
-* **Styling:** Tailwind CSS (elemen UI/UX *Glassmorphism*, *Micro-animations*, & *Lucide Icons*)
-* **Database & ORM:** PostgreSQL (Hosting via Neon Serverless) & Prisma ORM
-* **Authentication:** Custom JWT via `jose`, tersandi `bcryptjs`, *HTTP-Only Secure Cookies*.
-* **AI Engine & Gateway:** Google Gemini API yang dirutekan secara terpusat melalui proksi **9Router**. Mengisolasi kredensial utama dan mendistribusikan beban *request* agar antrean tidak macet.
-* **Image Processing:** HTML5 Canvas API (Client-side Compression & Base64 encoding).
-
----
-
-## 3. Fitur Utama (Core Features)
-
-### 3.1 Otentikasi & Keamanan Tingkat Lanjut (WAF)
-* **Stateful JWT Session & Auto-Kick:** Mencegah *Replay Attack*. Pembaruan *sessionVersion* otomatis memutus akses pengguna yang dicabut haknya secara *real-time*.
-* **Anti-Cookie Injection:** Umur *cookie* dibatasi maksimal 24 Jam dengan parameter `SameSite=Strict`.
-* **Payload Tamper Protection:** Validasi *Server Action* berbasis *RegEx* memblokir injeksi *malware* pada *form upload*.
-
-### 3.2 Manajemen Pengguna & Ujian
-* **Scoped Teacher Roles:** Proteksi otorisasi tingkat rute (403 Forbidden). Guru hanya dapat mengelola data sesuai wewenangnya.
-* **Token Ujian Dinamis:** Otomatis menghasilkan 5 karakter token unik (contoh: `A4XZ9`).
-* **Dukungan Multimedia:** Unggahan gambar untuk pertanyaan dan opsi otomatis dikompresi di sisi klien menjadi ~50KB.
-
-### 3.3 Penilaian Esai Otomatis & Resolusi "Menunggu AI"
-* **Asynchronous AI Queueing:** Mengatasi isu *bottleneck* (status "Menunggu AI" yang menggantung) dengan memisahkan *request* eksternal dari *thread* utama melalui integrasi *endpoint* proksi khusus.
-* **Dynamic Model Selection:** 9Router mendistribusikan *payload* ujian ke model Gemini yang beroperasi paling optimal saat itu.
-* **Penilaian Berbasis Rubrik:** AI mengurai jawaban siswa dan membandingkannya dengan referensi guru, memberikan hasil evaluasi berupa JSON terstruktur.
-
-### 3.4 Sistem Anti-Kecurangan (Anti-Cheat Wrapper)
-* **Disable Context Menu & Copy-Paste:** Mematikan klik kanan dan pintasan manipulasi teks.
-* **3-Strike Tab-Out Policy:** Mendeteksi navigasi ke luar aplikasi. Jika melebihi 3 pelanggaran, sistem memicu *auto-submit*.
-* **Mobile Debounce Fix:** Sistem kebal terhadap *double-firing* yang sering terjadi saat menyentuh bilah notifikasi di peramban seluler.
+## 2. Arsitektur & Teknologi (*Tech Stack*)
+- **Frontend & Backend:** Next.js (App Router, React) dengan TypeScript.
+- **Styling:** Tailwind CSS (dengan efek animasi *glassmorphism* neon modern).
+- **Database ORM:** Prisma Client.
+- **Database:** PostgreSQL.
+- **Otentikasi:** JSON Web Token (JWT) dengan *Stateful Verification* menggunakan *library* `jose`.
+- **Integrasi AI:** 9Router (Local Gateway ke LLM) untuk Penilaian Esai.
+- **Observability:** Vercel Analytics & Vercel Speed Insights.
 
 ---
 
-## 4. Konfigurasi Sistem & Integrasi 9Router
+## 3. Aktor & Peran (*User Roles*)
+Sistem ini menggunakan *Role-Based Access Control* (RBAC) dengan 3 aktor utama:
 
-Karena aplikasi Anda berjalan di *cloud* (Vercel) sedangkan 9Router berjalan di *localhost* Ubuntu Anda, aplikasi Vercel tidak akan bisa membaca `http://localhost:20128`. Anda harus mengaktifkan **Tunnel** (fitur bawaan 9Router di menu *Endpoint*, atau menggunakan layanan seperti *ngrok* / *Cloudflare Tunnel*) untuk mendapatkan URL publik.
+1. **SUPER_ADMIN**: Memiliki kontrol penuh atas seluruh data sistem, pengguna (CRUD semua *role*), dan melihat seluruh hasil ujian.
+2. **GURU**: Dapat membuat ujian, merancang soal (PG & Esai), mengelola kelas yang diajarnya, memantau *progress* ujian, dan meninjau hasil nilai AI.
+3. **MURID**: Mengakses antarmuka ujian, mengerjakan soal dengan batas waktu, dan melihat skor (jika diizinkan).
 
-### 4.1 Environment Variables (Vercel)
-Masukkan konfigurasi berikut ke dalam *Environment Variables* di *dashboard* Vercel Anda:
+---
 
-```env
-# Gunakan URL Tunnel Publik dari 9Router, BUKAN localhost
-AI_GATEWAY_URL=https://<alamat-tunnel-publik-anda>/v1/chat/completions
+## 4. Fitur Utama
 
-# Kunci API Lokal 9Router
-AI_GATEWAY_KEY=sk-8859786fd662bfef-xoh3vh-0a012852
+### 4.1. Otentikasi dan Keamanan
+- **Login Dinamis:** Menggunakan kombinasi `Username` dan `Password/Token` (token akses 5-digit unik untuk siswa).
+- **Anti-Replay Attack:** Menggunakan field `sessionVersion` di *database* yang dicek paralel dengan Token JWT.
+- **Enkripsi:** Menggunakan algoritma *hashing* HS256 yang divalidasi dari *environment variables*.
 
-### 4.2 Script Eksekusi Penilaian (Next.js Server Action)
+### 4.2. Manajemen Pengguna
+- **Data Murid & Guru:** Menyimpan data Nama, Role, Kelas, Mata Pelajaran (untuk guru), dan Token Akses.
+- Fitur *Bulk Delete* dan pengelolaan data masif.
 
-Implementasikan perutean standar OpenAI agar backend Secure-CBT menembak endpoint 9Router, bukan server Google secara langsung.
+### 4.3. Manajemen Ujian & Soal (Sisi Guru/Admin)
+- **Pembuatan Sesi:** Menentukan Tipe Ujian (UTS, UAS, dll), Mata Pelajaran, Kelas Tujuan, dan Durasi (menit).
+- **Format Soal:**
+  - **Pilihan Ganda (PG):** Mendukung hingga 4 Opsi (A, B, C, D) dengan pembobotan nilai spesifik per opsi (bukan hanya Benar/Salah).
+  - **Esai:** Mendukung kolom "Referensi Kunci Jawaban (Rubrik)" untuk panduan AI menilai.
+- **Dukungan Media:** Setiap soal dan opsi dapat disisipkan URL gambar.
 
-"use server";
+### 4.4. Pelaksanaan Ujian (Sisi Murid)
+- **Antarmuka Ujian:** Menampilkan *countdown timer* secara *real-time* berbasis durasi server (sinkron dengan `localStorage`).
+- **Fitur Keselamatan:** Peringatan "Sistem Padat / Koneksi Terputus" dengan logika *Auto-Retry* saat penyerahan (*submit*).
+- **Auto-Submit:** Jawaban akan terkumpul otomatis secara paksa apabila durasi waktu ujian telah habis.
+- **Pendeteksi Kecurangan (Basic):** Fitur peringatan kecurangan *built-in* (*flag isCheated*).
 
-export async function processEssayScoring(studentAnswer, referenceAnswer) {
-  try {
-    const response = await fetch(process.env.AI_GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.AI_GATEWAY_KEY}`, 
-      },
-      body: JSON.stringify({
-        model: "gemini/gemini-1.5-flash", // Sesuaikan dengan ID model di 9Router
-        messages: [
-          {
-            role: "system",
-            content: "Anda adalah sistem penilai ujian Secure-CBT. Bandingkan jawaban siswa dengan kunci referensi. Berikan output format JSON yang berisi 'skor' (0-100) dan 'alasan'."
-          },
-          {
-            role: "user",
-            content: `Kunci Referensi: ${referenceAnswer}\nJawaban Siswa: ${studentAnswer}`
-          }
-        ],
-        temperature: 0.1,
-        response_format: { type: "json_object" }
-      }),
-    });
+### 4.5. AI Auto-Grading (Penilaian Otomatis Esai)
+- **Mekanisme Pipa AI:** 
+  - Ujian pilihan ganda dikalkulasi secara matematis secara instan.
+  - Jika terdapat esai, status menjadi `PENDING` dan dikirim ke sistem *Job Queue*.
+- **Integrasi 9Router:** Mengirim permintaan penilaian ke endpoint lokal `https://rhhifl6.abc-tunnel.us/v1` menggunakan kunci `AI_GATEWAY_KEY`.
+- **Ekstraksi JSON Tahan Banting:** Menghapus tag `<thinking>` atau respon kotor dari AI dan hanya mengekstrak nilai akhir berformat JSON `{ "score": X, "reason": "Y" }`.
 
-    if (!response.ok) {
-      throw new Error(`AI Gateway Timeout or Error`);
-    }
+### 4.6. Pelaporan dan Observasi
+- **Riwayat Ujian:** Dasbor Guru dan Admin menampilkan riwayat ujian per kelas dan hasil rata-rata per mata pelajaran.
+- **Vercel Analytics:** Melacak dan menghitung pengunjung aktif, halaman (*Page Views*), dan asal trafik perangkat.
+- **Vercel Speed Insights:** Menganalisa *Core Web Vitals* (LCP, INP, CLS) secara *real-time* untuk 500 pengguna masif agar mendeteksi *bottleneck* seketika.
 
-    const data = await response.json();
-    
-    // Memperbarui status "Menunggu AI" di database menjadi "Selesai"
-    return JSON.parse(data.choices[0].message.content);
+---
 
-  } catch (error) {
-    console.error("Scoring failed:", error);
-    return { score: 0, reason: "Koneksi ke AI Gateway terputus." };
-  }
-}
+## 5. Arsitektur Database (Model Skema Utama)
 
+- **`User`**: Data kredensial, role, token unik sesi.
+- **`Exam`**: Sesi utama ujian, durasi, kelas sasaran.
+- **`Question`**: Detail teks soal, *image*, bobot opsi PG, dan referensi rubrik Esai.
+- **`ExamResult`**: Nilai total (*score*), nilai esai (*essayScore*), JSON rekam jejak jawaban, *feedback* dari AI, dan status *grading* (`GRADED`, `PENDING`).
+- **`JobQueue`**: Tabel eksekusi asinkron untuk tugas AI memproses ujian massal agar server tidak macet (*hang*).
+
+---
+
+## 6. Skenario Skalabilitas (SLA 500 Pengguna Serentak)
+1. **Frontend:** React di-*render* secara *Server-Side* melalui Edge Network Vercel. 
+2. **Database:** Terhubung via *Connection Pooling* di Prisma. *Error Timeout* dikelola via blok *try-catch* tanpa mengeluarkan *user* secara paksa (Fallback JWT Valid).
+3. **AI Gateway:** Dibantu kontainer Docker `9router` (dengan konfigurasi `--restart unless-stopped`) secara asinkron (tidak memblokir UI murid saat *submit*).
