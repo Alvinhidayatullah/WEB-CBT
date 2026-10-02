@@ -27,13 +27,10 @@ export default async function ForbiddenPage() {
         
         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none"></div>
 
-        {/* Logo and Icon area */}
+        {/* Logo area */}
         <div className="relative z-10 flex flex-col items-center mb-8">
-           <div className="w-20 h-20 mb-6 drop-shadow-xl relative">
+           <div className="w-28 h-28 drop-shadow-xl relative">
              <Image src="/logo-yasda.png" alt="Logo Yasda" fill className="object-contain" priority />
-           </div>
-           <div className="w-14 h-14 bg-slate-800/50 rounded-2xl flex items-center justify-center border border-slate-700/50 shadow-inner">
-             <ShieldX className="w-6 h-6 text-slate-300" />
            </div>
         </div>
 
