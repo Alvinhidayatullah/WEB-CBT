@@ -90,6 +90,19 @@ export async function getExamData(examId: string) {
       return null;
     }
 
+    const existingResult = await prisma.examResult.findUnique({
+      where: {
+        studentId_examId: {
+          studentId: userId,
+          examId: examId,
+        },
+      },
+    });
+
+    if (existingResult) {
+      return { error: "Anda sudah menyelesaikan ujian ini." };
+    }
+
     // Pisahkan PG dan Essay
     const pgQuestions = exam.questions.filter((q: any) => q.type !== 'ESSAY');
     const essayQuestions = exam.questions.filter((q: any) => q.type === 'ESSAY');

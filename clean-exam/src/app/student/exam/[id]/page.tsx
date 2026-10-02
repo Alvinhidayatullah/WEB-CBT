@@ -69,21 +69,24 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
     async function loadExam() {
       const data = await getExamData(examId);
       if (data) {
-        setExamData(data);
-        
-        // Timer Logic
-        const startKey = `exam_start_${examId}`;
-        const startTimeStr = localStorage.getItem(startKey);
-        const startTime = startTimeStr ? parseInt(startTimeStr) : Date.now();
-        if (!startTimeStr) {
-          localStorage.setItem(startKey, startTime.toString());
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setExamData(data);
+          
+          // Timer Logic
+          const startKey = `exam_start_${examId}`;
+          const startTimeStr = localStorage.getItem(startKey);
+          const startTime = startTimeStr ? parseInt(startTimeStr) : Date.now();
+          if (!startTimeStr) {
+            localStorage.setItem(startKey, startTime.toString());
+          }
+          
+          const durationMs = (data.duration || 60) * 60 * 1000;
+          const endTime = startTime + durationMs;
+          const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+          setInitialTimeLeft(remaining);
         }
-        
-        const durationMs = (data.duration || 60) * 60 * 1000;
-        const endTime = startTime + durationMs;
-        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-        setInitialTimeLeft(remaining);
-
       } else {
         setError("Ujian tidak ditemukan atau akses ditolak.");
       }
