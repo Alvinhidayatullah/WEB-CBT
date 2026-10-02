@@ -9,6 +9,46 @@ import { Loader2 } from 'lucide-react';
 import { use } from 'react';
 import Image from 'next/image';
 
+// Komponen Timer terpisah agar tidak merender ulang seluruh halaman ujian setiap detik (Optimasi Performa)
+function TimerDisplay({ initialTimeLeft, onTimeUp }: { initialTimeLeft: number, onTimeUp: () => void }) {
+  const [timeLeft, setTimeLeft] = useState(initialTimeLeft);
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      onTimeUp();
+      return;
+    }
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          onTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, onTimeUp]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className={`w-full lg:w-auto font-mono text-sm md:text-base font-bold px-3 py-2 md:px-4 rounded-lg border flex items-center justify-center gap-2 ${
+      timeLeft < 300 
+        ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' 
+        : 'bg-slate-100 text-slate-700 border-slate-200'
+    }`}>
+      <span>Sisa Waktu:</span>
+      <span>{formatTime(timeLeft)}</span>
+    </div>
+  );
+}
+
 export default function ExamRoom({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const examId = resolvedParams.id;
@@ -18,7 +58,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   const [examData, setExamData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [initialTimeLeft, setInitialTimeLeft] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [markedQuestions, setMarkedQuestions] = useState<Record<string, boolean>>({});
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -41,7 +81,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
         const durationMs = (data.duration || 60) * 60 * 1000;
         const endTime = startTime + durationMs;
         const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-        setTimeLeft(remaining);
+        setInitialTimeLeft(remaining);
 
       } else {
         setError("Ujian tidak ditemukan atau akses ditolak.");
@@ -50,21 +90,6 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
     }
     loadExam();
   }, [examId]);
-
-  useEffect(() => {
-    if (timeLeft === null || isSubmitting) return;
-
-    if (timeLeft <= 0) {
-      handleAutoSubmit();
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft, isSubmitting]);
 
   useEffect(() => {
     if (!examData || !examData.questions || examData.questions.length === 0) return;
@@ -151,12 +176,6 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
        }
   };
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -211,15 +230,8 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           
           {/* Bagian Kanan: Timer */}
           <div className="flex items-center w-full lg:w-auto shrink-0 justify-center lg:justify-end mt-1 lg:mt-0">
-             {timeLeft !== null && (
-               <div className={`w-full lg:w-auto font-mono text-sm md:text-base font-bold px-3 py-2 md:px-4 rounded-lg border flex items-center justify-center gap-2 ${
-                 timeLeft < 300 
-                   ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' 
-                   : 'bg-slate-100 text-slate-700 border-slate-200'
-               }`}>
-                 <span>Sisa Waktu:</span>
-                 <span>{formatTime(timeLeft)}</span>
-               </div>
+             {initialTimeLeft !== null && !isSubmitting && (
+               <TimerDisplay initialTimeLeft={initialTimeLeft} onTimeUp={handleAutoSubmit} />
              )}
           </div>
         </header>
