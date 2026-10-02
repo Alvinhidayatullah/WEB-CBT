@@ -10,7 +10,7 @@ import { use } from 'react';
 import Image from 'next/image';
 
 // Komponen Timer terpisah agar tidak merender ulang seluruh halaman ujian setiap detik (Optimasi Performa)
-function TimerDisplay({ initialTimeLeft, onTimeUp }: { initialTimeLeft: number, onTimeUp: () => void }) {
+function TimerDisplay({ initialTimeLeft, totalDuration, onTimeUp }: { initialTimeLeft: number, totalDuration: number, onTimeUp: () => void }) {
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft);
 
   useEffect(() => {
@@ -37,14 +37,16 @@ function TimerDisplay({ initialTimeLeft, onTimeUp }: { initialTimeLeft: number, 
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const isCritical = timeLeft <= totalDuration * 0.2; // 20% waktu sisa
+
   return (
-    <div className={`w-full lg:w-auto font-mono text-sm md:text-base font-bold px-3 py-2 md:px-4 rounded-lg border flex items-center justify-center gap-2 ${
-      timeLeft < 300 
-        ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' 
-        : 'bg-slate-100 text-slate-700 border-slate-200'
+    <div className={`w-full lg:w-auto font-mono text-sm md:text-base font-bold px-3 py-2 md:px-4 rounded-lg border flex items-center justify-center gap-2 transition-colors duration-500 ${
+      isCritical 
+        ? 'bg-rose-50 text-rose-600 border-rose-200 shadow-sm' 
+        : 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm'
     }`}>
-      <span>Sisa Waktu:</span>
-      <span>{formatTime(timeLeft)}</span>
+      <span className={`text-xs font-bold uppercase tracking-wider ${isCritical ? 'text-rose-500/80' : 'text-emerald-600/80'}`}>Sisa Waktu:</span>
+      <span className="tracking-tight">{formatTime(timeLeft)}</span>
     </div>
   );
 }
@@ -238,7 +240,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           {/* Bagian Kanan: Timer */}
           <div className="flex items-center w-full lg:w-auto shrink-0 justify-center lg:justify-end mt-1 lg:mt-0">
              {initialTimeLeft !== null && !isSubmitting && (
-               <TimerDisplay initialTimeLeft={initialTimeLeft} onTimeUp={handleAutoSubmit} />
+               <TimerDisplay initialTimeLeft={initialTimeLeft} totalDuration={(examData.duration || 60) * 60} onTimeUp={handleAutoSubmit} />
              )}
           </div>
         </header>
