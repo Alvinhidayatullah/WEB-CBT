@@ -52,6 +52,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   }, [exams]);
 
   const [examType, setExamType] = useState("Ujian Tengah Semester");
+  const [isCustomExamType, setIsCustomExamType] = useState(false);
   const [subject, setSubject] = useState("");
   const [targetClasses, setTargetClasses] = useState<string[]>([]);
   const [duration, setDuration] = useState(60);
@@ -192,6 +193,8 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       setTargetClasses([]);
       setDuration(60);
       setIsAIGradingEnabled(true);
+      setIsCustomExamType(false);
+      setExamType("Ujian Tengah Semester");
     } else {
       alert(res.error || "Gagal membuat sesi ujian");
     }
@@ -263,16 +266,47 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
           <form onSubmit={handleAddExam} className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-1">
              <label className="text-sm font-medium text-slate-700 block mb-1">Tipe Ujian</label>
-             <select 
-               className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-white"
-               value={examType}
-               onChange={(e) => setExamType(e.target.value)}
-             >
-               <option value="Ujian Tengah Semester">Ujian Tengah Semester</option>
-               <option value="Ujian Akhir Semester">Ujian Akhir Semester</option>
-               <option value="Ulangan Harian">Ulangan Harian</option>
-               <option value="Kuis">Kuis</option>
-             </select>
+             {isCustomExamType ? (
+               <div className="flex gap-2">
+                 <Input 
+                   placeholder="Ketik tipe ujian..." 
+                   value={examType} 
+                   onChange={(e) => setExamType(e.target.value)}
+                   required
+                   autoFocus
+                 />
+                 <button 
+                   type="button" 
+                   onClick={() => {
+                     setIsCustomExamType(false);
+                     setExamType("Ujian Tengah Semester");
+                   }}
+                   className="px-3 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 border border-slate-300 transition-colors"
+                   title="Batal custom tipe"
+                 >
+                   <X className="w-4 h-4"/>
+                 </button>
+               </div>
+             ) : (
+               <select 
+                 className="w-full h-11 px-3 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 value={examType}
+                 onChange={(e) => {
+                   if (e.target.value === "custom") {
+                     setIsCustomExamType(true);
+                     setExamType("");
+                   } else {
+                     setExamType(e.target.value);
+                   }
+                 }}
+               >
+                 <option value="Ujian Tengah Semester">Ujian Tengah Semester</option>
+                 <option value="Ujian Akhir Semester">Ujian Akhir Semester</option>
+                 <option value="Ulangan Harian">Ulangan Harian</option>
+                 <option value="Kuis">Kuis</option>
+                 <option value="custom" className="font-semibold text-blue-600">+ Tambah Tipe Lainnya...</option>
+               </select>
+             )}
             </div>
             <div className="md:col-span-1">
               <label className="text-sm font-medium text-slate-700 block mb-1">Mata Pelajaran</label>
