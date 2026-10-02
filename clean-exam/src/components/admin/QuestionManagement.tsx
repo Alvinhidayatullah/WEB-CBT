@@ -139,10 +139,10 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
         return;
       }
 
-      const { payloads, totalMaxWeights, totalEarnedWeights } = payloadRes;
+      const { payloads, totalMaxPG, totalEarnedPG, totalMaxEssay } = payloadRes;
       
       if (payloads.length === 0) {
-        await finalizeAIGrading(resId, totalEarnedWeights || 0, totalMaxWeights || 0, 0, []);
+        await finalizeAIGrading(resId, totalEarnedPG || 0, totalMaxPG || 0, 0, totalMaxEssay || 0, []);
         setProcessingProgress(prev => { const n = {...prev}; delete n[resId]; return n; });
         return;
       }
@@ -167,7 +167,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       }
 
       setProcessingProgress(prev => ({ ...prev, [resId]: "Menyimpan hasil..." }));
-      await finalizeAIGrading(resId, totalEarnedWeights || 0, totalMaxWeights || 0, totalEssayScore, aiFeedbacks);
+      await finalizeAIGrading(resId, totalEarnedPG || 0, totalMaxPG || 0, totalEssayScore, totalMaxEssay || 0, aiFeedbacks);
 
     } catch (err) {
       console.error(err);

@@ -14,12 +14,14 @@ export async function gradeEssay(questionText: string, referenceAnswer: string, 
     return { score: 0, reason: "Tidak ada jawaban (kosong)." };
   }
 
-  const prompt = `Kamu adalah guru profesional yang empatik dan bijak. Tugasmu menilai jawaban esai siswa dengan skala 0 hingga 100 berdasarkan pemahaman konsep, bukan kecocokan kata per kata. Terapkan prinsip 'menghargai usaha' dengan pedoman berikut:
-- 90 - 100: Jawaban sangat tepat, logis, dan komprehensif.
-- 70 - 89: Konsep dasar benar, bahasa mungkin berantakan atau ada sedikit kekurangan detail.
-- 40 - 69: Siswa menunjukkan usaha menjawab dan menangkap sebagian kecil konsep dasar, meskipun penyampaiannya meleset. Hargai usahanya, jangan beri nilai nol.
-- 15 - 39: Jawaban salah atau kurang tepat, namun siswa sudah berusaha menuliskan sesuatu yang masih menyenggol konteks topik utama. Berikan poin apresiasi.
-- 0 - 14: Hanya jika jawaban benar-benar kosong, provokatif, atau sepenuhnya tidak relevan dengan pertanyaan.
+  const prompt = `Kamu adalah guru evaluator profesional yang sangat kritis, analitis, namun bijaksana dan empatik. Tugasmu adalah menilai jawaban esai siswa dengan skala 0 hingga 100 berdasarkan kedalaman pemahaman konsep, nalar kritis, dan relevansi. 
+
+Pedoman Penilaian Kritis & Apresiatif:
+- 90 - 100 (Sangat Baik): Jawaban sangat komprehensif, logis, dan menyentuh esensi inti dari kunci jawaban. Penjelasan terstruktur dengan baik.
+- 70 - 89 (Baik): Siswa menangkap inti konsep dengan benar, meskipun penjelasan mungkin kurang mendalam, ada sedikit salah ketik, atau bahasa kurang formal.
+- 40 - 69 (Cukup / Menghargai Usaha): Jawaban meleset sebagian dari kunci, namun siswa berhasil menunjukkan nalar kritis atau menyentuh sebagian konteks yang relevan. Hargai proses berpikirnya.
+- 15 - 39 (Kurang): Jawaban mayoritas salah atau melantur, namun siswa masih berusaha menuliskan sesuatu yang bersinggungan dengan topik. Berikan poin apresiasi atas usahanya menjawab.
+- 0 - 14 (Sangat Kurang): Hanya diberikan jika jawaban asal-asalan, provokatif, menyalin ulang soal tanpa jawaban, atau sepenuhnya di luar konteks.
 
 Kembalikan output HANYA dalam format JSON murni tanpa tag atau markdown tambahan lainnya. JANGAN pernah menghasilkan teks seperti <none>.
 

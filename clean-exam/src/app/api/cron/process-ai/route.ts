@@ -27,8 +27,12 @@ export async function GET() {
         const payload = JSON.parse(job.payload);
         const { examResultId, essays } = payload;
         
-        let totalEssayScore = 0;
+        let totalEssayRaw = 0;
+        let totalMaxEssay = essays.reduce((acc: number, curr: any) => acc + curr.weight, 0);
         let aiFeedbacks: string[] = [];
+
+        const examRes = await prisma.examResult.findUnique({ where: { id: examResultId } });
+        if (!examRes) throw new Error("ExamResult not found");
 
         for (const essay of essays) {
           const { questionText, referenceAnswer, studentAnswer, weight } = essay;
@@ -42,16 +46,22 @@ export async function GET() {
           
           // Konversi skor (0-100) menjadi berdasarkan bobot (weight) soal
           const weightedScore = (result.score / 100) * weight;
-          totalEssayScore += weightedScore;
+          totalEssayRaw += weightedScore;
           
           aiFeedbacks.push(`Soal: ${questionText} - AI Score: ${result.score}/100. Alasan: ${result.reason}`);
         }
+
+        const essayWeight = 40;
+        const finalEssayScore = totalMaxEssay > 0 ? (totalEssayRaw / totalMaxEssay) * essayWeight : 0;
+        // pgScore was saved initially in 'score'
+        const newFinalScore = parseFloat((examRes.score + finalEssayScore).toFixed(2));
 
         // 4. Update ExamResult
         await prisma.examResult.update({
           where: { id: examResultId },
           data: {
-            essayScore: totalEssayScore,
+            score: newFinalScore,
+            essayScore: parseFloat(finalEssayScore.toFixed(2)),
             aiFeedback: aiFeedbacks.join("\\n\\n"),
             gradingStatus: "GRADED"
           }

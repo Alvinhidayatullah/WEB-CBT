@@ -518,14 +518,15 @@ export async function getPendingEssayPayloads(resultId: string) {
     const answers = JSON.parse(result.answersJson as string);
     const essayPayloads: any[] = [];
     
-    let totalMaxWeights = 0;
-    let totalEarnedWeights = 0;
+    let totalMaxPG = 0;
+    let totalEarnedPG = 0;
+    let totalMaxEssay = 0;
 
     result.exam.questions.forEach(q => {
       const studentAnswer = answers[q.id];
       if (q.type === "ESSAY") {
         const essayMaxW = q.weightA && q.weightA > 0 ? q.weightA : 100;
-        totalMaxWeights += essayMaxW;
+        totalMaxEssay += essayMaxW;
         essayPayloads.push({
           questionId: q.id,
           questionText: q.text,
@@ -536,22 +537,23 @@ export async function getPendingEssayPayloads(resultId: string) {
       } else {
         const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
         const questionMax = maxW > 0 ? maxW : 100;
-        totalMaxWeights += questionMax;
+        totalMaxPG += questionMax;
 
         let earned = 0;
         if (studentAnswer === "A") earned = q.weightA || 0;
         else if (studentAnswer === "B") earned = q.weightB || 0;
         else if (studentAnswer === "C") earned = q.weightC || 0;
         else if (studentAnswer === "D") earned = q.weightD || 0;
-        totalEarnedWeights += earned;
+        totalEarnedPG += earned;
       }
     });
 
     return { 
       success: true, 
       payloads: essayPayloads,
-      totalMaxWeights,
-      totalEarnedWeights
+      totalMaxPG,
+      totalEarnedPG,
+      totalMaxEssay
     };
   } catch (error) {
     return { success: false, error: "Gagal memproses data ujian." };
@@ -573,22 +575,29 @@ export async function gradeSingleEssayAction(questionText: string, referenceAnsw
 
 export async function finalizeAIGrading(
   resultId: string, 
-  totalEarnedWeights: number, 
-  totalMaxWeights: number, 
-  totalEssayScore: number, 
+  totalEarnedPG: number, 
+  totalMaxPG: number, 
+  totalEssayRaw: number,
+  totalMaxEssay: number,
   aiFeedbacks: string[]
 ) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
-    const finalTotalEarned = totalEarnedWeights + totalEssayScore;
-    const newScore = totalMaxWeights > 0 ? (finalTotalEarned / totalMaxWeights) * 100 : 0;
-    const newFinalScore = parseFloat(newScore.toFixed(2));
+    
+    const hasEssay = totalMaxEssay > 0;
+    const pgWeight = hasEssay ? 60 : 100;
+    const pgScore = totalMaxPG > 0 ? (totalEarnedPG / totalMaxPG) * pgWeight : 0;
+    
+    const essayWeight = 40;
+    const finalEssayScore = hasEssay ? (totalEssayRaw / totalMaxEssay) * essayWeight : 0;
+
+    const newFinalScore = parseFloat((pgScore + finalEssayScore).toFixed(2));
 
     await prisma.examResult.update({
       where: { id: resultId },
       data: {
         score: newFinalScore,
-        essayScore: totalEssayScore,
+        essayScore: parseFloat(finalEssayScore.toFixed(2)),
         aiFeedback: aiFeedbacks.join("\n\n"),
         gradingStatus: "GRADED"
       }
