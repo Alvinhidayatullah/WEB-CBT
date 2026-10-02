@@ -191,23 +191,28 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
         <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none -z-10" />
 
         {/* Header Minimalis (Tetap Putih) */}
-        <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-8 py-3 flex flex-col md:flex-row gap-3 md:justify-between items-center sticky top-0 z-20 shadow-sm w-full">
-          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 flex-1 min-w-0 text-center md:text-left w-full md:w-auto">
-             <div className="flex items-center gap-2">
+        <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200/60 px-4 lg:px-8 py-3 flex flex-col lg:flex-row gap-3 lg:gap-4 lg:justify-between items-center sticky top-0 z-20 shadow-sm w-full">
+          
+          {/* Bagian Kiri: Logo & Judul */}
+          <div className="flex flex-col lg:flex-row items-center gap-2 lg:gap-4 flex-1 min-w-0 text-center lg:text-left w-full lg:w-auto">
+             <div className="flex items-center gap-2 lg:gap-3 justify-center">
                <Image src="/logo-yasda.png" alt="Logo Yasda" width={48} height={48} className="object-contain shrink-0" />
-               <div className="font-extrabold text-xl md:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight shrink-0 hidden md:block">SecureCBT</div>
+               <div className="font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight shrink-0 hidden lg:block">SecureCBT</div>
              </div>
              
-             <div className="h-6 w-px bg-slate-200 hidden md:block shrink-0"></div>
+             <div className="h-6 w-px bg-slate-300 hidden lg:block shrink-0"></div>
              
-             <div className="text-slate-600 font-medium text-sm w-full leading-snug">
-                {examData.title} <br className="md:hidden" /> <span className="hidden md:inline">-</span> Kelas {examData.targetClass}
+             <div className="text-slate-700 font-semibold text-sm lg:text-base leading-snug">
+                {examData.title} <br className="lg:hidden" /> 
+                <span className="hidden lg:inline mr-1">-</span> 
+                Kelas {examData.targetClass}
              </div>
           </div>
           
-          <div className="flex items-center w-full md:w-auto shrink-0 mt-1 md:mt-0">
+          {/* Bagian Kanan: Timer */}
+          <div className="flex items-center w-full lg:w-auto shrink-0 justify-center lg:justify-end mt-1 lg:mt-0">
              {timeLeft !== null && (
-               <div className={`w-full md:w-auto font-mono text-sm md:text-base font-bold px-3 py-2 md:px-4 rounded-lg border flex items-center justify-center gap-2 ${
+               <div className={`w-full lg:w-auto font-mono text-sm md:text-base font-bold px-3 py-2 md:px-4 rounded-lg border flex items-center justify-center gap-2 ${
                  timeLeft < 300 
                    ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' 
                    : 'bg-slate-100 text-slate-700 border-slate-200'
