@@ -56,6 +56,8 @@ model Question {
   weightC       Int?     @default(0)
   weightD       Int?     @default(0)
   essayReference String? @db.Text // Kunci jawaban referensi (rubrik) untuk esai
+  isShuffled    Boolean  @default(true) // Apakah soal ini boleh dipindah-pindah urutannya
+  isOptionsShuffled Boolean @default(true) // Apakah opsi A,B,C,D boleh diacak posisinya
   examId        String
   exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())

@@ -6,7 +6,7 @@ import { ArrowLeft, Trash2, Loader2, Save, Upload, Download, Edit } from "lucide
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Image as ImageIcon, X } from "lucide-react";
-import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions, deleteAllQuestions, updateExamSettings } from "@/actions/dashboardActions";
+import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions, deleteAllQuestions, updateExamSettings, updateQuestionSettings } from "@/actions/dashboardActions";
 import * as XLSX from "xlsx";
 import { use } from "react";
 
@@ -273,6 +273,25 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
     }
   };
 
+  const handleToggleQuestionSettings = async (qId: string, currentShuffled: boolean, currentOptionsShuffled: boolean, field: "isShuffled" | "isOptionsShuffled") => {
+    if (!exam || !exam.questions) return;
+    
+    const newShuffled = field === "isShuffled" ? !currentShuffled : currentShuffled;
+    const newOptionsShuffled = field === "isOptionsShuffled" ? !currentOptionsShuffled : currentOptionsShuffled;
+    
+    // Optimistic Update
+    const updatedQuestions = exam.questions.map((q: any) => 
+      q.id === qId ? { ...q, isShuffled: newShuffled, isOptionsShuffled: newOptionsShuffled } : q
+    );
+    setExam({ ...exam, questions: updatedQuestions });
+    
+    const res = await updateQuestionSettings(qId, newShuffled, newOptionsShuffled);
+    if (!res.success) {
+      alert(res.error || "Gagal menyimpan pengaturan spesifik soal");
+      await fetchExam(examId); // Revert
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -533,6 +552,20 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
                       <img src={q.imageUrl} alt={`Soal ${idx + 1}`} className="max-h-64 rounded-lg border border-slate-200 shadow-sm object-contain" />
                     </div>
                   )}
+
+                  {/* Question Level Controls */}
+                  <div className="flex gap-4 mb-4 mt-2">
+                     <label className="flex items-center gap-2 cursor-pointer text-xs">
+                        <input type="checkbox" checked={q.isShuffled !== false} onChange={() => handleToggleQuestionSettings(q.id, q.isShuffled !== false, q.isOptionsShuffled !== false, 'isShuffled')} className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" />
+                        <span className="font-medium text-slate-700">Acak Nomor Ini</span>
+                     </label>
+                     {q.type !== "ESSAY" && (
+                       <label className="flex items-center gap-2 cursor-pointer text-xs">
+                          <input type="checkbox" checked={q.isOptionsShuffled !== false} onChange={() => handleToggleQuestionSettings(q.id, q.isShuffled !== false, q.isOptionsShuffled !== false, 'isOptionsShuffled')} className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" />
+                          <span className="font-medium text-slate-700">Acak Opsi (A,B,C,D) Ini</span>
+                       </label>
+                     )}
+                  </div>
                   
                   {q.type !== "ESSAY" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-600">

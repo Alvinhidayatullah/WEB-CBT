@@ -77,6 +77,8 @@ export async function getExamData(examId: string) {
             optionBImg: true,
             optionCImg: true,
             optionDImg: true,
+            isShuffled: true,
+            isOptionsShuffled: true,
             // DO NOT select correctOption to prevent cheating on client
           }
         }
@@ -107,16 +109,33 @@ export async function getExamData(examId: string) {
     let pgQuestions = exam.questions.filter((q: any) => q.type !== 'ESSAY');
     let essayQuestions = exam.questions.filter((q: any) => q.type === 'ESSAY');
 
-    // Pengacakan Nomor Soal jika diaktifkan (masing-masing dikelompokkan PG dan Esai)
+    // Pengacakan Nomor Soal jika diaktifkan (dengan fitur Pin/Freeze untuk soal cerita)
     if (exam.randomizeQuestions) {
-      for (let i = pgQuestions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pgQuestions[i], pgQuestions[j]] = [pgQuestions[j], pgQuestions[i]];
-      }
-      for (let i = essayQuestions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [essayQuestions[i], essayQuestions[j]] = [essayQuestions[j], essayQuestions[i]];
-      }
+      const smartShuffle = (arr: any[]) => {
+        const shufflableIndices: number[] = [];
+        const shufflableItems: any[] = [];
+        
+        arr.forEach((item, index) => {
+          if (item.isShuffled !== false) {
+            shufflableIndices.push(index);
+            shufflableItems.push(item);
+          }
+        });
+
+        for (let i = shufflableItems.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shufflableItems[i], shufflableItems[j]] = [shufflableItems[j], shufflableItems[i]];
+        }
+
+        const result = [...arr];
+        shufflableIndices.forEach((originalIndex, i) => {
+          result[originalIndex] = shufflableItems[i];
+        });
+        return result;
+      };
+
+      pgQuestions = smartShuffle(pgQuestions);
+      essayQuestions = smartShuffle(essayQuestions);
     }
 
     // Gabungkan kembali: PG terlebih dahulu, lalu Essay, dan persiapkan opsi
@@ -130,7 +149,7 @@ export async function getExamData(examId: string) {
         { originalValue: "D", text: q.optionD, img: q.optionDImg },
       ];
       
-      if (exam.randomizeOptions) {
+      if (exam.randomizeOptions && q.isOptionsShuffled !== false) {
         for (let i = opts.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [opts[i], opts[j]] = [opts[j], opts[i]];

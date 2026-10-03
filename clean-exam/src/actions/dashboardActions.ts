@@ -448,6 +448,21 @@ export async function updateExamSettings(id: string, randomizeQuestions: boolean
   }
 }
 
+export async function updateQuestionSettings(id: string, isShuffled: boolean, isOptionsShuffled: boolean) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    
+    await prisma.question.update({
+      where: { id },
+      data: { isShuffled, isOptionsShuffled }
+    });
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error: unknown) {
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
+  }
+}
+
 export async function updateQuestion(id: string, data: {
   type?: string;
   text: string;
