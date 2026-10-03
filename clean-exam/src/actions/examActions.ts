@@ -59,6 +59,11 @@ export async function getExamData(examId: string) {
     const userClass = session?.className as string;
 
     if (!userId) return null;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, username: true }
+    });
 
     const exam = await prisma.exam.findUnique({
       where: { id: examId },
@@ -173,6 +178,8 @@ export async function getExamData(examId: string) {
       title: `${exam.examType} - ${exam.subject}`,
       targetClass: exam.targetClass,
       duration: exam.duration,
+      studentName: user?.name || user?.username || "Siswa",
+      studentClass: userClass || "-",
       questions: processedQuestions,
     };
   } catch (error) {

@@ -42,7 +42,7 @@ export default function StudentDashboard() {
 
   const handleLogout = async () => {
     await logoutUser();
-    router.push("/");
+    window.location.href = "/";
   };
 
   return (
