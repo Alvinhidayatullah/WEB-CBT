@@ -525,7 +525,8 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
        }
     }
 
-    const formattedQuestions = questions.map(q => ({
+    const now = new Date();
+    const formattedQuestions = questions.map((q, index) => ({
       examId,
       type: q.type || "MULTIPLE_CHOICE",
       text: q.text,
@@ -543,6 +544,7 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
       weightC: q.weightC || 0,
       weightD: q.weightD || 0,
       essayReference: q.essayReference || null,
+      createdAt: new Date(now.getTime() + index * 1000), // Stagger by 1 second to ensure stable sorting
     }));
 
     await prisma.question.createMany({
