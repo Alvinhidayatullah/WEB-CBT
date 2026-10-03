@@ -136,10 +136,10 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
   return (
     <>
       {showWarning && (
-        <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 text-center shadow-2xl">
-            <h2 className="text-2xl font-bold text-red-600 mb-2">Peringatan Kecurangan!</h2>
-            <p className="text-slate-600 mb-6">
+        <div className="fixed inset-0 bg-slate-900/80 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-[340px] md:max-w-md p-6 text-center shadow-2xl mx-auto overflow-hidden">
+            <h2 className="text-xl md:text-2xl font-bold text-red-600 mb-3">Peringatan Kecurangan!</h2>
+            <p className="text-slate-600 mb-6 text-sm md:text-base leading-relaxed break-words px-2">
               Sistem mendeteksi Anda mencoba berpindah tab atau keluar dari area ujian.
               Ini adalah pelanggaran ke-{violations} dari maksimal {MAX_VIOLATIONS} pelanggaran.
             </p>

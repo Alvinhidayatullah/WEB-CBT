@@ -222,29 +222,31 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
         <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdHRlcm4gaWQ9InNtYWxsR3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNMTAgMEwwIDBMMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9InVybCgjc21hbGxHcmlkKSIvPjxwYXRoIGQ9Ik00MCAwTDAgMEwwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)] pointer-events-none -z-10" />
 
         {/* Header Minimalis (Tetap Putih) */}
-        <header className="bg-white/95 border-b border-slate-200/60 px-4 lg:px-6 py-3 flex flex-wrap md:flex-nowrap gap-3 justify-between items-center sticky top-0 z-20 shadow-sm w-full">
+        <header className="bg-white/95 border-b border-slate-200/60 px-4 lg:px-6 py-2.5 flex flex-wrap lg:flex-nowrap gap-2 justify-between items-center sticky top-0 z-20 shadow-sm w-full">
           
           {/* Bagian Kiri: Logo */}
-          <div className="flex items-center gap-2 lg:gap-3 shrink-0 order-1">
-             <Image src="/logo-yasda.png" alt="Logo Yasda" width={40} height={40} className="object-contain shrink-0" />
-             <div className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight shrink-0 hidden lg:block">SecureCBT</div>
+          <div className="flex items-center gap-2 shrink-0 order-1">
+             <Image src="/logo-yasda.png" alt="Logo Yasda" width={36} height={36} className="object-contain" />
+             <div className="font-extrabold text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight hidden lg:block">SecureCBT</div>
           </div>
           
-          {/* Bagian Tengah: Judul & Identitas */}
-          <div className="flex-1 flex flex-col items-center md:items-start lg:items-center text-center md:text-left lg:text-center w-full order-3 md:order-2 px-1">
-             <div className="text-slate-800 font-bold text-[13px] sm:text-sm md:text-base leading-snug line-clamp-1">
-                {examData.title}
-             </div>
-             <div className="text-slate-500 font-medium text-[11px] sm:text-xs md:text-sm mt-0.5 bg-slate-100 px-2 py-0.5 rounded-full inline-block">
-                <span className="text-blue-700 font-semibold">{examData.studentName}</span> <span className="mx-1 opacity-50">•</span> Kelas {examData.studentClass}
-             </div>
-          </div>
-          
-          {/* Bagian Kanan: Timer */}
-          <div className="shrink-0 flex items-center justify-end order-2 md:order-3">
+          {/* Bagian Tengah: Timer (selalu terlihat) */}
+          <div className="shrink-0 flex items-center justify-center order-2 lg:order-2 flex-1 lg:flex-none">
              {initialTimeLeft !== null && !isSubmitting && (
                <TimerDisplay initialTimeLeft={initialTimeLeft} totalDuration={(examData.duration || 60) * 60} onTimeUp={handleAutoSubmit} />
              )}
+          </div>
+
+          {/* Bagian Kanan: Pelajaran & Identitas */}
+          <div className="flex flex-col items-end text-right shrink-0 order-3 w-full lg:w-auto mt-2 lg:mt-0 px-1">
+             <div className="text-slate-800 font-bold text-sm lg:text-base leading-tight">
+                {examData.subject || examData.title}
+             </div>
+             <div className="text-slate-500 font-medium text-[11px] lg:text-xs mt-0.5 flex items-center gap-1.5 flex-wrap justify-end">
+                <span className="text-blue-700 font-bold uppercase">{examData.studentName}</span> 
+                <span className="w-1 h-1 rounded-full bg-slate-300"></span> 
+                <span>Kelas {examData.studentClass}</span>
+             </div>
           </div>
         </header>
 
