@@ -410,6 +410,18 @@ export async function deleteQuestion(id: string) {
   }
 }
 
+export async function deleteAllQuestions(examId: string) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    
+    await prisma.question.deleteMany({ where: { examId } });
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error: unknown) {
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
+  }
+}
+
 export async function deleteExam(id: string) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);

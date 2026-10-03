@@ -6,7 +6,7 @@ import { ArrowLeft, Trash2, Loader2, Save, Upload, Download, Edit } from "lucide
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Image as ImageIcon, X } from "lucide-react";
-import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions } from "@/actions/dashboardActions";
+import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions, deleteAllQuestions } from "@/actions/dashboardActions";
 import * as XLSX from "xlsx";
 import { use } from "react";
 
@@ -245,6 +245,18 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
     setIsSubmitting(false);
   };
 
+  const handleDeleteAllQuestions = async () => {
+    if (!window.confirm("Yakin ingin menghapus SEMUA soal pada ujian ini secara permanen?")) return;
+    setIsSubmitting(true);
+    const res = await deleteAllQuestions(examId);
+    if (res.success) {
+      await fetchExam(examId);
+    } else {
+      alert(res.error || "Gagal menghapus semua soal");
+    }
+    setIsSubmitting(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -457,7 +469,14 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
         </form>
 
         <div className="space-y-4">
-          <h3 className="font-bold text-slate-800 text-lg mt-8">Daftar Soal ({exam.questions?.length || 0})</h3>
+          <div className="flex justify-between items-center mt-8 mb-4">
+            <h3 className="font-bold text-slate-800 text-lg">Daftar Soal ({exam.questions?.length || 0})</h3>
+            {exam.questions && exam.questions.length > 0 && (
+              <Button variant="secondary" onClick={handleDeleteAllQuestions} disabled={isSubmitting} className="text-red-600 hover:bg-red-50 hover:text-red-700 bg-red-50/50 border-red-200">
+                Hapus Semua Soal
+              </Button>
+            )}
+          </div>
           {exam.questions && exam.questions.length > 0 ? (
             exam.questions.map((q: any, idx: number) => (
               <div key={q.id} className="p-6 border border-slate-200 rounded-2xl flex flex-col md:flex-row justify-between items-start gap-4 bg-white shadow-sm hover:shadow-md transition-shadow">

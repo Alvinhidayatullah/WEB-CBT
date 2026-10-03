@@ -107,17 +107,8 @@ export async function getExamData(examId: string) {
     const pgQuestions = exam.questions.filter((q: any) => q.type !== 'ESSAY');
     const essayQuestions = exam.questions.filter((q: any) => q.type === 'ESSAY');
 
-    // Fisher-Yates Shuffle khusus PG
-    for (let i = pgQuestions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pgQuestions[i], pgQuestions[j]] = [pgQuestions[j], pgQuestions[i]];
-    }
-
-    // Fisher-Yates Shuffle khusus Essay
-    for (let i = essayQuestions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [essayQuestions[i], essayQuestions[j]] = [essayQuestions[j], essayQuestions[i]];
-    }
+    // Pengacakan urutan nomor soal DIMATIKAN agar soal cerita / reading comprehension tidak berantakan
+    // Opsi jawaban (A,B,C,D) tetap diacak di bawah ini.
 
     // Gabungkan kembali: PG terlebih dahulu, lalu Essay, dan persiapkan opsi yang diacak untuk PG
     const shuffledQuestions = [...pgQuestions, ...essayQuestions].map(q => {
