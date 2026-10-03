@@ -107,4 +107,4 @@ graph TD
 
 Proyek ini dibangun dari dasar dengan filosofi keamanan dan kecepatan. Pembaharuan, *pull request*, maupun laporan (*bug*) sangat kami hargai!
 
-*Didesain dan dikembangkan secara kolaboratif bersama Antigravity (AI).*
+*Didesain dan dikembangkan oleh Alvin Hidayatullah*
