@@ -238,8 +238,9 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       "Siswa": res.student.username,
       "Kelas": res.student.className || "-",
       "Waktu Pengerjaan": res.timeSpent ? `${Math.floor(res.timeSpent / 60)}m ${res.timeSpent % 60}s` : "-",
-      "Nilai PG & Total": res.score,
-      "Nilai Esai (AI)": res.essayScore !== null ? res.essayScore : "-",
+      "Nilai PG": res.essayScore !== null && typeof res.essayScore !== 'undefined' ? parseFloat((res.score - res.essayScore).toFixed(2)) : res.score,
+      "Nilai Esai (AI)": res.essayScore !== null && typeof res.essayScore !== 'undefined' ? res.essayScore : "-",
+      "Total Nilai": res.score,
       "Ulasan AI": res.aiFeedback || "-",
       "Status Ujian": res.gradingStatus === "PENDING" ? "Menunggu AI" : res.gradingStatus === "MANUAL_REVIEW" ? "Menunggu Koreksi Guru" : "Selesai",
       "Indikasi Curang": res.isCheated ? "Ya" : "Tidak"
