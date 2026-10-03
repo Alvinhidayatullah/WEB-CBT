@@ -138,13 +138,31 @@ export async function createUser(data: { username: string; role: string; token?:
 
     const finalPassword = assignedRole === "SUPER_ADMIN" ? data.password! : data.token!;
     const hashedPassword = await bcrypt.hash(finalPassword, 10);
+    const resolvedClassName = assignedRole === "SUPER_ADMIN" ? null : finalClassName;
+
+    // Check for exact duplicates (same username, role, and className)
+    const existingExactUser = await prisma.user.findFirst({
+      where: {
+        username: data.username,
+        role: assignedRole,
+        className: resolvedClassName
+      }
+    });
+
+    if (existingExactUser) {
+      if (assignedRole === "MURID") {
+        return { success: false, error: `Username '${data.username}' sudah digunakan oleh murid lain di kelas ${resolvedClassName}.` };
+      } else {
+        return { success: false, error: `Username '${data.username}' sudah terdaftar sebagai ${assignedRole}.` };
+      }
+    }
 
     const newUser = await prisma.user.create({
       data: {
         username: data.username,
         password: hashedPassword,
         role: assignedRole,
-        className: assignedRole === "SUPER_ADMIN" ? null : finalClassName,
+        className: resolvedClassName,
         teacherSubject: assignedRole === "GURU" ? data.teacherSubject : null,
         token: assignedRole === "SUPER_ADMIN" ? null : data.token,
       },
@@ -161,9 +179,6 @@ export async function createUser(data: { username: string; role: string; token?:
 
     return { success: true, user: newUser };
   } catch (error: unknown) {
-    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
-      return { success: false, error: "Username sudah digunakan." };
-    }
     return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }

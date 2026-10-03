@@ -17,20 +17,29 @@ export async function loginUser(username: string, password: string) {
 
     const cookieStore = await cookies();
 
-    // Login verification using database
-    const user = await prisma.user.findUnique({
+    // Login verification using database (support multiple same usernames)
+    const users = await prisma.user.findMany({
       where: { username },
     });
 
-    if (!user) {
+    if (users.length === 0) {
       return { success: false, error: "Username tidak ditemukan." };
     }
 
-    const isValid = await bcrypt.compare(password, user.password);
-
-    if (!isValid) {
-      return { success: false, error: "Password tidak valid." };
+    let matchedUser = null;
+    for (const u of users) {
+      const isValid = await bcrypt.compare(password, u.password);
+      if (isValid) {
+        matchedUser = u;
+        break;
+      }
     }
+
+    if (!matchedUser) {
+      return { success: false, error: "Password/Token tidak valid." };
+    }
+
+    const user = matchedUser;
 
     const token = await signToken({
       userId: user.id,
