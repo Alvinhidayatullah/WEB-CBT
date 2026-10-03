@@ -105,6 +105,6 @@ graph TD
 
 ## 👨‍💻 Kontribusi
 
-Proyek ini dibangun dari dasar dengan filosofi keamanan dan kecepatan. Pembaharuan, *pull request*, maupun laporan kutu (*bug*) sangat kami hargai!
+Proyek ini dibangun dari dasar dengan filosofi keamanan dan kecepatan. Pembaharuan, *pull request*, maupun laporan (*bug*) sangat kami hargai!
 
 *Didesain dan dikembangkan secara kolaboratif bersama Antigravity (AI).*
