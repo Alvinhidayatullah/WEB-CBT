@@ -257,6 +257,38 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
     setIsSubmitting(false);
   };
 
+  const handleExportQuestions = () => {
+    if (!exam || !exam.questions || exam.questions.length === 0) {
+      alert("Tidak ada soal untuk diekspor.");
+      return;
+    }
+    
+    const dataToExport = exam.questions.map((q: any) => ({
+      "Tipe Soal": q.type === "ESSAY" ? "ESAI" : "PG",
+      "Pertanyaan": q.text,
+      "Gambar Soal (URL)": q.imageUrl || "",
+      "Opsi A": q.optionA || "",
+      "Gambar Opsi A (URL)": q.optionAImg || "",
+      "Opsi B": q.optionB || "",
+      "Gambar Opsi B (URL)": q.optionBImg || "",
+      "Opsi C": q.optionC || "",
+      "Gambar Opsi C (URL)": q.optionCImg || "",
+      "Opsi D": q.optionD || "",
+      "Gambar Opsi D (URL)": q.optionDImg || "",
+      "Bobot A": q.weightA || 0,
+      "Bobot B": q.weightB || 0,
+      "Bobot C": q.weightC || 0,
+      "Bobot D": q.weightD || 0,
+      "Kunci Referensi Esai": q.essayReference || ""
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Soal Ujian");
+    const safeTitle = exam.subject?.replace(/[^a-z0-9]/gi, '_') || 'ujian';
+    XLSX.writeFile(wb, `Export_Soal_${safeTitle}.xlsx`);
+  };
+
   const handleToggleSettings = async (field: "randomizeQuestions" | "randomizeOptions") => {
     if (!exam) return;
     
@@ -533,9 +565,14 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
           <div className="flex justify-between items-center mt-8 mb-4">
             <h3 className="font-bold text-slate-800 text-lg">Daftar Soal ({exam.questions?.length || 0})</h3>
             {exam.questions && exam.questions.length > 0 && (
-              <Button variant="secondary" onClick={handleDeleteAllQuestions} disabled={isSubmitting} className="text-red-600 hover:bg-red-50 hover:text-red-700 bg-red-50/50 border-red-200">
-                Hapus Semua Soal
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleExportQuestions} className="text-emerald-700 hover:bg-emerald-50 border-emerald-200">
+                  <Download className="w-4 h-4 mr-2" /> Export Soal
+                </Button>
+                <Button variant="secondary" onClick={handleDeleteAllQuestions} disabled={isSubmitting} className="text-red-600 hover:bg-red-50 hover:text-red-700 bg-red-50/50 border-red-200">
+                  Hapus Semua Soal
+                </Button>
+              </div>
             )}
           </div>
           {exam.questions && exam.questions.length > 0 ? (
