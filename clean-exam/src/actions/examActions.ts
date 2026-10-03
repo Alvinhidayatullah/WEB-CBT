@@ -104,14 +104,23 @@ export async function getExamData(examId: string) {
     }
 
     // Pisahkan PG dan Essay
-    const pgQuestions = exam.questions.filter((q: any) => q.type !== 'ESSAY');
-    const essayQuestions = exam.questions.filter((q: any) => q.type === 'ESSAY');
+    let pgQuestions = exam.questions.filter((q: any) => q.type !== 'ESSAY');
+    let essayQuestions = exam.questions.filter((q: any) => q.type === 'ESSAY');
 
-    // Pengacakan urutan nomor soal DIMATIKAN agar soal cerita / reading comprehension tidak berantakan
-    // Opsi jawaban (A,B,C,D) tetap diacak di bawah ini.
+    // Pengacakan Nomor Soal jika diaktifkan (masing-masing dikelompokkan PG dan Esai)
+    if (exam.randomizeQuestions) {
+      for (let i = pgQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pgQuestions[i], pgQuestions[j]] = [pgQuestions[j], pgQuestions[i]];
+      }
+      for (let i = essayQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [essayQuestions[i], essayQuestions[j]] = [essayQuestions[j], essayQuestions[i]];
+      }
+    }
 
-    // Gabungkan kembali: PG terlebih dahulu, lalu Essay, dan persiapkan opsi yang diacak untuk PG
-    const shuffledQuestions = [...pgQuestions, ...essayQuestions].map(q => {
+    // Gabungkan kembali: PG terlebih dahulu, lalu Essay, dan persiapkan opsi
+    const processedQuestions = [...pgQuestions, ...essayQuestions].map(q => {
       if (q.type === 'ESSAY') return q;
       
       const opts = [
@@ -121,9 +130,11 @@ export async function getExamData(examId: string) {
         { originalValue: "D", text: q.optionD, img: q.optionDImg },
       ];
       
-      for (let i = opts.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [opts[i], opts[j]] = [opts[j], opts[i]];
+      if (exam.randomizeOptions) {
+        for (let i = opts.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [opts[i], opts[j]] = [opts[j], opts[i]];
+        }
       }
       
       const visualOpts = opts.map((opt, idx) => ({
@@ -142,7 +153,7 @@ export async function getExamData(examId: string) {
       title: `${exam.examType} - ${exam.subject}`,
       targetClass: exam.targetClass,
       duration: exam.duration,
-      questions: shuffledQuestions,
+      questions: processedQuestions,
     };
   } catch (error) {
     return null;

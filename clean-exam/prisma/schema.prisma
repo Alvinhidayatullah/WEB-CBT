@@ -30,6 +30,8 @@ model Exam {
   duration    Int        @default(60) // Durasi ujian dalam menit
   isActive    Boolean    @default(true)
   isAIGradingEnabled Boolean @default(true) // Toggle AI
+  randomizeQuestions Boolean @default(true) // Pengacakan nomor soal
+  randomizeOptions   Boolean @default(true) // Pengacakan opsi A,B,C,D
   createdAt   DateTime   @default(now())
   updatedAt   DateTime     @updatedAt
   questions   Question[]

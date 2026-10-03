@@ -433,6 +433,21 @@ export async function deleteExam(id: string) {
   }
 }
 
+export async function updateExamSettings(id: string, randomizeQuestions: boolean, randomizeOptions: boolean) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    
+    await prisma.exam.update({
+      where: { id },
+      data: { randomizeQuestions, randomizeOptions }
+    });
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error: unknown) {
+    return { success: false, error: "Terjadi kesalahan sistem internal." };
+  }
+}
+
 export async function updateQuestion(id: string, data: {
   type?: string;
   text: string;

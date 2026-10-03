@@ -6,7 +6,7 @@ import { ArrowLeft, Trash2, Loader2, Save, Upload, Download, Edit } from "lucide
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Image as ImageIcon, X } from "lucide-react";
-import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions, deleteAllQuestions } from "@/actions/dashboardActions";
+import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions, deleteAllQuestions, updateExamSettings } from "@/actions/dashboardActions";
 import * as XLSX from "xlsx";
 import { use } from "react";
 
@@ -257,6 +257,22 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
     setIsSubmitting(false);
   };
 
+  const handleToggleSettings = async (field: "randomizeQuestions" | "randomizeOptions") => {
+    if (!exam) return;
+    
+    const newRandomizeQuestions = field === "randomizeQuestions" ? !exam.randomizeQuestions : exam.randomizeQuestions;
+    const newRandomizeOptions = field === "randomizeOptions" ? !exam.randomizeOptions : exam.randomizeOptions;
+    
+    // Optimistic UI update
+    setExam({ ...exam, randomizeQuestions: newRandomizeQuestions, randomizeOptions: newRandomizeOptions });
+    
+    const res = await updateExamSettings(examId, newRandomizeQuestions, newRandomizeOptions);
+    if (!res.success) {
+      alert(res.error || "Gagal menyimpan pengaturan");
+      await fetchExam(examId); // Revert on fail
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -299,6 +315,32 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
             </div>
           </div>
         </header>
+
+        <div className="bg-white border border-slate-200 p-4 rounded-xl mb-6 shadow-sm flex flex-col md:flex-row gap-6 md:items-center">
+          <div>
+            <h3 className="font-bold text-slate-800 text-sm mb-1">Pengaturan Acak Ujian</h3>
+            <p className="text-slate-500 text-xs">Atur perilaku pengacakan untuk mencegah kecurangan. Matikan acak soal jika terdapat soal cerita/urutan.</p>
+          </div>
+          <div className="flex gap-4 items-center">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className="relative">
+                <input type="checkbox" className="sr-only" checked={exam.randomizeQuestions} onChange={() => handleToggleSettings('randomizeQuestions')} />
+                <div className={`block w-10 h-6 rounded-full transition-colors ${exam.randomizeQuestions ? 'bg-blue-600' : 'bg-slate-300'}`}></div>
+                <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${exam.randomizeQuestions ? 'transform translate-x-4' : ''}`}></div>
+              </div>
+              <span className="text-sm font-medium text-slate-700">Acak Nomor Soal</span>
+            </label>
+            
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className="relative">
+                <input type="checkbox" className="sr-only" checked={exam.randomizeOptions} onChange={() => handleToggleSettings('randomizeOptions')} />
+                <div className={`block w-10 h-6 rounded-full transition-colors ${exam.randomizeOptions ? 'bg-blue-600' : 'bg-slate-300'}`}></div>
+                <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${exam.randomizeOptions ? 'transform translate-x-4' : ''}`}></div>
+              </div>
+              <span className="text-sm font-medium text-slate-700">Acak Opsi (A,B,C,D)</span>
+            </label>
+          </div>
+        </div>
 
         <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-6 shadow-sm">
           <h3 className="font-bold text-amber-800 flex items-center gap-2 mb-1">
