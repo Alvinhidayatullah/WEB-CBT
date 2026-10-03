@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trash2, UserPlus, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, UserPlus, Download, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { createUser, deleteUser, bulkDeleteUsers, getUsers } from "@/actions/userActions";
 import * as XLSX from "xlsx";
 
@@ -268,12 +268,24 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
             ) : (
               <div>
                  <label className="text-sm font-medium text-slate-700 block mb-1">Pass/Token</label>
-                 <Input 
-                   value={token} 
-                   onChange={(e) => setToken(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                   maxLength={5}
-                   required
-                 />
+                 <div className="flex gap-2">
+                   <Input 
+                     value={token} 
+                     onChange={(e) => setToken(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                     maxLength={5}
+                     required
+                     className="uppercase font-mono"
+                   />
+                   <Button 
+                     type="button" 
+                     variant="outline" 
+                     onClick={() => setToken(Math.random().toString(36).substring(2, 7).toUpperCase())}
+                     className="px-3 border-slate-300 text-slate-600 hover:bg-slate-100"
+                     title="Generate Token Acak"
+                   >
+                     <RefreshCw className="w-4 h-4" />
+                   </Button>
+                 </div>
               </div>
             )}
             
