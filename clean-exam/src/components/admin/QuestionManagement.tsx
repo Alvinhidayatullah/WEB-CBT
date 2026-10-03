@@ -59,6 +59,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   const [isAIGradingEnabled, setIsAIGradingEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [expandedExam, setExpandedExam] = useState<string | null>(null);
+  const [isExamListOpen, setIsExamListOpen] = useState(false);
 
   // Edit State
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
@@ -389,10 +390,18 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
           </form>
         </div>
 
-        <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
-          <FolderEdit className="w-5 h-5 text-indigo-600" /> Daftar Ujian Aktif
-        </h3>
-        <div className="space-y-8">
+        <button 
+          onClick={() => setIsExamListOpen(!isExamListOpen)}
+          className="w-full flex items-center justify-between font-bold text-slate-900 mb-6 bg-slate-50/50 hover:bg-slate-100 p-3 rounded-lg transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <FolderEdit className="w-5 h-5 text-indigo-600" /> Daftar Ujian Aktif
+          </span>
+          {isExamListOpen ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
+        </button>
+
+        {isExamListOpen && (
+        <div className="space-y-8 animate-in fade-in slide-in-from-top-2 duration-200">
           {Object.entries(
             localExams.reduce((groups: any, exam) => {
               const type = exam.examType || "Lainnya";
@@ -611,6 +620,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
             </div>
           )}
         </div>
+        )}
 
       </CardContent>
 

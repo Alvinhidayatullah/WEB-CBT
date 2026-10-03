@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trash2, UserPlus, Download } from "lucide-react";
+import { Trash2, UserPlus, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { createUser, deleteUser, bulkDeleteUsers, getUsers } from "@/actions/userActions";
 import * as XLSX from "xlsx";
 
@@ -49,6 +49,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [isListOpen, setIsListOpen] = useState(false);
 
   React.useEffect(() => {
     setUsers(sortUsers(initialUsers));
@@ -310,11 +311,17 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
           <p className="text-xs text-slate-500 mt-3">* Password/Token untuk Murid/Guru otomatis dibuat 5 digit acak. Untuk Super Admin, Anda bebas membuat password sendiri tanpa token.</p>
         </div>
 
-        <div className="flex flex-col gap-4 mb-4 md:flex-row justify-between items-center">
-          <div className="text-sm text-slate-500 font-medium">
+        <div className="flex flex-col gap-4 mb-4 md:flex-row justify-between items-center bg-slate-50/50 p-2 rounded-lg">
+          <button 
+            type="button"
+            onClick={() => setIsListOpen(!isListOpen)}
+            className="flex items-center gap-2 text-sm text-slate-700 font-bold hover:text-blue-600 transition-colors py-2 px-3 hover:bg-slate-100 rounded-md"
+          >
+            {isListOpen ? <ChevronUp className="w-5 h-5 text-blue-500" /> : <ChevronDown className="w-5 h-5 text-blue-500" />}
             Total {users.length} pengguna
-          </div>
-          {selectedUsers.size > 0 && (
+          </button>
+          
+          {selectedUsers.size > 0 && isListOpen && (
             <Button 
               variant="danger" 
               onClick={handleBulkDelete}
@@ -326,7 +333,8 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
           )}
         </div>
         
-        <div className="overflow-x-auto rounded-xl border border-slate-200/60 shadow-sm">
+        {isListOpen && (
+          <div className="overflow-x-auto rounded-xl border border-slate-200/60 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
           <table className="w-full text-sm text-left whitespace-nowrap">
             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200/60">
               <tr>
@@ -393,6 +401,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
             </tbody>
           </table>
         </div>
+        )}
       </CardContent>
     </Card>
   );
