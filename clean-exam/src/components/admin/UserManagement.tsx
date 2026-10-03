@@ -252,7 +252,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                <Input 
                  placeholder="Nama lengkap siswa/guru" 
                  value={name} 
-                 onChange={(e) => setName(e.target.value)}
+                 onChange={(e) => setName(e.target.value.toUpperCase())}
                />
             </div>
             <div>
