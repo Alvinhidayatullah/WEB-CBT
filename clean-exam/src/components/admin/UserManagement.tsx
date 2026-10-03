@@ -211,16 +211,17 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
 
   const handleExportExcel = () => {
     const dataToExport = users.map(user => ({
-      Username: user.username,
-      "Pass/Token": user.token || (user.role === "SUPER_ADMIN" ? "-" : ""),
-      Kelas: user.className || "-",
-      Mapel: user.role === "GURU" ? (user.teacherSubject || "-") : "-",
+      "Nama Lengkap": user.name || "-",
+      "Username": user.username,
+      "Password": user.token || (user.role === "SUPER_ADMIN" ? "(Password disembunyikan)" : "-"),
+      "Kelas": user.className || "-",
+      "Role": user.role
     }));
     
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Data Pengguna");
-    XLSX.writeFile(wb, "Data_Pengguna_SecureCBT.xlsx");
+    XLSX.writeFile(wb, "Data_Pengguna_Kartu_Ujian.xlsx");
   };
 
   return (
