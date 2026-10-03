@@ -519,10 +519,14 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                   <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
                                   <td className="py-3 px-5 text-slate-600 font-mono text-sm">{timeStr}</td>
                                   <td className="py-3 px-5 font-bold text-slate-900 text-base">
-                                    {res.score} 
-                                    {res.essayScore !== null && typeof res.essayScore !== 'undefined' && (
-                                      <span className="text-xs text-blue-600 ml-1">(+ Esai: {res.essayScore})</span>
-                                    )}
+                                    <div className="flex flex-col">
+                                      <span>{res.score}</span>
+                                      {res.essayScore !== null && typeof res.essayScore !== 'undefined' && (
+                                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight mt-0.5">
+                                          PG: {parseFloat((res.score - res.essayScore).toFixed(2))} <span className="text-slate-300">|</span> Esai: {res.essayScore}
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="py-3 px-5 align-middle">
                                     <div className="flex flex-col gap-1 items-start">
@@ -617,7 +621,16 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div>
                 <h3 className="font-bold text-xl text-slate-900">Detail Jawaban: {viewingResult.student.username}</h3>
-                <p className="text-sm text-slate-500 mt-1">Nilai Total: <strong className="text-slate-800">{viewingResult.score}</strong> | Status: {viewingResult.gradingStatus}</p>
+                <p className="text-sm text-slate-500 mt-1 flex items-center flex-wrap gap-2">
+                  <span>Nilai Total: <strong className="text-slate-900 text-lg">{viewingResult.score}</strong></span>
+                  {viewingResult.essayScore !== null && typeof viewingResult.essayScore !== 'undefined' && (
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-bold border border-blue-100">
+                      PG: {parseFloat((viewingResult.score - viewingResult.essayScore).toFixed(2))} + Esai: {viewingResult.essayScore}
+                    </span>
+                  )}
+                  <span className="text-slate-300">|</span> 
+                  <span>Status: <span className="font-semibold text-slate-700">{viewingResult.gradingStatus}</span></span>
+                </p>
               </div>
               <button onClick={() => { setViewingResult(null); setViewingExam(null); }} className="p-2 bg-slate-200 hover:bg-slate-300 rounded-full text-slate-600 transition-colors">
                 <X className="w-5 h-5" />
