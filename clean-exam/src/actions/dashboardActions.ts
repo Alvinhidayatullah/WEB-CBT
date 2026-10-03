@@ -121,7 +121,7 @@ export async function getExams() {
           orderBy: { createdAt: "asc" },
           include: { 
             student: {
-              select: { id: true, username: true, className: true }
+              select: { id: true, username: true, name: true, className: true }
             } 
           } 
         }

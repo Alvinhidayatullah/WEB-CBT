@@ -233,17 +233,11 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       return;
     }
 
-    const dataToExport = exam.results.map((res: any) => ({
-      "Nama Ujian": `${exam.examType} - ${exam.subject}`,
-      "Siswa": res.student.username,
-      "Kelas": res.student.className || "-",
-      "Waktu Pengerjaan": res.timeSpent ? `${Math.floor(res.timeSpent / 60)}m ${res.timeSpent % 60}s` : "-",
-      "Nilai PG": res.essayScore !== null && typeof res.essayScore !== 'undefined' ? parseFloat((res.score - res.essayScore).toFixed(2)) : res.score,
-      "Nilai Esai (AI)": res.essayScore !== null && typeof res.essayScore !== 'undefined' ? res.essayScore : "-",
-      "Total Nilai": res.score,
-      "Ulasan AI": res.aiFeedback || "-",
-      "Status Ujian": res.gradingStatus === "PENDING" ? "Menunggu AI" : res.gradingStatus === "MANUAL_REVIEW" ? "Menunggu Koreksi Guru" : "Selesai",
-      "Indikasi Curang": res.isCheated ? "Ya" : "Tidak"
+    const dataToExport = exam.results.map((res: any, index: number) => ({
+      "No": index + 1,
+      "Nama Siswa": res.student.name || res.student.username,
+      "Mata Pelajaran": exam.subject,
+      "Total Nilai": res.score
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -525,7 +519,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                               const timeStr = res.timeSpent ? `${Math.floor(res.timeSpent / 60)}m ${res.timeSpent % 60}s` : "-";
                               return (
                                 <tr key={res.id} className="hover:bg-slate-50 transition-colors">
-                                  <td className="py-3 px-5 font-semibold text-slate-900">{res.student.username}</td>
+                                  <td className="py-3 px-5 font-semibold text-slate-900">{res.student.name || res.student.username}</td>
                                   <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
                                   <td className="py-3 px-5 text-slate-600 font-mono text-sm">{timeStr}</td>
                                   <td className="py-3 px-5 font-bold text-slate-900 text-base">
@@ -562,7 +556,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                       </button>
                                       <button 
                                         onClick={async () => {
-                                          if (!window.confirm(`Hapus nilai atas nama ${res.student.username}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
+                                          if (!window.confirm(`Hapus nilai atas nama ${res.student.name || res.student.username}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
                                           const deleteRes = await deleteExamResult(res.id);
                                           if (deleteRes.success) {
                                             setLocalExams(prev => prev.map(e => e.id === exam.id ? { ...e, results: e.results?.filter((r: any) => r.id !== res.id) } : e));
@@ -631,7 +625,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
           <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div>
-                <h3 className="font-bold text-xl text-slate-900">Detail Jawaban: {viewingResult.student.username}</h3>
+                <h3 className="font-bold text-xl text-slate-900">Detail Jawaban: {viewingResult.student.name || viewingResult.student.username}</h3>
                 <p className="text-sm text-slate-500 mt-1 flex items-center flex-wrap gap-2">
                   <span>Nilai Total: <strong className="text-slate-900 text-lg">{viewingResult.score}</strong></span>
                   {viewingResult.essayScore !== null && typeof viewingResult.essayScore !== 'undefined' && (

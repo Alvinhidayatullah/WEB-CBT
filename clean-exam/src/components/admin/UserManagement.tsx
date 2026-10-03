@@ -11,6 +11,7 @@ import * as XLSX from "xlsx";
 export interface UIUser {
   id: string;
   username: string;
+  name?: string | null;
   role: string;
   token?: string | null;
   className?: string | null;
@@ -76,6 +77,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
   
   // Form State
   const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [role, setRole] = useState("MURID");
   const [className, setClassName] = useState("");
   const [teacherSubject, setTeacherSubject] = useState("");
@@ -121,6 +123,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
 
     const payload = {
       username,
+      name,
       role,
       token: role === "SUPER_ADMIN" ? undefined : token,
       password: role === "SUPER_ADMIN" ? customPassword : "",
@@ -140,6 +143,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
         createdAt: res.user!.createdAt
       }, ...prev]));
       setUsername("");
+      setName("");
       setClassName("");
       setTeacherSubject("");
       setCustomPassword("");
@@ -147,6 +151,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     } else if (res.success) {
       // Fallback if user wasn't returned for some reason
       setUsername("");
+      setName("");
       setClassName("");
       setTeacherSubject("");
       setCustomPassword("");
@@ -232,7 +237,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
           <h3 className="font-semibold text-slate-800 mb-5 flex items-center gap-2">
             <UserPlus className="w-4 h-4 text-blue-600" /> Tambah Pengguna Baru
           </h3>
-          <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
             <div>
                <label className="text-sm font-medium text-slate-700 block mb-1">Username</label>
                <Input 
@@ -240,6 +245,14 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                  value={username} 
                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
                  required
+               />
+            </div>
+            <div>
+               <label className="text-sm font-medium text-slate-700 block mb-1">Nama Lengkap</label>
+               <Input 
+                 placeholder="Nama lengkap siswa/guru" 
+                 value={name} 
+                 onChange={(e) => setName(e.target.value)}
                />
             </div>
             <div>
@@ -313,7 +326,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                  />
               </div>
             )}
-            <div className={role !== "SUPER_ADMIN" ? "md:col-span-2" : ""}>
+            <div className={role !== "SUPER_ADMIN" ? "md:col-span-3" : "md:col-span-2"}>
                <Button type="submit" className="w-full h-11 shadow-sm font-medium" disabled={loading}>
                  {loading ? "Menyimpan..." : "Simpan Pengguna"}
                </Button>
@@ -359,6 +372,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                   />
                 </th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Username</th>
+                <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Nama Lengkap</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Role</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Pass/Token</th>
                 <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Kelas</th>
@@ -379,6 +393,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                     />
                   </td>
                   <td className="py-3 px-4 font-medium text-slate-900">{user.username}</td>
+                  <td className="py-3 px-4 text-slate-700">{user.name || "-"}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       user.role === 'SUPER_ADMIN' ? 'bg-red-100 text-red-700' :

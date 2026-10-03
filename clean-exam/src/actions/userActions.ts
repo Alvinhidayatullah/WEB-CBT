@@ -44,6 +44,7 @@ export async function getUsers() {
       select: {
         id: true,
         username: true,
+        name: true,
         role: true,
         token: true,
         className: true,
@@ -68,7 +69,7 @@ export async function getUsers() {
   }
 }
 
-export async function createUser(data: { username: string; role: string; token?: string; password?: string; className?: string; teacherSubject?: string }) {
+export async function createUser(data: { username: string; name?: string; role: string; token?: string; password?: string; className?: string; teacherSubject?: string }) {
   try {
     const { userRole, userId } = await checkAuth(["SUPER_ADMIN", "GURU"]);
     
@@ -160,6 +161,7 @@ export async function createUser(data: { username: string; role: string; token?:
     const newUser = await prisma.user.create({
       data: {
         username: data.username,
+        name: data.name || null,
         password: hashedPassword,
         role: assignedRole,
         className: resolvedClassName,
@@ -169,6 +171,7 @@ export async function createUser(data: { username: string; role: string; token?:
       select: {
         id: true,
         username: true,
+        name: true,
         role: true,
         token: true,
         className: true,
