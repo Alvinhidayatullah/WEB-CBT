@@ -28,6 +28,29 @@ SecureCBT telah terintegrasi dengan Google Gemini AI untuk mengoreksi jawaban es
 - **Glassmorphism Design:** Antarmuka ujian yang bersih, modern, dan tidak kaku.
 - **Mobile First:** Tata letak disesuaikan dengan cerdas di HP. Logo, waktu ujian, peta tombol soal, hingga peringatan anti-curang merespons mulus di segala ukuran layar tanpa patah (*no bleed*).
 
+### 📈 Alur Kerja Sistem (Workflow)
+```mermaid
+graph TD
+    A[Admin / Guru] -->|Membuat Ujian| B(Sistem Ujian)
+    B -->|Menghasilkan Token Unik| C[Token Ujian]
+    D[Siswa] -->|Memasukkan Token| C
+    C -->|Validasi Sukses| E{Mengerjakan Ujian}
+    
+    E -->|Mencoba Curang| F[Pelanggaran Bertambah]
+    F -->|Pelanggaran Ke-3| G[Auto Submit & Kick]
+    
+    E -->|Selesai & Kumpul| H(Pemrosesan Nilai)
+    G --> H
+    
+    H -->|Pilihan Ganda| I[Koreksi Sistem Otomatis]
+    H -->|Soal Esai| J[Dikirim ke Gemini AI]
+    
+    I --> K[Daftar Nilai Akhir]
+    J -->|Rubrik & Analisis AI| K
+    
+    K -->|Unduh Excel| L[Laporan Guru/Admin]
+```
+
 ---
 
 ## 🛠️ Stack Teknologi
@@ -70,7 +93,7 @@ SecureCBT telah terintegrasi dengan Google Gemini AI untuk mengoreksi jawaban es
    npx prisma generate
    npm run seed
    ```
-   *(Data Seed Default: username `vinz_admin`, password `vinz_admin`)*
+   *(Akun admin utama akan otomatis terbuat ketika proses seeding selesai)*
 
 5. **Jalankan Server Lokal (Development):**
    ```bash
