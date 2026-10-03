@@ -566,7 +566,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
             <h3 className="font-bold text-slate-800 text-lg">Daftar Soal ({exam.questions?.length || 0})</h3>
             {exam.questions && exam.questions.length > 0 && (
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleExportQuestions} className="text-emerald-700 hover:bg-emerald-50 border-emerald-200">
+                <Button variant="secondary" onClick={handleExportQuestions} className="text-emerald-700 hover:bg-emerald-50 border-emerald-200">
                   <Download className="w-4 h-4 mr-2" /> Export Soal
                 </Button>
                 <Button variant="secondary" onClick={handleDeleteAllQuestions} disabled={isSubmitting} className="text-red-600 hover:bg-red-50 hover:text-red-700 bg-red-50/50 border-red-200">
