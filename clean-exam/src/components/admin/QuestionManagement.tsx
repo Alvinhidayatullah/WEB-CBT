@@ -235,9 +235,11 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
 
     const dataToExport = exam.results.map((res: any, index: number) => ({
       "No": index + 1,
+      "Nama Ujian": `${exam.examType} - ${exam.subject}`,
       "Nama Siswa": res.student.name || res.student.username,
-      "Mata Pelajaran": exam.subject,
-      "Total Nilai": res.score
+      "Kelas": res.student.className || "-",
+      "Total Nilai": res.score,
+      "Status Ujian": res.gradingStatus === "PENDING" ? "Menunggu AI" : res.gradingStatus === "MANUAL_REVIEW" ? "Menunggu Koreksi Guru" : "Selesai"
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
