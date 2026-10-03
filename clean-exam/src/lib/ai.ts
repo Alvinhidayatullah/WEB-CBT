@@ -14,14 +14,15 @@ export async function gradeEssay(questionText: string, referenceAnswer: string, 
     return { score: 0, reason: "Tidak ada jawaban (kosong)." };
   }
 
-  const prompt = `Kamu adalah guru evaluator profesional yang sangat kritis, analitis, namun bijaksana dan empatik. Tugasmu adalah menilai jawaban esai siswa dengan skala 0 hingga 100 berdasarkan kedalaman pemahaman konsep, nalar kritis, dan relevansi. 
+  const prompt = `Kamu adalah guru evaluator profesional yang sangat suportif, empatik, dan rendah hati. Tugasmu adalah menilai jawaban esai siswa dengan skala 0 hingga 100.
+Tujuan utamamu adalah MENGHARGAI USAHA siswa yang sudah mau menjawab. Jangan terlalu strict (kaku).
 
 Pedoman Penilaian Kritis & Apresiatif:
-- 90 - 100 (Sangat Baik): Jawaban sangat komprehensif, logis, dan menyentuh esensi inti dari kunci jawaban. Penjelasan terstruktur dengan baik.
-- 70 - 89 (Baik): Siswa menangkap inti konsep dengan benar, meskipun penjelasan mungkin kurang mendalam, ada sedikit salah ketik, atau bahasa kurang formal.
-- 40 - 69 (Cukup / Menghargai Usaha): Jawaban meleset sebagian dari kunci, namun siswa berhasil menunjukkan nalar kritis atau menyentuh sebagian konteks yang relevan. Hargai proses berpikirnya.
-- 15 - 39 (Kurang): Jawaban mayoritas salah atau melantur, namun siswa masih berusaha menuliskan sesuatu yang bersinggungan dengan topik. Berikan poin apresiasi atas usahanya menjawab.
-- 0 - 14 (Sangat Kurang): Hanya diberikan jika jawaban asal-asalan, provokatif, menyalin ulang soal tanpa jawaban, atau sepenuhnya di luar konteks.
+- Toleransi Bahasa (SANGAT PENTING): Jika pertanyaan dalam bahasa Inggris, Sunda, Arab, atau bahasa daerah lainnya, namun siswa menjawab menggunakan Bahasa Indonesia (atau campuran), JAWABAN TERSEBUT MASIH BISA DIHARGAI dengan bobot nilai yang cukup tinggi asalkan inti maknanya mengarah ke jawaban yang benar. Jangan memberi nilai 0 hanya karena beda bahasa.
+- 80 - 100 (Sangat Baik / Baik): Siswa menangkap inti konsep dari kunci jawaban. Kesalahan tata bahasa, salah eja, atau perbedaan bahasa sama sekali tidak masalah asalkan maknanya relevan.
+- 50 - 79 (Cukup / Menghargai Usaha): Jawaban meleset sebagian dari kunci, namun siswa berhasil menunjukkan nalar atau menyentuh sebagian konteks. Hargai proses berpikirnya. Berikan nilai yang seimbang.
+- 20 - 49 (Kurang): Jawaban mayoritas melantur, namun siswa masih berusaha menuliskan sesuatu yang bersinggungan sedikit saja dengan topik. Berikan poin apresiasi atas usahanya menjawab.
+- 0 - 19 (Sangat Kurang): Hanya diberikan jika jawaban 100% kosong, berisi kata-kata kasar, atau sama sekali tidak ada hubungannya dengan soal (misal: "tidak tahu").
 
 Kembalikan output HANYA dalam format JSON murni tanpa tag atau markdown tambahan lainnya. JANGAN pernah menghasilkan teks seperti <none>.
 
