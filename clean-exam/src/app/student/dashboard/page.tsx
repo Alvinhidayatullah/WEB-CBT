@@ -40,10 +40,7 @@ export default function StudentDashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await logoutUser();
-    window.location.href = "/";
-  };
+
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4 font-sans selection:bg-blue-500/30">
@@ -102,13 +99,13 @@ export default function StudentDashboard() {
         </div>
         
         <div className="w-full mt-1">
-          <button 
-            onClick={handleLogout} 
+          <a 
+            href="/api/auth/logout"
             className="mx-auto flex items-center justify-center gap-2 text-xs font-semibold text-red-500/80 hover:text-red-400 hover:bg-red-500/10 px-4 py-2.5 rounded-lg transition-all bg-transparent border border-red-500/20"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Keluar Akun</span>
-          </button>
+          </a>
         </div>
         
         <div className="text-center bg-yellow-500/10 p-4 rounded-2xl border border-yellow-500/20 text-yellow-200/90 text-[13px] leading-relaxed shadow-lg backdrop-blur-md mx-auto">

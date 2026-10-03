@@ -66,16 +66,10 @@ export default async function AdminDashboard() {
         </div>
         <div className="flex gap-4">
           <ProfileSettings currentUsername={currentUsername} />
-          <form action={async () => {
-            "use server";
-            await logoutUser();
-            redirect("/");
-          }}>
-            <button type="submit" className="bg-red-50 text-red-600 hover:bg-red-500 hover:text-white px-5 h-12 rounded-xl border border-red-100 shadow-sm flex items-center justify-center gap-2 transition-all">
-              <LogOut className="w-4 h-4" />
-              <span className="font-medium text-sm hidden md:inline">Keluar</span>
-            </button>
-          </form>
+          <a href="/api/auth/logout" className="bg-red-50 text-red-600 hover:bg-red-500 hover:text-white px-5 h-12 rounded-xl border border-red-100 shadow-sm flex items-center justify-center gap-2 transition-all">
+            <LogOut className="w-4 h-4" />
+            <span className="font-medium text-sm hidden md:inline">Keluar</span>
+          </a>
         </div>
       </header>
 

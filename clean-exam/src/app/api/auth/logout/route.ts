@@ -1,8 +1,9 @@
-import { cookies } from "next/headers";
+import { logoutUser } from "@/actions/authActions";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies();
-  cookieStore.delete("session");
-  return NextResponse.redirect(new URL("/", request.url));
+  await logoutUser();
+  const response = NextResponse.redirect(new URL("/", request.url));
+  response.cookies.delete("session");
+  return response;
 }
