@@ -93,6 +93,7 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
     window.history.pushState(null, document.title, window.location.href);
     
     const handlePopState = (e: PopStateEvent) => {
+      if (disabledRef.current) return;
       const leave = window.confirm("Peringatan: Apakah Anda yakin ingin meninggalkan halaman ujian? Pekerjaan Anda bisa hilang atau langsung diselesaikan!");
       if (leave) {
         window.removeEventListener('popstate', handlePopState);
@@ -105,6 +106,7 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
 
     // 6. Mencegah Refresh / Tutup Tab
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (disabledRef.current) return; // Bebaskan navigasi jika sedang proses submit
       isUnloading = true;
       // Jika pengguna membatalkan reload, kita perlu mereset isUnloading
       setTimeout(() => { isUnloading = false; }, 2000); 
