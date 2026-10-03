@@ -1,114 +1,87 @@
-# 🛡️ SecureCBT
+# SecureCBT 🚀
 
-> **Modern, Highly-Secure, and Comprehensive Computer Based Test (CBT) Platform**
+SecureCBT adalah sebuah sistem Computer-Based Test (CBT) modern, super responsif, dan sangat aman, dibangun menggunakan **Next.js 14**, **Prisma**, dan **TailwindCSS**. Aplikasi ini dirancang khusus untuk memfasilitasi ujian online skala kecil hingga menengah dengan beragam perlindungan anti-kecurangan mutakhir. 
 
-SecureCBT is a powerful, secure, and modern Next.js application designed to facilitate Computer Based Tests (CBT) for schools and institutions. Built with the Next.js App Router and Prisma (PostgreSQL), SecureCBT ensures high performance, seamless user experience, and rigorous cybersecurity standards to maintain academic integrity.
+Dilengkapi dengan koreksi esai otomatis oleh Artificial Intelligence (Gemini AI), SecureCBT tidak hanya memudahkan guru dalam membuat soal, tetapi juga menghemat waktu berharga dalam mengoreksi ratusan esai secara real-time!
 
-🌍 **Live Website:** [https://secure-cbt-alpha.vercel.app/](https://secure-cbt-alpha.vercel.app/)
+---
 
-## ✨ Key Features
+## ✨ Fitur Unggulan
 
-- **Role-Based Access Control (RBAC):** Distinct dashboards and access levels for `SUPER_ADMIN`, `GURU` (Teacher), and `MURID` (Student).
-- **Strict Anti-Cheat Engine:** 
-  - Full-screen enforcement during exams.
-  - Tab switching & window minimizing detection.
-  - Blocks right-click, copy, paste, and common developer shortcuts.
-  - Real-time violation logging & automatic submission upon critical infractions.
-- **Advanced Exam Management:** 
-  - Create Multiple Choice (PG) and Essay questions.
-  - **Bulk Import via Excel (.xlsx)** for rapid question bank creation.
-  - **Export Scores to Excel** directly from the dashboard.
-- **Stateful JWT Authentication:** Protects against session replay and cookie injection attacks by validating session versions against the database in real-time.
-- **Premium UI/UX:** Built with Tailwind CSS, utilizing glassmorphism, glowing aesthetics, and highly responsive layouts for both mobile and desktop.
-- **Robust Database Architecture:** Powered by Prisma ORM connected to a PostgreSQL database (Neon), ready for massive scale.
+### 🛡️ Smart Anti-Cheat System (WAF & Client Protection)
+- **Zero-Tolerance Bypass:** Deteksi jika siswa berpindah tab, *minimize* browser, atau mencoba menekan *Back/Refresh*. 
+- **Auto-Submit Hukuman:** Jika pelanggaran mencapai batas maksimum (3 kali), sistem akan langsung mensubmit ujian tersebut secara instan tanpa dialog browser, dan token akan hangus!
+- **Keyboard & Mouse Lock:** Mematikan fungsi klik kanan (Context Menu), Copy-Paste, F12, dan fungsi *View Source*.
+- **Token Sekali Pakai:** Setiap token ujian hanya berlaku 1 kali untuk 1 siswa. Setelah dipakai dan siswa masuk, token otomatis terkunci.
 
-## 🔒 Comprehensive Cybersecurity Approach
+### 🤖 AI-Powered Essay Grading
+Bosan mengoreksi ratusan esai secara manual?
+SecureCBT telah terintegrasi dengan Google Gemini AI untuk mengoreksi jawaban esai siswa secara otomatis di balik layar.
+- **Background Processing:** Proses berjalan di *background worker*, mencegah *server timeout* saat mensubmit ratusan jawaban secara bersamaan.
+- **Smart Rubrics:** Anda bisa menyematkan kunci referensi esai. AI akan membaca referensi Anda dan memberikan nilai serta komentar mendalam (Feedback) langsung kepada siswa!
 
-We take security seriously. SecureCBT integrates multiple layers of protection:
+### 📊 Real-Time Zero-Load Dashboard
+- **Live Timer Monitor:** Memantau waktu ujian siswa yang sedang mengerjakan ujian secara langsung (*real-time counting*) di Dasbor Admin tanpa membebani *database* maupun *server* (0 Server Load).
+- **Export to Excel:** Hasil akhir, lengkap dengan rincian PG, Esai, serta Status (Selesai/Curang), dapat diunduh menjadi file XLSX secara rapi.
 
-1. **Strict Role-Based Routing:** Next.js Edge Middleware automatically intercepts and validates access rights, ensuring users can only reach authorized endpoints. Includes a dedicated 403 Security Gateway.
-2. **Encrypted Passwords:** User credentials are cryptographically hashed using `bcryptjs`.
-3. **Stateful Session Validation:** Authentication state is managed via secure, HTTP-only cookies combined with a unique `sessionVersion` tracker in the database. When a user logs out, old stolen tokens are instantly invalidated.
-4. **HTTP Security Headers:** Configuration enforces strict security headers to prevent framing and XSS attacks.
-5. **No Hardcoded Credentials:** Production-ready authentication flow utilizing `.env` secrets.
+### 🎨 Premium & Responsive UI
+- **Glassmorphism Design:** Antarmuka ujian yang bersih, modern, dan tidak kaku.
+- **Mobile First:** Tata letak disesuaikan dengan cerdas di HP. Logo, waktu ujian, peta tombol soal, hingga peringatan anti-curang merespons mulus di segala ukuran layar tanpa patah (*no bleed*).
 
-## 📐 System Architecture & Flowchart
+---
 
-The following flowchart illustrates the high-level architecture and access flow within SecureCBT:
+## 🛠️ Stack Teknologi
 
-```mermaid
-graph TD
-    User([User]) --> Login[Login Page]
-    
-    Login --> AuthCheck{Authentication & Role Check}
-    
-    AuthCheck -- Invalid --> Login
-    AuthCheck -- Valid --> Middleware[Next.js Middleware]
-    
-    Middleware -- SUPER_ADMIN --> AdminDash[Admin Dashboard]
-    Middleware -- GURU --> TeacherDash[Teacher Dashboard]
-    Middleware -- MURID --> StudentDash[Student Dashboard]
-    
-    AdminDash --> ManageUsers[Manage Users & Roles]
-    AdminDash --> ManageExamsAdmin[Manage Exams & View All Scores]
-    
-    TeacherDash --> ManageExams[Create/Manage Exams]
-    TeacherDash --> ImportExcel[Import Questions via Excel]
-    TeacherDash --> ExportExcel[Export Student Scores]
-    
-    StudentDash --> EnterToken[Enter Exam Token]
-    EnterToken --> TakeExam[Take Exam Environment]
-    
-    TakeExam --> Submits[Submit Answers]
-    Submits --> AntiCheat{Anti-Cheat Verification}
-    
-    AntiCheat -- Clean --> SaveScore[(PostgreSQL: Prisma ORM)]
-    AntiCheat -- Flagged --> SaveScoreFlagged[(PostgreSQL: Logged as Cheating)]
-```
+- **Frontend / Framework:** Next.js 14 (App Router), React 18
+- **Styling:** TailwindCSS (dengan utilitas kustom animasi)
+- **Backend / ORM:** Prisma Client
+- **Database:** PostgreSQL (Atau database SQL lainnya yang didukung Prisma)
+- **Icons:** Lucide-React
+- **AI Integration:** `@google/genai` (Gemini API)
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
-- Node.js 18+
-- npm, pnpm, or yarn
-- PostgreSQL Database (e.g., Neon, Supabase, or local)
+## 🚀 Panduan Instalasi & Menjalankan
 
-### Installation
-
-1. **Clone the repository:**
+1. **Clone Repositori:**
    ```bash
    git clone https://github.com/Alvinhidayatullah/WEB-CBT.git
    cd clean-exam
    ```
 
-2. **Install dependencies:**
+2. **Instalasi Dependensi:**
    ```bash
    npm install
    ```
 
-3. **Set up the database:**
-   Create a `.env` file in the root directory and add your database URL and JWT Secret:
+3. **Konfigurasi Environment:**
+   Buat file `.env` di dalam folder *root* proyek Anda, lalu isi dengan kunci rahasia berikut:
    ```env
-   DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
-   JWT_SECRET="your_super_secret_key"
-   ADMIN_SEED_PASSWORD="secure_admin_password"
-   GURU_SEED_PASSWORD="secure_guru_password"
-   ```
-   Then run migrations and seed the database:
-   ```bash
-   npx prisma db push
-   npx prisma db seed
+   DATABASE_URL="postgresql://user:password@localhost:5432/cbt_db"
+   JWT_SECRET="rahasia_super_aman_anda"
+   GEMINI_API_KEY="api_key_gemini_anda"
+   CRON_SECRET="kunci_rahasia_cron_job"
    ```
 
-4. **Run the development server:**
+4. **Siapkan Database (Prisma):**
+   Mendorong skema ke database dan melakukan seeding data dasar (Admin):
+   ```bash
+   npx prisma db push
+   npx prisma generate
+   npm run seed
+   ```
+   *(Data Seed Default: username `vinz_admin`, password `vinz_admin`)*
+
+5. **Jalankan Server Lokal (Development):**
    ```bash
    npm run dev
    ```
+   Buka `http://localhost:3000` di peramban (browser) Anda.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/Alvinhidayatullah/WEB-CBT/issues).
+## 👨‍💻 Kontribusi
 
-## 📝 License
-This project is [MIT](https://choosealicense.com/licenses/mit/) licensed.
+Proyek ini dibangun dari dasar dengan filosofi keamanan dan kecepatan. Pembaharuan, *pull request*, maupun laporan kutu (*bug*) sangat kami hargai!
+
+*Didesain dan dikembangkan secara kolaboratif bersama Antigravity (AI).*
