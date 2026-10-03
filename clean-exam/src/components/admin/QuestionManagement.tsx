@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -43,6 +43,23 @@ export interface UIExam {
   questions?: UIQuestion[];
   results?: UIExamResult[];
 }
+
+const LiveTime = ({ createdAt, timeSpent, status }: { createdAt: string, timeSpent: number, status: string }) => {
+  const [now, setNow] = useState(Date.now());
+  
+  useEffect(() => {
+    if (status !== "STARTED") return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [status]);
+
+  if (status !== "STARTED") {
+     return <span>{timeSpent ? `${Math.floor(timeSpent / 60)}m ${timeSpent % 60}s` : "-"}</span>;
+  }
+
+  const elapsed = Math.max(0, Math.floor((now - new Date(createdAt).getTime()) / 1000));
+  return <span className="text-blue-600 font-semibold">{Math.floor(elapsed / 60)}m {elapsed % 60}s</span>;
+};
 
 export function QuestionManagement({ exams = [], availableClasses = [], availableSubjects = [] }: { exams: UIExam[], availableClasses?: string[], availableSubjects?: string[] }) {
   const [localExams, setLocalExams] = useState<UIExam[]>(exams);
@@ -518,12 +535,13 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                           </thead>
                           <tbody className="divide-y divide-slate-100 bg-white">
                             {exam.results && exam.results.map((res: any) => {
-                              const timeStr = res.timeSpent ? `${Math.floor(res.timeSpent / 60)}m ${res.timeSpent % 60}s` : "-";
                               return (
                                 <tr key={res.id} className="hover:bg-slate-50 transition-colors">
                                   <td className="py-3 px-5 font-semibold text-slate-900">{res.student.name || res.student.username}</td>
                                   <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
-                                  <td className="py-3 px-5 text-slate-600 font-mono text-sm">{timeStr}</td>
+                                  <td className="py-3 px-5 text-slate-600 font-mono text-sm">
+                                    <LiveTime createdAt={res.createdAt} timeSpent={res.timeSpent} status={res.gradingStatus} />
+                                  </td>
                                   <td className="py-3 px-5 font-bold text-slate-900 text-base">
                                     <div className="flex flex-col">
                                       <span>{res.score}</span>
