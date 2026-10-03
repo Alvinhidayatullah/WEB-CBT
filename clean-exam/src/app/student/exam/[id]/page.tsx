@@ -238,14 +238,14 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           </div>
 
           {/* Bagian Kanan: Pelajaran & Identitas */}
-          <div className="flex flex-col items-end text-right shrink-0 order-3 w-full lg:w-auto mt-2 lg:mt-0 px-1">
-             <div className="text-slate-800 font-bold text-sm lg:text-base leading-tight">
+          <div className="flex flex-col items-center lg:items-end text-center lg:text-right shrink-0 order-3 w-full lg:w-auto mt-2 lg:mt-0 px-1">
+             <div className="text-slate-800 font-bold text-base lg:text-lg leading-tight uppercase tracking-tight">
                 {examData.subject || examData.title}
              </div>
-             <div className="text-slate-500 font-medium text-[11px] lg:text-xs mt-0.5 flex items-center gap-1.5 flex-wrap justify-end">
-                <span className="text-blue-700 font-bold uppercase">{examData.studentName}</span> 
-                <span className="w-1 h-1 rounded-full bg-slate-300"></span> 
-                <span>Kelas {examData.studentClass}</span>
+             <div className="text-slate-600 font-medium text-xs lg:text-sm mt-1 flex items-center gap-1.5 flex-wrap justify-center lg:justify-end">
+                <span className="text-blue-700 font-bold uppercase tracking-wide">{examData.studentName}</span> 
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> 
+                <span className="font-semibold">Kelas {examData.studentClass}</span>
              </div>
           </div>
         </header>

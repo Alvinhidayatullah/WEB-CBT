@@ -186,7 +186,7 @@ export async function getExamData(examId: string) {
 
     return {
       id: exam.id,
-      title: `${exam.examType} - ${exam.subject}`,
+      title: exam.subject,
       targetClass: exam.targetClass,
       duration: exam.duration,
       studentName: user?.name || user?.username || "Siswa",

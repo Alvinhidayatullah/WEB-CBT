@@ -137,15 +137,15 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false }:
     <>
       {showWarning && (
         <div className="fixed inset-0 bg-slate-900/80 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-[340px] md:max-w-md p-6 text-center shadow-2xl mx-auto overflow-hidden">
-            <h2 className="text-xl md:text-2xl font-bold text-red-600 mb-3">Peringatan Kecurangan!</h2>
-            <p className="text-slate-600 mb-6 text-sm md:text-base leading-relaxed break-words px-2">
+          <div className="bg-white rounded-2xl w-full max-w-[340px] md:max-w-md p-6 md:p-8 text-center shadow-2xl mx-auto overflow-hidden">
+            <h2 className="text-2xl md:text-3xl font-bold text-red-600 mb-4 tracking-tight">Peringatan Kecurangan!</h2>
+            <p className="text-slate-700 mb-8 text-base md:text-lg leading-relaxed break-words px-2 font-medium">
               Sistem mendeteksi Anda mencoba berpindah tab atau keluar dari area ujian.
-              Ini adalah pelanggaran ke-{violations} dari maksimal {MAX_VIOLATIONS} pelanggaran.
+              Ini adalah pelanggaran ke-<strong className="text-red-600">{violations}</strong> dari maksimal <strong className="text-slate-900">{MAX_VIOLATIONS}</strong> pelanggaran.
             </p>
             <button
               onClick={() => setShowWarning(false)}
-              className="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full bg-blue-600 text-white font-bold py-3.5 md:py-4 text-base md:text-lg rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-600/30"
             >
               Kembali ke Ujian
             </button>
