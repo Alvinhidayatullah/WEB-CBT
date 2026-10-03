@@ -278,7 +278,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
                    />
                    <Button 
                      type="button" 
-                     variant="outline" 
+                     variant="secondary" 
                      onClick={() => setToken(Math.random().toString(36).substring(2, 7).toUpperCase())}
                      className="px-3 border-slate-300 text-slate-600 hover:bg-slate-100"
                      title="Generate Token Acak"
