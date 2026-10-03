@@ -118,7 +118,7 @@ export async function getExamData(examId: string) {
       },
     });
 
-    if (existingResult) {
+    if (existingResult && existingResult.gradingStatus !== "STARTED") {
       return { error: "Anda sudah menyelesaikan ujian ini." };
     }
 
