@@ -64,6 +64,7 @@ export async function getExamData(examId: string) {
       where: { id: examId },
       include: {
         questions: {
+          orderBy: { createdAt: 'asc' },
           select: {
             id: true,
             type: true,

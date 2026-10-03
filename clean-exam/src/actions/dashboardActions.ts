@@ -116,7 +116,7 @@ export async function getExams() {
     let exams = await prisma.exam.findMany({
       where: whereClause,
       include: { 
-        questions: true,
+        questions: { orderBy: { createdAt: 'asc' } },
         results: { 
           orderBy: { createdAt: "asc" },
           include: { 
@@ -146,14 +146,12 @@ export async function getExams() {
        });
     }
 
-    // Urutkan soal di setiap ujian: PG terlebih dahulu, lalu ESSAY
+    // Urutkan soal di setiap ujian: PG terlebih dahulu, lalu ESSAY (stabil)
     exams.forEach(exam => {
       if (exam.questions && Array.isArray(exam.questions)) {
-        exam.questions.sort((a, b) => {
-          if (a.type !== 'ESSAY' && b.type === 'ESSAY') return -1;
-          if (a.type === 'ESSAY' && b.type !== 'ESSAY') return 1;
-          return 0; // Pertahankan urutan asli jika tipenya sama
-        });
+        const pg = exam.questions.filter((q: any) => q.type !== 'ESSAY');
+        const essay = exam.questions.filter((q: any) => q.type === 'ESSAY');
+        exam.questions = [...pg, ...essay];
       }
     });
 
@@ -563,7 +561,7 @@ export async function getPendingEssayPayloads(resultId: string) {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     const result = await prisma.examResult.findUnique({
       where: { id: resultId },
-      include: { exam: { include: { questions: true } } }
+      include: { exam: { include: { questions: { orderBy: { createdAt: 'asc' } } } } }
     });
 
     if (!result) return { success: false, error: "Data tidak ditemukan." };
