@@ -239,7 +239,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       "Nama Siswa": res.student.name || res.student.username,
       "Kelas": res.student.className || "-",
       "Total Nilai": res.score,
-      "Status Ujian": res.gradingStatus === "PENDING" ? "Menunggu AI" : res.gradingStatus === "MANUAL_REVIEW" ? "Menunggu Koreksi Guru" : "Selesai"
+      "Status Ujian": res.gradingStatus === "STARTED" ? "Mengerjakan" : res.gradingStatus === "PENDING" ? "Menunggu AI" : res.gradingStatus === "MANUAL_REVIEW" ? "Menunggu Koreksi Guru" : "Selesai"
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -536,7 +536,9 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                   </td>
                                   <td className="py-3 px-5 align-middle">
                                     <div className="flex flex-col gap-1 items-start">
-                                      {res.gradingStatus === "PENDING" ? (
+                                      {res.gradingStatus === "STARTED" ? (
+                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold text-center w-24">Mengerjakan</span>
+                                      ) : res.gradingStatus === "PENDING" ? (
                                         <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center w-24">Menunggu AI</span>
                                       ) : res.gradingStatus === "MANUAL_REVIEW" ? (
                                         <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded font-semibold text-center w-24">Perlu Koreksi</span>

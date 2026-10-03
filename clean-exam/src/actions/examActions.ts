@@ -46,6 +46,17 @@ export async function joinExam(token: string) {
       return { success: false, error: "Token sudah digunakan. Harap hubungi administrator ujian." };
     }
 
+    // Create a placeholder result so the token is immediately consumed
+    await prisma.examResult.create({
+      data: {
+        studentId: userId,
+        examId: exam.id,
+        score: 0,
+        gradingStatus: "STARTED",
+        answersJson: "{}"
+      }
+    });
+
     return { success: true, examId: exam.id };
   } catch (error) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
@@ -217,6 +228,15 @@ export async function submitExam(examId: string, answers: Record<string, string>
       return { success: false, error: "Anda tidak memiliki akses ke ujian ini." };
     }
 
+    // Pastikan belum disubmit
+    const existingResult = await prisma.examResult.findUnique({
+      where: { studentId_examId: { studentId: userId, examId: examId } }
+    });
+    
+    if (!existingResult || existingResult.gradingStatus !== "STARTED") {
+      return { success: false, error: "Ujian ini sudah diselesaikan atau sesi tidak valid." };
+    }
+
     let totalEarnedPG = 0;
     let totalMaxPG = 0;
     let totalMaxEssay = 0;
@@ -263,10 +283,14 @@ export async function submitExam(examId: string, answers: Record<string, string>
       finalGradingStatus = exam.isAIGradingEnabled ? "PENDING" : "MANUAL_REVIEW";
     }
 
-    const resultRecord = await prisma.examResult.create({
+    const resultRecord = await prisma.examResult.update({
+      where: {
+        studentId_examId: {
+          studentId: userId,
+          examId: examId
+        }
+      },
       data: {
-        studentId: userId,
-        examId: examId,
         score: finalScore,
         isCheated: isCheated,
         timeSpent: timeSpent,
