@@ -44,10 +44,11 @@ export interface UIExam {
   results?: UIExamResult[];
 }
 
-const LiveTime = ({ createdAt, timeSpent, status }: { createdAt: string, timeSpent: number, status: string }) => {
-  const [now, setNow] = useState(Date.now());
+const LiveTime = ({ createdAt, timeSpent, status }: { createdAt: string | Date, timeSpent: number, status: string }) => {
+  const [now, setNow] = useState<number | null>(null);
   
   useEffect(() => {
+    setNow(Date.now());
     if (status !== "STARTED") return;
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
@@ -57,7 +58,10 @@ const LiveTime = ({ createdAt, timeSpent, status }: { createdAt: string, timeSpe
      return <span>{timeSpent ? `${Math.floor(timeSpent / 60)}m ${timeSpent % 60}s` : "-"}</span>;
   }
 
-  const elapsed = Math.max(0, Math.floor((now - new Date(createdAt).getTime()) / 1000));
+  if (now === null) return <span>Menghitung...</span>;
+
+  const createdTime = createdAt instanceof Date ? createdAt.getTime() : new Date(createdAt).getTime();
+  const elapsed = Math.max(0, Math.floor((now - createdTime) / 1000));
   return <span className="text-blue-600 font-semibold">{Math.floor(elapsed / 60)}m {elapsed % 60}s</span>;
 };
 
