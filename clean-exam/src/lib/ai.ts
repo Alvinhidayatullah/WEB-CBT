@@ -48,55 +48,64 @@ ${studentAnswer}
 \`\`\`
 `;
 
-  try {
-    const response = await fetch(gatewayUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${gatewayKey}`,
-      },
-      body: JSON.stringify({
-        model: process.env.AI_GATEWAY_MODEL || "test-cbt", // Default 9Router model as tested via curl
-        stream: false,
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.1,
-        // response_format: { type: "json_object" } // Optional depending on gateway support
-      }),
-    });
+  let lastError = null;
+  const maxRetries = 3;
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => null);
-      throw new Error(errData?.error?.message || errData?.message || response.statusText || "AI Gateway HTTP Error");
-    }
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(gatewayUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${gatewayKey}`,
+        },
+        body: JSON.stringify({
+          model: process.env.AI_GATEWAY_MODEL || "test-cbt", 
+          stream: false,
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.1,
+        }),
+      });
 
-    const data = await response.json();
-    if (!data.choices || !data.choices[0]) {
-      throw new Error(data.error?.message || "Invalid response format from 9Router Gateway");
-    }
-
-    const text = data.choices[0].message.content.trim();
-    
-    // Gunakan Regex untuk mengekstrak hanya bagian JSON (mengabaikan tag <thinking> dsb)
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) {
-      if (text.includes("<none>")) {
-        return { score: 0, reason: "Sistem AI tidak dapat menilai (Respons kosong). Silakan nilai manual." };
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error?.message || errData?.message || response.statusText || "AI Gateway HTTP Error");
       }
-      throw new Error(`Respons AI bukan JSON: ${text.substring(0, 40)}...`);
+
+      const data = await response.json();
+      if (!data.choices || !data.choices[0]) {
+        throw new Error(data.error?.message || "Invalid response format from 9Router Gateway");
+      }
+
+      const text = data.choices[0].message.content.trim();
+      
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) {
+        if (text.includes("<none>")) {
+          return { score: 0, reason: "Sistem AI tidak dapat menilai (Respons kosong). Silakan nilai manual." };
+        }
+        throw new Error(`Respons AI bukan JSON: ${text.substring(0, 40)}...`);
+      }
+      
+      const parsed = JSON.parse(match[0]);
+      return {
+        score: typeof parsed.score === 'number' ? parsed.score : 0,
+        reason: parsed.reason || "Dinilai oleh AI"
+      };
+    } catch (error: any) {
+      console.error(`AI Gateway Scoring Error (Attempt ${attempt}/${maxRetries}):`, error);
+      lastError = error;
+      if (attempt < maxRetries) {
+        // Wait 3 seconds before retrying to prevent rapid rate-limiting
+        await new Promise(res => setTimeout(res, 3000));
+      }
     }
-    
-    const parsed = JSON.parse(match[0]);
-    return {
-      score: typeof parsed.score === 'number' ? parsed.score : 0,
-      reason: parsed.reason || "Dinilai oleh AI"
-    };
-  } catch (error: any) {
-    console.error("AI Gateway Scoring Error:", error);
-    return { score: 0, reason: `Gagal memproses penilaian: ${error.message || "Kesalahan Gateway 9Router"}` };
   }
+
+  return { score: 0, reason: `Gagal memproses penilaian: ${lastError?.message || "Kesalahan Gateway 9Router"}` };
 }
