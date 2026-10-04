@@ -126,7 +126,11 @@ export async function getExams() {
           } 
         }
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { subject: "asc" },
+        { targetClass: "asc" },
+        { createdAt: "desc" }
+      ],
     });
     
     // Perform JS filtering if user is GURU
