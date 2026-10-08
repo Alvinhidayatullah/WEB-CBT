@@ -211,6 +211,32 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   const question = examData.questions[currentQuestion];
   const qId = question.id;
 
+  // Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis
+  const formatMathText = (text: string) => {
+    if (!text) return text;
+    // Regex memisahkan pecahan (misal 1/2) atau pangkat (misal ^2, ^-3, ^x)
+    const parts = text.split(/(\b\d+\/\d+\b|\^[-]?\w+)/g);
+    
+    return parts.map((part, i) => {
+      const fracMatch = part.match(/^(\d+)\/(\d+)$/);
+      if (fracMatch) {
+        return (
+          <span key={i} className="inline-flex flex-col items-center justify-center mx-1 font-semibold text-[0.85em]" style={{ verticalAlign: 'middle', lineHeight: 1.1 }}>
+            <span className="border-b border-current pb-[1px] px-[2px]">{fracMatch[1]}</span>
+            <span className="pt-[1px] px-[2px]">{fracMatch[2]}</span>
+          </span>
+        );
+      }
+      
+      const supMatch = part.match(/^\^([-\w]+)$/);
+      if (supMatch) {
+        return <sup key={i} className="text-[0.75em]">{supMatch[1]}</sup>;
+      }
+      
+      return part;
+    });
+  };
+
   return (
     <AntiCheatWrapper onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
       <div className="min-h-[100dvh] bg-[#030305] flex flex-col relative overflow-x-hidden selection:bg-blue-500/30">
@@ -303,7 +329,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
               
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 mb-8 shadow-sm">
                 <div className="text-[17px] text-slate-800 leading-snug whitespace-pre-wrap">
-                  {question.text}
+                  {formatMathText(question.text)}
                 </div>
                 {question.imageUrl && (
                   <div className="mt-8 text-center">
@@ -348,7 +374,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                         <span className={`text-base leading-relaxed flex flex-col gap-2 ${isSelected ? 'text-blue-900 font-semibold' : 'text-slate-700'}`}>
                            <div className="whitespace-pre-wrap">
                              <span className={`font-bold mr-2 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`}>{opt.label}.</span> 
-                             {opt.text}
+                             {formatMathText(opt.text)}
                            </div>
                            {opt.img && <img src={opt.img} alt={`Opsi ${opt.label}`} className="max-w-full max-h-40 w-auto rounded border border-slate-200 object-contain mt-2" />}
                         </span>

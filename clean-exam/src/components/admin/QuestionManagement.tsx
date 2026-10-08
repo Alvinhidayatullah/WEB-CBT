@@ -65,6 +65,31 @@ const LiveTime = ({ createdAt, timeSpent, status }: { createdAt: string | Date, 
   return <span className="text-blue-600 font-semibold">{Math.floor(elapsed / 60)}m {elapsed % 60}s</span>;
 };
 
+// Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis di sisi Admin
+const formatMathText = (text: string) => {
+  if (!text) return text;
+  const parts = text.split(/(\b\d+\/\d+\b|\^[-]?\w+)/g);
+  
+  return parts.map((part, i) => {
+    const fracMatch = part.match(/^(\d+)\/(\d+)$/);
+    if (fracMatch) {
+      return (
+        <span key={i} className="inline-flex flex-col items-center justify-center mx-1 font-semibold text-[0.85em]" style={{ verticalAlign: 'middle', lineHeight: 1.1 }}>
+          <span className="border-b border-current pb-[1px] px-[2px]">{fracMatch[1]}</span>
+          <span className="pt-[1px] px-[2px]">{fracMatch[2]}</span>
+        </span>
+      );
+    }
+    
+    const supMatch = part.match(/^\^([-\w]+)$/);
+    if (supMatch) {
+      return <sup key={i} className="text-[0.75em]">{supMatch[1]}</sup>;
+    }
+    
+    return part;
+  });
+};
+
 export function QuestionManagement({ exams = [], availableClasses = [], availableSubjects = [] }: { exams: UIExam[], availableClasses?: string[], availableSubjects?: string[] }) {
   const [localExams, setLocalExams] = useState<UIExam[]>(exams);
 
@@ -741,14 +766,14 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                       <p className="font-medium text-slate-900 mb-2 leading-snug whitespace-pre-wrap">
                         <span className="font-bold text-blue-600 mr-2">{idx + 1}.</span>
                         <span className="text-xs bg-slate-200 px-2 py-0.5 rounded mr-2 font-bold">{isEssay ? 'ESAI' : 'PG'}</span>
-                        {q.text}
+                        {formatMathText(q.text)}
                       </p>
                       
                       <div className="mt-3 bg-white p-3 border border-slate-200 rounded-lg flex flex-col gap-2">
                         <div>
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Jawaban Siswa:</span>
                           <div className="flex items-start justify-between gap-4">
-                            <p className={`text-slate-800 whitespace-pre-wrap ${isEssay ? 'italic' : 'font-bold'}`}>{displayAnswer}</p>
+                            <p className={`text-slate-800 whitespace-pre-wrap ${isEssay ? 'italic' : 'font-bold'}`}>{formatMathText(displayAnswer)}</p>
                             {!isEssay && studentAns !== "Tidak dijawab" && (
                               <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-md ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                 {isCorrect ? 'BENAR' : 'SALAH'}
@@ -761,7 +786,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                           <div className="pt-2 mt-1 border-t border-slate-100">
                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Kunci Jawaban:</span>
                              <p className="text-green-700 font-bold text-sm">
-                               {calculatedCorrectAnswer === "A" ? `A. ${q.optionA}` : calculatedCorrectAnswer === "B" ? `B. ${q.optionB}` : calculatedCorrectAnswer === "C" ? `C. ${q.optionC}` : `D. ${q.optionD}`}
+                               {formatMathText(calculatedCorrectAnswer === "A" ? `A. ${q.optionA}` : calculatedCorrectAnswer === "B" ? `B. ${q.optionB}` : calculatedCorrectAnswer === "C" ? `C. ${q.optionC}` : `D. ${q.optionD}`)}
                              </p>
                           </div>
                         )}
