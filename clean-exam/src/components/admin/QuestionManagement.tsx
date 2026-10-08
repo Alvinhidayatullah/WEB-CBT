@@ -68,7 +68,7 @@ const LiveTime = ({ createdAt, timeSpent, status }: { createdAt: string | Date, 
 // Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis di sisi Admin
 const formatMathText = (text: string) => {
   if (!text) return text;
-  const parts = text.split(/(\b\d+\/\d+\b|\^[-]?\w+)/g);
+  const parts = text.split(/(\d+\/\d+|\^[-]?\w+)/g);
   
   return parts.map((part, i) => {
     const fracMatch = part.match(/^(\d+)\/(\d+)$/);

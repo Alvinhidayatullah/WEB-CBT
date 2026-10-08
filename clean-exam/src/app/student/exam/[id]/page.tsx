@@ -215,7 +215,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   const formatMathText = (text: string) => {
     if (!text) return text;
     // Regex memisahkan pecahan (misal 1/2) atau pangkat (misal ^2, ^-3, ^x)
-    const parts = text.split(/(\b\d+\/\d+\b|\^[-]?\w+)/g);
+    const parts = text.split(/(\d+\/\d+|\^[-]?\w+)/g);
     
     return parts.map((part, i) => {
       const fracMatch = part.match(/^(\d+)\/(\d+)$/);
