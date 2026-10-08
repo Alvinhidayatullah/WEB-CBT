@@ -13,8 +13,8 @@ import { use } from "react";
 // Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis
 const formatMathText = (text: string) => {
   if (!text) return text;
-  // Character class for numbers, letters, and unicode superscripts
-  const charClass = "[a-zA-Z0-9\u00B2\u00B3\u00B9\u2070-\u2079\u207B]+";
+  // Character class for numbers and unicode superscripts (strictly no letters to prevent tindakan/kata)
+  const charClass = "[0-9\u00B2\u00B3\u00B9\u2070-\u2079\u207B]+";
   const splitRegex = new RegExp(`(${charClass}\\s*\\/\\s*${charClass}|\\^[-]?\\w+)`, "g");
   const matchRegex = new RegExp(`^(${charClass})\\s*\\/\\s*(${charClass})$`);
   

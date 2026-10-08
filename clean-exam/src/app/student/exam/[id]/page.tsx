@@ -214,7 +214,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   // Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis
   const formatMathText = (text: string) => {
     if (!text) return text;
-    const charClass = "[a-zA-Z0-9\u00B2\u00B3\u00B9\u2070-\u2079\u207B]+";
+    const charClass = "[0-9\u00B2\u00B3\u00B9\u2070-\u2079\u207B]+";
     const splitRegex = new RegExp(`(${charClass}\\s*\\/\\s*${charClass}|\\^[-]?\\w+)`, "g");
     const matchRegex = new RegExp(`^(${charClass})\\s*\\/\\s*(${charClass})$`);
     
