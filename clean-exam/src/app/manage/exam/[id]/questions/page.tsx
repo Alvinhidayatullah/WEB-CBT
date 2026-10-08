@@ -13,14 +13,19 @@ import { use } from "react";
 // Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis
 const formatMathText = (text: string) => {
   if (!text) return text;
-  const parts = text.split(/(\d+\/\d+|\^[-]?\w+)/g);
+  // Character class for numbers, letters, and unicode superscripts
+  const charClass = "[a-zA-Z0-9\u00B2\u00B3\u00B9\u2070-\u2079\u207B]+";
+  const splitRegex = new RegExp(`(${charClass}\\s*\\/\\s*${charClass}|\\^[-]?\\w+)`, "g");
+  const matchRegex = new RegExp(`^(${charClass})\\s*\\/\\s*(${charClass})$`);
+  
+  const parts = text.split(splitRegex);
   
   return parts.map((part, i) => {
-    const fracMatch = part.match(/^(\d+)\/(\d+)$/);
+    const fracMatch = part.match(matchRegex);
     if (fracMatch) {
       return (
         <span key={i} className="inline-flex flex-col items-center justify-center mx-1 font-semibold text-[0.85em]" style={{ verticalAlign: 'middle', lineHeight: 1.1 }}>
-          <span className="border-b border-current pb-[1px] px-[2px]">{fracMatch[1]}</span>
+          <span className="border-b border-slate-700 pb-[1px] px-[2px]">{fracMatch[1]}</span>
           <span className="pt-[1px] px-[2px]">{fracMatch[2]}</span>
         </span>
       );
