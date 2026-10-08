@@ -10,6 +10,31 @@ import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQue
 import * as XLSX from "xlsx";
 import { use } from "react";
 
+// Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis
+const formatMathText = (text: string) => {
+  if (!text) return text;
+  const parts = text.split(/(\b\d+\/\d+\b|\^[-]?\w+)/g);
+  
+  return parts.map((part, i) => {
+    const fracMatch = part.match(/^(\d+)\/(\d+)$/);
+    if (fracMatch) {
+      return (
+        <span key={i} className="inline-flex flex-col items-center justify-center mx-1 font-semibold text-[0.85em]" style={{ verticalAlign: 'middle', lineHeight: 1.1 }}>
+          <span className="border-b border-current pb-[1px] px-[2px]">{fracMatch[1]}</span>
+          <span className="pt-[1px] px-[2px]">{fracMatch[2]}</span>
+        </span>
+      );
+    }
+    
+    const supMatch = part.match(/^\^([-\w]+)$/);
+    if (supMatch) {
+      return <sup key={i} className="text-[0.75em]">{supMatch[1]}</sup>;
+    }
+    
+    return part;
+  });
+};
+
 export default function ManageQuestionsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const resolvedParams = use(params);
@@ -582,7 +607,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
                   <p className="font-medium text-slate-900 mb-4 text-lg leading-relaxed">
                     <span className="text-blue-600 font-bold mr-2">{idx + 1}.</span> 
                     <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold mr-2">{q.type === "ESSAY" ? "ESAI" : "PG"}</span>
-                    {q.text}
+                    {formatMathText(q.text)}
                   </p>
                   {q.imageUrl && (
                     <div className="mb-4">
@@ -607,19 +632,19 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
                   {q.type !== "ESSAY" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm text-slate-600">
                       <div className="px-3 py-2 flex flex-col gap-2">
-                        <div className="flex justify-between"><span>A. {q.optionA}</span> <span className="font-bold text-blue-600">Bobot: {q.weightA}%</span></div>
+                        <div className="flex justify-between"><span>A. {formatMathText(q.optionA)}</span> <span className="font-bold text-blue-600">Bobot: {q.weightA}%</span></div>
                         {q.optionAImg && <img src={q.optionAImg} alt="Opsi A" className="max-h-32 rounded border border-slate-200 object-contain" />}
                       </div>
                       <div className="px-3 py-2 flex flex-col gap-2">
-                        <div className="flex justify-between"><span>B. {q.optionB}</span> <span className="font-bold text-blue-600">Bobot: {q.weightB}%</span></div>
+                        <div className="flex justify-between"><span>B. {formatMathText(q.optionB)}</span> <span className="font-bold text-blue-600">Bobot: {q.weightB}%</span></div>
                         {q.optionBImg && <img src={q.optionBImg} alt="Opsi B" className="max-h-32 rounded border border-slate-200 object-contain" />}
                       </div>
                       <div className="px-3 py-2 flex flex-col gap-2">
-                        <div className="flex justify-between"><span>C. {q.optionC}</span> <span className="font-bold text-blue-600">Bobot: {q.weightC}%</span></div>
+                        <div className="flex justify-between"><span>C. {formatMathText(q.optionC)}</span> <span className="font-bold text-blue-600">Bobot: {q.weightC}%</span></div>
                         {q.optionCImg && <img src={q.optionCImg} alt="Opsi C" className="max-h-32 rounded border border-slate-200 object-contain" />}
                       </div>
                       <div className="px-3 py-2 flex flex-col gap-2">
-                        <div className="flex justify-between"><span>D. {q.optionD}</span> <span className="font-bold text-blue-600">Bobot: {q.weightD}%</span></div>
+                        <div className="flex justify-between"><span>D. {formatMathText(q.optionD)}</span> <span className="font-bold text-blue-600">Bobot: {q.weightD}%</span></div>
                         {q.optionDImg && <img src={q.optionDImg} alt="Opsi D" className="max-h-32 rounded border border-slate-200 object-contain" />}
                       </div>
                     </div>
@@ -627,7 +652,7 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
                   {q.type === "ESSAY" && q.essayReference && (
                      <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm">
                         <p className="font-bold text-slate-700 mb-1">Kunci Referensi (AI Rubric):</p>
-                        <p className="text-slate-600">{q.essayReference}</p>
+                        <p className="text-slate-600">{formatMathText(q.essayReference)}</p>
                      </div>
                   )}
                 </div>
