@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download, Bot } from "lucide-react";
 import { createExam, deleteExam, updateExam, getExams, getPendingResultIds, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult } from "@/actions/dashboardActions";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 
 export interface UIQuestion {
@@ -110,6 +111,16 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   const [loading, setLoading] = useState(false);
   const [expandedExam, setExpandedExam] = useState<string | null>(null);
   const [isExamListOpen, setIsExamListOpen] = useState(false);
+  const router = useRouter();
+
+  // Auto-refresh untuk melihat siswa yang baru bergabung (live update)
+  React.useEffect(() => {
+    if (!expandedExam) return;
+    const interval = setInterval(() => {
+      router.refresh(); // Fetch data terbaru dari server tanpa reset state client
+    }, 5000); // refresh tiap 5 detik
+    return () => clearInterval(interval);
+  }, [expandedExam, router]);
 
   // Edit State
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
