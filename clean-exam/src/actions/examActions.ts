@@ -126,6 +126,20 @@ export async function getExamData(examId: string) {
     let pgQuestions = exam.questions.filter((q: any) => q.type !== 'ESSAY');
     let essayQuestions = exam.questions.filter((q: any) => q.type === 'ESSAY');
 
+    // Seeded Random Generator agar urutan soal tidak berubah saat siswa refresh (berdasarkan ID siswa dan ID Ujian)
+    const generateSeed = (str: string) => {
+      let h = 0;
+      for(let i = 0; i < str.length; i++) h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+      return h;
+    };
+    let seed = generateSeed(userId + examId);
+    const seededRandom = () => {
+      let t = seed += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+
     // Pengacakan Nomor Soal jika diaktifkan (dengan fitur Pin/Freeze untuk soal cerita)
     if (exam.randomizeQuestions) {
       const smartShuffle = (arr: any[]) => {
@@ -140,7 +154,7 @@ export async function getExamData(examId: string) {
         });
 
         for (let i = shufflableItems.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
+          const j = Math.floor(seededRandom() * (i + 1));
           [shufflableItems[i], shufflableItems[j]] = [shufflableItems[j], shufflableItems[i]];
         }
 
@@ -168,7 +182,7 @@ export async function getExamData(examId: string) {
       
       if (exam.randomizeOptions && q.isOptionsShuffled !== false) {
         for (let i = opts.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
+          const j = Math.floor(seededRandom() * (i + 1));
           [opts[i], opts[j]] = [opts[j], opts[i]];
         }
       }

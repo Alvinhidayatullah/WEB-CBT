@@ -86,6 +86,12 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           const endTime = startTime + durationMs;
           const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
           setInitialTimeLeft(remaining);
+
+          // Restore answers & marks from local storage (if internet dropped)
+          const savedAnswers = localStorage.getItem(`exam_answers_${examId}`);
+          if (savedAnswers) setAnswers(JSON.parse(savedAnswers));
+          const savedMarks = localStorage.getItem(`exam_marks_${examId}`);
+          if (savedMarks) setMarkedQuestions(JSON.parse(savedMarks));
         }
       } else {
         setError("Ujian tidak ditemukan atau akses ditolak.");
@@ -100,7 +106,21 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   const handleSelect = (optionValue: string) => {
     if (!examData) return;
     const qId = examData.questions[currentQuestion].id;
-    setAnswers((prev) => ({ ...prev, [qId]: optionValue }));
+    setAnswers((prev) => {
+      const newAnswers = { ...prev, [qId]: optionValue };
+      localStorage.setItem(`exam_answers_${examId}`, JSON.stringify(newAnswers));
+      return newAnswers;
+    });
+  };
+
+  const handleToggleMark = (checked: boolean) => {
+    if (!examData) return;
+    const qId = examData.questions[currentQuestion].id;
+    setMarkedQuestions((prev) => {
+      const newMarks = { ...prev, [qId]: checked };
+      localStorage.setItem(`exam_marks_${examId}`, JSON.stringify(newMarks));
+      return newMarks;
+    });
   };
 
   const handleAutoSubmit = async () => {
@@ -279,8 +299,8 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           </div>
         </header>
 
-        {/* Konten Utama */}
-        <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-10">
+        {/* Konten Utama - Tambahkan translate="no" className="notranslate" agar Google Translate tidak merusak React State */}
+        <main translate="no" className="notranslate flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-10">
           
           {/* Navigasi Soal */}
           <aside className="lg:col-span-1 order-2 lg:order-1 relative z-10">
@@ -395,7 +415,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                        type="checkbox" 
                        className="peer appearance-none w-5 h-5 rounded border-2 border-slate-300 checked:bg-amber-500 checked:border-amber-500 focus:ring-2 focus:ring-amber-500/30 focus:outline-none transition-all cursor-pointer"
                        checked={!!markedQuestions[qId]}
-                       onChange={(e) => setMarkedQuestions(prev => ({...prev, [qId]: e.target.checked}))}
+                       onChange={(e) => handleToggleMark(e.target.checked)}
                      />
                      <svg className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
