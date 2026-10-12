@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download, Bot } from "lucide-react";
+import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download, Bot, Users, Flame, Sparkles } from "lucide-react";
 import { createExam, deleteExam, updateExam, getExams, getPendingResultIds, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult, forceFinalizeExamResult } from "@/actions/dashboardActions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -110,17 +110,34 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   const [isAIGradingEnabled, setIsAIGradingEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [expandedExam, setExpandedExam] = useState<string | null>(null);
-  const [isExamListOpen, setIsExamListOpen] = useState(false);
+  const [isExamListOpen, setIsExamListOpen] = useState(true);
+  const [filterClassification, setFilterClassification] = useState<"ALL" | "ACTIVE" | "IDLE">("ALL");
   const router = useRouter();
 
-  // Auto-refresh untuk melihat siswa yang baru bergabung (live update)
-  React.useEffect(() => {
-    if (!expandedExam) return;
+  // Pisahkan ujian yang ada siswa (sedang berlangsung / selesai) vs belum ada siswa
+  const activeExams = useMemo(() => {
+    return localExams
+      .filter((e) => (e.results?.length || 0) > 0)
+      .sort((a, b) => {
+        const aStarted = a.results?.some((r: any) => r.gradingStatus === "STARTED") ? 1 : 0;
+        const bStarted = b.results?.some((r: any) => r.gradingStatus === "STARTED") ? 1 : 0;
+        if (bStarted !== aStarted) return bStarted - aStarted; // Yang sedang aktif dikerjakan paling atas
+        return (b.results?.length || 0) - (a.results?.length || 0);
+      });
+  }, [localExams]);
+
+  const idleExams = useMemo(() => {
+    return localExams.filter((e) => !e.results || e.results.length === 0);
+  }, [localExams]);
+
+  // Auto-refresh untuk melihat siswa yang baru bergabung / berpindah mapel secara live
+  useEffect(() => {
+    if (!isExamListOpen && !expandedExam) return;
     const interval = setInterval(() => {
       router.refresh(); // Fetch data terbaru dari server tanpa reset state client
-    }, 5000); // refresh tiap 5 detik
+    }, expandedExam ? 5000 : 8000);
     return () => clearInterval(interval);
-  }, [expandedExam, router]);
+  }, [isExamListOpen, expandedExam, router]);
 
   // Edit State
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
@@ -321,6 +338,270 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     XLSX.writeFile(workbook, safeFileName);
   };
 
+  const renderExamCard = (exam: any) => {
+    const isExpanded = expandedExam === exam.id;
+    const startedStudents = exam.results?.filter((r: any) => r.gradingStatus === "STARTED") || [];
+    const hasStudents = (exam.results?.length || 0) > 0;
+
+    return (
+      <div 
+        key={exam.id} 
+        className={`border rounded-xl bg-white shadow-sm overflow-hidden transition-all hover:border-slate-300 ${
+          startedStudents.length > 0 
+            ? "border-emerald-300 ring-1 ring-emerald-200" 
+            : hasStudents 
+              ? "border-blue-200" 
+              : "border-slate-200/80"
+        }`}
+      >
+        <div 
+          className={`p-4 md:p-5 flex flex-col md:flex-row justify-between items-start md:items-center cursor-pointer gap-4 md:gap-0 ${
+            startedStudents.length > 0 
+              ? "bg-emerald-50/40" 
+              : hasStudents 
+                ? "bg-slate-50/80" 
+                : "bg-slate-50"
+          }`}
+          onClick={() => toggleExpand(exam.id)}
+        >
+          <div className="flex items-start gap-4">
+            <div className={`p-2.5 rounded-lg shrink-0 mt-1 md:mt-0 ${
+              startedStudents.length > 0 
+                ? "bg-emerald-100 text-emerald-700" 
+                : hasStudents 
+                  ? "bg-blue-100 text-blue-700" 
+                  : "bg-indigo-100 text-indigo-700"
+            }`}>
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="font-bold text-slate-900 text-lg leading-tight">{exam.examType} - {exam.subject}</h4>
+                {startedStudents.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    {startedStudents.length} Siswa Sedang Mengerjakan ({exam.results.length} Total Siswa)
+                  </span>
+                ) : hasStudents ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    <Users className="w-3.5 h-3.5" />
+                    {exam.results.length} Siswa Telah Mengerjakan
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                    Belum Ada Siswa
+                  </span>
+                )}
+              </div>
+              <div className="text-slate-500 text-sm mt-1 flex flex-wrap gap-2 items-center">
+                <div className="flex flex-wrap gap-1">
+                  {(exam.targetClass === "Semua Kelas" ? ["Semua Kelas"] : String(exam.targetClass).split(",")).map((cls: string, idx: number) => (
+                    <span key={idx} className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-700 shadow-sm">Kelas: {cls.trim()}</span>
+                  ))}
+                </div>
+                <span className="hidden md:inline text-slate-300">•</span>
+                {editingExamId === exam.id ? (
+                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                     <Input 
+                       type="number" 
+                       className="w-20 h-7 text-xs" 
+                       value={editDuration} 
+                       onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)} 
+                     />
+                     <span className="text-xs">Menit</span>
+                     <button onClick={() => handleUpdateDuration(exam.id)} disabled={loading} className="p-1 bg-green-100 text-green-700 rounded hover:bg-green-200"><Save className="w-3 h-3" /></button>
+                     <button onClick={() => setEditingExamId(null)} className="p-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200"><X className="w-3 h-3" /></button>
+                   </div>
+                ) : (
+                   <span className="bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-md font-medium text-orange-700 shadow-sm flex items-center gap-1">
+                      Waktu: {exam.duration} Menit 
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setEditingExamId(exam.id); 
+                          setEditDuration(exam.duration); 
+                        }}
+                        className="ml-1 hover:text-orange-900"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                   </span>
+                )}
+                <span className="hidden md:inline text-slate-300">•</span>
+                <span className="font-mono bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md border border-blue-100 font-semibold tracking-wider">Token: {exam.token}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end md:self-auto">
+            <button 
+              onClick={(e) => handleDeleteExam(e, exam.id)}
+              className="text-red-500 hover:bg-red-50 p-2 rounded-md transition-colors"
+              title="Hapus Ujian"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+            {isExpanded ? <ChevronUp className="text-slate-400" /> : <ChevronDown className="text-slate-400" />}
+          </div>
+        </div>
+
+        {isExpanded && (
+          <div className="p-4 md:p-6 bg-white border-t border-slate-200">
+            
+            {/* View / Manage Questions Link */}
+            <div className="mb-8 flex items-center justify-between bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+              <div>
+                <h4 className="font-semibold text-slate-800">Manajemen Soal ({exam.questions?.length || 0} Soal)</h4>
+                <p className="text-xs text-slate-500 mt-1">Tambah, edit, atau hapus soal untuk ujian ini di halaman khusus.</p>
+              </div>
+              <Link href={`/manage/exam/${exam.id}/questions`}>
+                <Button variant="primary" className="flex items-center gap-2 shadow-sm">
+                  <ExternalLink className="w-4 h-4" /> Lihat / Kelola Soal
+                </Button>
+              </Link>
+            </div>
+
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-bold text-slate-800 tracking-tight">Daftar Nilai Siswa</h4>
+                <button 
+                  onClick={() => handleDownloadExcel(exam)}
+                  className="flex items-center gap-2 text-emerald-700 border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 shadow-sm text-xs py-2 px-4 rounded-lg font-bold transition-colors focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                >
+                  <Download className="w-4 h-4" /> Unduh ke Excel
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-slate-200/60 shadow-sm">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 text-slate-600 border-b border-slate-200/60">
+                    <tr>
+                      <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Siswa</th>
+                      <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Kelas</th>
+                      <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Waktu</th>
+                      <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Nilai</th>
+                      <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Status</th>
+                      <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {exam.results && exam.results.map((res: any) => {
+                      return (
+                        <tr key={res.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-3 px-5 font-semibold text-slate-900">{res.student.name || res.student.username}</td>
+                          <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
+                          <td className="py-3 px-5 text-slate-600 font-mono text-sm">
+                            <LiveTime createdAt={res.createdAt} timeSpent={res.timeSpent} status={res.gradingStatus} />
+                          </td>
+                          <td className="py-3 px-5 font-bold text-slate-900 text-base">
+                            <div className="flex flex-col">
+                              <span>{res.score}</span>
+                              {res.essayScore !== null && typeof res.essayScore !== 'undefined' && (
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight mt-0.5">
+                                  PG: {parseFloat((res.score - res.essayScore).toFixed(2))} <span className="text-slate-300">|</span> Esai: {res.essayScore}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-5 align-middle">
+                            <div className="flex flex-col gap-1 items-start">
+                              {res.gradingStatus === "STARTED" ? (
+                                (() => {
+                                  const isOverdue = exam.duration && res.createdAt && ((Date.now() - new Date(res.createdAt).getTime()) > (exam.duration * 60 * 1000));
+                                  return isOverdue ? (
+                                    <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded font-semibold text-center w-24" title="Waktu pengerjaan telah melebihi batas durasi ujian">Waktu Habis</span>
+                                  ) : (
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold text-center w-24">Mengerjakan</span>
+                                  );
+                                })()
+                              ) : res.gradingStatus === "PENDING" ? (
+                                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center w-24">Menunggu AI</span>
+                              ) : res.gradingStatus === "MANUAL_REVIEW" ? (
+                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded font-semibold text-center w-24">Perlu Koreksi</span>
+                              ) : (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center w-24">Selesai</span>
+                              )}
+                              {res.isCheated && (
+                                <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1 w-24">Curang</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-5 align-middle text-right">
+                            <div className="flex gap-2 items-center justify-end flex-wrap">
+                              {res.gradingStatus === "STARTED" && (
+                                <button 
+                                  onClick={async () => {
+                                    if (!window.confirm(`Paksa selesaikan ujian untuk ${res.student.name || res.student.username}? Jawaban yang sudah tersimpan saat ini akan langsung dinilai.`)) return;
+                                    const finRes = await forceFinalizeExamResult(res.id);
+                                    if (finRes.success) {
+                                      router.refresh();
+                                    } else {
+                                      alert(finRes.error);
+                                    }
+                                  }}
+                                  className="text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors whitespace-nowrap"
+                                  title="Kunci ujian murid ini dan langsung hitung nilainya"
+                                >
+                                  Paksa Selesai
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => { setViewingResult(res); setViewingExam(exam); }}
+                                className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors whitespace-nowrap"
+                              >
+                                Detail Jawaban
+                              </button>
+                              <button 
+                                onClick={async () => {
+                                  if (!window.confirm(`Hapus nilai atas nama ${res.student.name || res.student.username}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
+                                  const deleteRes = await deleteExamResult(res.id);
+                                  if (deleteRes.success) {
+                                    setLocalExams(prev => prev.map(e => e.id === exam.id ? { ...e, results: e.results?.filter((r: any) => r.id !== res.id) } : e));
+                                  } else {
+                                    alert(deleteRes.error);
+                                  }
+                                }}
+                                className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors whitespace-nowrap"
+                                title="Hapus Nilai Murid Ini"
+                              >
+                                Hapus
+                              </button>
+                              {res.gradingStatus !== "MANUAL_REVIEW" && (
+                                <button 
+                                  onClick={() => handleProcessAI(res.id)}
+                                  disabled={activeBatch.has(res.id)}
+                                  className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                  title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
+                                >
+                                  {activeBatch.has(res.id) ? (
+                                    processingProgress[res.id] || "Memproses..."
+                                  ) : (
+                                    <>
+                                      <Bot className="w-3.5 h-3.5" />
+                                      {res.gradingStatus === "PENDING" ? "Proses AI" : "Nilai Ulang AI"}
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {(!exam.results || exam.results.length === 0) && (
+                      <tr>
+                        <td colSpan={6} className="py-4 text-center text-slate-500">Belum ada siswa yang mengerjakan ujian ini.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Card className="mt-8 shadow-sm border-slate-200/60 rounded-2xl overflow-hidden">
       <CardHeader className="flex flex-row justify-between items-center border-b border-slate-100 bg-slate-50/50 pb-4">
@@ -458,263 +739,142 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
           </form>
         </div>
 
-        <button 
-          onClick={() => setIsExamListOpen(!isExamListOpen)}
-          className="w-full flex items-center justify-between font-bold text-slate-900 mb-6 bg-slate-50/50 hover:bg-slate-100 p-3 rounded-lg transition-colors"
-        >
-          <span className="flex items-center gap-2">
-            <FolderEdit className="w-5 h-5 text-indigo-600" /> Daftar Ujian Aktif
-          </span>
-          {isExamListOpen ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
-        </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 bg-slate-50/70 p-3 md:p-4 rounded-xl border border-slate-200/80">
+          <button 
+            type="button"
+            onClick={() => setIsExamListOpen(!isExamListOpen)}
+            className="flex items-center gap-3 font-bold text-slate-900 hover:text-indigo-600 transition-colors text-left"
+          >
+            <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg shrink-0">
+              <FolderEdit className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base md:text-lg">Daftar Sesi Ujian</span>
+                {isExamListOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+              </div>
+              <p className="text-xs text-slate-500 font-normal">
+                Total {localExams.length} Mapel • <span className="text-emerald-700 font-medium">{activeExams.length} Ada Siswa</span> • <span className="text-slate-600">{idleExams.length} Belum Ada Siswa</span>
+              </p>
+            </div>
+          </button>
+
+          {/* Quick Filter Classification Tabs */}
+          <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setFilterClassification("ALL")}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                filterClassification === "ALL"
+                  ? "bg-white text-slate-900 shadow-sm font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Semua ({localExams.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterClassification("ACTIVE")}
+              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                filterClassification === "ACTIVE"
+                  ? "bg-emerald-600 text-white shadow-sm font-bold"
+                  : "text-emerald-700 hover:bg-emerald-100/60"
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5" /> Ada Siswa ({activeExams.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterClassification("IDLE")}
+              className={`px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                filterClassification === "IDLE"
+                  ? "bg-slate-700 text-white shadow-sm font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Belum Ada Siswa ({idleExams.length})
+            </button>
+          </div>
+        </div>
 
         {isExamListOpen && (
-        <div className="space-y-8 animate-in fade-in slide-in-from-top-2 duration-200">
-          {Object.entries(
-            localExams.reduce((groups: any, exam) => {
-              const type = exam.examType || "Lainnya";
-              if (!groups[type]) groups[type] = [];
-              groups[type].push(exam);
-              return groups;
-            }, {})
-          ).map(([type, examsOfType]: [string, any]) => (
-            <div key={type} className="space-y-4">
-              <h4 className="font-semibold text-slate-800 text-lg flex items-center gap-2 border-b border-slate-200 pb-2">
-                <span className="w-1.5 h-5 bg-indigo-500 rounded-full"></span>
-                {type}
-              </h4>
-              <div className="space-y-4">
-                {examsOfType.map((exam: any) => {
-                  const isExpanded = expandedExam === exam.id;
-                  return (
-              <div key={exam.id} className="border border-slate-200/80 rounded-xl bg-white shadow-sm overflow-hidden transition-all hover:border-slate-300">
-                <div 
-                  className="bg-slate-50 p-4 md:p-5 flex flex-col md:flex-row justify-between items-start md:items-center cursor-pointer gap-4 md:gap-0"
-                  onClick={() => toggleExpand(exam.id)}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="bg-indigo-100 text-indigo-700 p-2.5 rounded-lg shrink-0 mt-1 md:mt-0">
-                      <BookOpen className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-lg leading-tight">{exam.examType} - {exam.subject}</h4>
-                      <div className="text-slate-500 text-sm mt-1 flex flex-wrap gap-2 items-center">
-                        <div className="flex flex-wrap gap-1">
-                          {(exam.targetClass === "Semua Kelas" ? ["Semua Kelas"] : String(exam.targetClass).split(",")).map((cls: string, idx: number) => (
-                            <span key={idx} className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-700 shadow-sm">Kelas: {cls.trim()}</span>
-                          ))}
-                        </div>
-                        <span className="hidden md:inline text-slate-300">•</span>
-                        {editingExamId === exam.id ? (
-                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                             <Input 
-                               type="number" 
-                               className="w-20 h-7 text-xs" 
-                               value={editDuration} 
-                               onChange={(e) => setEditDuration(parseInt(e.target.value) || 0)} 
-                             />
-                             <span className="text-xs">Menit</span>
-                             <button onClick={() => handleUpdateDuration(exam.id)} disabled={loading} className="p-1 bg-green-100 text-green-700 rounded hover:bg-green-200"><Save className="w-3 h-3" /></button>
-                             <button onClick={() => setEditingExamId(null)} className="p-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200"><X className="w-3 h-3" /></button>
-                           </div>
-                        ) : (
-                           <span className="bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-md font-medium text-orange-700 shadow-sm flex items-center gap-1">
-                              Waktu: {exam.duration} Menit 
-                              <button 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  setEditingExamId(exam.id); 
-                                  setEditDuration(exam.duration); 
-                                }}
-                                className="ml-1 hover:text-orange-900"
-                              >
-                                <Edit2 className="w-3 h-3" />
-                              </button>
-                           </span>
-                        )}
-                        <span className="hidden md:inline text-slate-300">•</span>
-                        <span className="font-mono bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md border border-blue-100 font-semibold tracking-wider">Token: {exam.token}</span>
+          <div className="space-y-8 animate-in fade-in slide-in-from-top-2 duration-200">
+            {localExams.length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
+                <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-slate-600 font-medium">Belum ada sesi ujian yang dibuat.</p>
+                <p className="text-slate-400 text-xs mt-1">Buat sesi ujian baru menggunakan formulir di atas.</p>
+              </div>
+            ) : (
+              <>
+                {/* KATEGORI 1: UJIAN SEDANG BERLANGSUNG / MEMILIKI SISWA */}
+                {(filterClassification === "ALL" || filterClassification === "ACTIVE") && (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b-2 border-emerald-500/80 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-3 w-3 relative">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                        </span>
+                        <h4 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                          <Flame className="w-5 h-5 text-emerald-600" />
+                          Ujian Sedang Berlangsung / Memiliki Siswa
+                        </h4>
+                        <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold">
+                          {activeExams.length} Mapel
+                        </span>
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 self-end md:self-auto">
-                    <button 
-                      onClick={(e) => handleDeleteExam(e, exam.id)}
-                      className="text-red-500 hover:bg-red-50 p-2 rounded-md transition-colors"
-                      title="Hapus Ujian"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    {isExpanded ? <ChevronUp className="text-slate-400" /> : <ChevronDown className="text-slate-400" />}
-                  </div>
-                </div>
-
-                {isExpanded && (
-                  <div className="p-4 md:p-6 bg-white border-t border-slate-200">
-                    
-                    {/* View / Manage Questions Link */}
-                    <div className="mb-8 flex items-center justify-between bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                      <div>
-                        <h4 className="font-semibold text-slate-800">Manajemen Soal ({exam.questions?.length || 0} Soal)</h4>
-                        <p className="text-xs text-slate-500 mt-1">Tambah, edit, atau hapus soal untuk ujian ini di halaman khusus.</p>
-                      </div>
-                      <Link href={`/manage/exam/${exam.id}/questions`}>
-                        <Button variant="primary" className="flex items-center gap-2 shadow-sm">
-                          <ExternalLink className="w-4 h-4" /> Lihat / Kelola Soal
-                        </Button>
-                      </Link>
+                      <p className="text-xs text-slate-500">
+                        Mapel otomatis berpindah ke sini ketika siswa menginput token atau mulai ujian
+                      </p>
                     </div>
 
-                    <div className="pt-2">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-bold text-slate-800 tracking-tight">Daftar Nilai Siswa</h4>
-                        <button 
-                          onClick={() => handleDownloadExcel(exam)}
-                          className="flex items-center gap-2 text-emerald-700 border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 shadow-sm text-xs py-2 px-4 rounded-lg font-bold transition-colors focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                        >
-                          <Download className="w-4 h-4" /> Unduh ke Excel
-                        </button>
+                    {activeExams.length > 0 ? (
+                      <div className="space-y-4">
+                        {activeExams.map(renderExamCard)}
                       </div>
-                      <div className="overflow-x-auto rounded-xl border border-slate-200/60 shadow-sm">
-                        <table className="w-full text-sm text-left">
-                          <thead className="bg-slate-50 text-slate-600 border-b border-slate-200/60">
-                            <tr>
-                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Siswa</th>
-                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Kelas</th>
-                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Waktu</th>
-                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Nilai</th>
-                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Status</th>
-                              <th className="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-right">Aksi</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
-                            {exam.results && exam.results.map((res: any) => {
-                              return (
-                                <tr key={res.id} className="hover:bg-slate-50 transition-colors">
-                                  <td className="py-3 px-5 font-semibold text-slate-900">{res.student.name || res.student.username}</td>
-                                  <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
-                                  <td className="py-3 px-5 text-slate-600 font-mono text-sm">
-                                    <LiveTime createdAt={res.createdAt} timeSpent={res.timeSpent} status={res.gradingStatus} />
-                                  </td>
-                                  <td className="py-3 px-5 font-bold text-slate-900 text-base">
-                                    <div className="flex flex-col">
-                                      <span>{res.score}</span>
-                                      {res.essayScore !== null && typeof res.essayScore !== 'undefined' && (
-                                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight mt-0.5">
-                                          PG: {parseFloat((res.score - res.essayScore).toFixed(2))} <span className="text-slate-300">|</span> Esai: {res.essayScore}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td className="py-3 px-5 align-middle">
-                                    <div className="flex flex-col gap-1 items-start">
-                                      {res.gradingStatus === "STARTED" ? (
-                                        (() => {
-                                          const isOverdue = exam.duration && res.createdAt && ((Date.now() - new Date(res.createdAt).getTime()) > (exam.duration * 60 * 1000));
-                                          return isOverdue ? (
-                                            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded font-semibold text-center w-24" title="Waktu pengerjaan telah melebihi batas durasi ujian">Waktu Habis</span>
-                                          ) : (
-                                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold text-center w-24">Mengerjakan</span>
-                                          );
-                                        })()
-                                      ) : res.gradingStatus === "PENDING" ? (
-                                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center w-24">Menunggu AI</span>
-                                      ) : res.gradingStatus === "MANUAL_REVIEW" ? (
-                                        <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded font-semibold text-center w-24">Perlu Koreksi</span>
-                                      ) : (
-                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center w-24">Selesai</span>
-                                      )}
-                                      {res.isCheated && (
-                                        <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1 w-24">Curang</span>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td className="py-3 px-5 align-middle text-right">
-                                    <div className="flex gap-2 items-center justify-end flex-wrap">
-                                      {res.gradingStatus === "STARTED" && (
-                                        <button 
-                                          onClick={async () => {
-                                            if (!window.confirm(`Paksa selesaikan ujian untuk ${res.student.name || res.student.username}? Jawaban yang sudah tersimpan saat ini akan langsung dinilai.`)) return;
-                                            const finRes = await forceFinalizeExamResult(res.id);
-                                            if (finRes.success) {
-                                              router.refresh();
-                                            } else {
-                                              alert(finRes.error);
-                                            }
-                                          }}
-                                          className="text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors whitespace-nowrap"
-                                          title="Kunci ujian murid ini dan langsung hitung nilainya"
-                                        >
-                                          Paksa Selesai
-                                        </button>
-                                      )}
-                                      <button 
-                                        onClick={() => { setViewingResult(res); setViewingExam(exam); }}
-                                        className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors whitespace-nowrap"
-                                      >
-                                        Detail Jawaban
-                                      </button>
-                                      <button 
-                                        onClick={async () => {
-                                          if (!window.confirm(`Hapus nilai atas nama ${res.student.name || res.student.username}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
-                                          const deleteRes = await deleteExamResult(res.id);
-                                          if (deleteRes.success) {
-                                            setLocalExams(prev => prev.map(e => e.id === exam.id ? { ...e, results: e.results?.filter((r: any) => r.id !== res.id) } : e));
-                                          } else {
-                                            alert(deleteRes.error);
-                                          }
-                                        }}
-                                        className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors whitespace-nowrap"
-                                        title="Hapus Nilai Murid Ini"
-                                      >
-                                        Hapus
-                                      </button>
-                                      {res.gradingStatus !== "MANUAL_REVIEW" && (
-                                        <button 
-                                          onClick={() => handleProcessAI(res.id)}
-                                          disabled={activeBatch.has(res.id)}
-                                          className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors disabled:opacity-50 whitespace-nowrap"
-                                          title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
-                                        >
-                                          {activeBatch.has(res.id) ? (
-                                            processingProgress[res.id] || "Memproses..."
-                                          ) : (
-                                            <>
-                                              <Bot className="w-3.5 h-3.5" />
-                                              {res.gradingStatus === "PENDING" ? "Proses AI" : "Nilai Ulang AI"}
-                                            </>
-                                          )}
-                                        </button>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                            {(!exam.results || exam.results.length === 0) && (
-                              <tr>
-                                <td colSpan={5} className="py-4 text-center text-slate-500">Belum ada siswa yang mengerjakan ujian ini.</td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
+                    ) : (
+                      <div className="p-6 bg-emerald-50/40 rounded-xl border border-emerald-100 text-center">
+                        <p className="text-sm font-medium text-emerald-900">Belum ada siswa yang mengerjakan ujian apapun saat ini.</p>
+                        <p className="text-xs text-emerald-600 mt-0.5">Begitu siswa memasukkan token di HP/perangkat mereka, mapel ujian akan otomatis muncul di bagian ini.</p>
                       </div>
-                    </div>
-
+                    )}
                   </div>
                 )}
-              </div>
-            );
-          })}
-              </div>
-            </div>
-          ))}
-          {localExams.length === 0 && (
-            <div className="text-center py-10 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
-              <p className="text-slate-500 text-sm">Belum ada sesi ujian yang dibuat.</p>
-            </div>
-          )}
-        </div>
+
+                {/* KATEGORI 2: UJIAN BELUM ADA SISWA */}
+                {(filterClassification === "ALL" || filterClassification === "IDLE") && (
+                  <div className="space-y-4 pt-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-200 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                        <h4 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                          <BookOpen className="w-5 h-5 text-slate-500" />
+                          Daftar Ujian Tersedia (Belum Ada Siswa)
+                        </h4>
+                        <span className="bg-slate-100 text-slate-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                          {idleExams.length} Mapel
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Ujian yang sudah siap dan menunggu siswa memasukkan token
+                      </p>
+                    </div>
+
+                    {idleExams.length > 0 ? (
+                      <div className="space-y-4">
+                        {idleExams.map(renderExamCard)}
+                      </div>
+                    ) : (
+                      <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                        <p className="text-sm font-medium text-slate-600">Semua ujian saat ini telah memiliki siswa.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         )}
 
       </CardContent>
