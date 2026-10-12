@@ -381,6 +381,14 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
             })
           };
         }));
+
+        // JIKA STATUSNYA PENDING (ada esai yang perlu dinilai AI):
+        // LANGSUNG JALANKAN AI OTOMATIS SAAT ITU JUGA TANPA HARUS KLIK TOMBOL LAGI!
+        if (finRes.result.gradingStatus === "PENDING") {
+          handleProcessAI(result.id).then(() => {
+            getExams().then(freshExams => setLocalExams(freshExams as unknown as UIExam[]));
+          });
+        }
       } else if (!finRes.success) {
         alert(finRes.error || "Gagal memproses penilaian paksa.");
         router.refresh();
@@ -635,7 +643,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                               >
                                 Hapus
                               </button>
-                              {res.gradingStatus !== "MANUAL_REVIEW" && (
+                              {(res.gradingStatus === "PENDING" || res.gradingStatus === "GRADED") && (
                                 <button 
                                   onClick={() => handleProcessAI(res.id)}
                                   disabled={activeBatch.has(res.id)}

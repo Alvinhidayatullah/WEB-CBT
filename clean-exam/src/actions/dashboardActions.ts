@@ -740,6 +740,33 @@ export async function forceFinalizeExamResult(resultId: string) {
       }
     });
 
+    if (hasEssay && result.exam.isAIGradingEnabled) {
+      const essayPayloads: any[] = [];
+      result.exam.questions.forEach(q => {
+        if (q.type === "ESSAY") {
+          const essayMaxW = q.weightA && q.weightA > 0 ? q.weightA : 100;
+          essayPayloads.push({
+            questionText: q.text,
+            referenceAnswer: q.essayReference || "",
+            studentAnswer: answers[q.id] || "",
+            weight: essayMaxW
+          });
+        }
+      });
+
+      if (essayPayloads.length > 0) {
+        await prisma.jobQueue.create({
+          data: {
+            type: "AI_GRADING",
+            payload: JSON.stringify({
+              resultId: result.id,
+              essays: essayPayloads
+            })
+          }
+        });
+      }
+    }
+
     revalidatePath("/admin/dashboard");
     revalidatePath("/teacher/dashboard");
     return { 
