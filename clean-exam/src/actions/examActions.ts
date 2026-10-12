@@ -212,6 +212,29 @@ export async function getExamData(examId: string) {
   }
 }
 
+export async function saveStudentAnswersProgress(examId: string, answers: Record<string, string>, timeSpent?: number) {
+  try {
+    const session = await getSession();
+    const userId = session?.userId as string;
+    if (!userId || typeof answers !== 'object' || answers === null) return { success: false };
+
+    await prisma.examResult.updateMany({
+      where: {
+        studentId: userId,
+        examId: examId,
+        gradingStatus: "STARTED"
+      },
+      data: {
+        answersJson: JSON.stringify(answers),
+        ...(typeof timeSpent === 'number' && timeSpent > 0 ? { timeSpent } : {})
+      }
+    });
+    return { success: true };
+  } catch {
+    return { success: false };
+  }
+}
+
 export async function submitExam(examId: string, answers: Record<string, string>, isCheated: boolean = false, timeSpent: number = 0) {
   try {
     // 1. Strict Payload Validation

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download, Bot } from "lucide-react";
-import { createExam, deleteExam, updateExam, getExams, getPendingResultIds, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult } from "@/actions/dashboardActions";
+import { createExam, deleteExam, updateExam, getExams, getPendingResultIds, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult, forceFinalizeExamResult } from "@/actions/dashboardActions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -216,15 +216,25 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
         const essay = payloads[i];
         setProcessingProgress(prev => ({ ...prev, [resId]: `Menilai ${i + 1}/${payloads.length}...` }));
         
-        const aiRes = await gradeSingleEssayAction(essay.questionText, essay.referenceAnswer, essay.studentAnswer);
-        
-        if (aiRes.success) {
-          const score = aiRes.score || 0;
-          const weightedScore = (score / 100) * essay.weight;
-          totalEssayScore += weightedScore;
-          aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: ${score}/100. Alasan: ${aiRes.reason}`);
-        } else {
-          aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: 0/100. Alasan: Gagal memproses - ${aiRes.error}`);
+        try {
+          const timeoutPromise = new Promise<{ success: boolean; error: string }>((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout (AI tidak merespons dalam 15s)")), 15000)
+          );
+          const aiRes = await Promise.race([
+            gradeSingleEssayAction(essay.questionText, essay.referenceAnswer, essay.studentAnswer),
+            timeoutPromise
+          ]) as any;
+          
+          if (aiRes.success) {
+            const score = aiRes.score || 0;
+            const weightedScore = (score / 100) * essay.weight;
+            totalEssayScore += weightedScore;
+            aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: ${score}/100. Alasan: ${aiRes.reason}`);
+          } else {
+            aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: 0/100. Alasan: Gagal memproses - ${aiRes.error}`);
+          }
+        } catch (callErr: any) {
+          aiFeedbacks.push(`Soal: ${essay.questionText} - AI Score: 0/100. Alasan: Gagal memproses - ${callErr.message || "Timeout"}`);
         }
       }
 
@@ -599,7 +609,14 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                   <td className="py-3 px-5 align-middle">
                                     <div className="flex flex-col gap-1 items-start">
                                       {res.gradingStatus === "STARTED" ? (
-                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold text-center w-24">Mengerjakan</span>
+                                        (() => {
+                                          const isOverdue = exam.duration && res.createdAt && ((Date.now() - new Date(res.createdAt).getTime()) > (exam.duration * 60 * 1000));
+                                          return isOverdue ? (
+                                            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded font-semibold text-center w-24" title="Waktu pengerjaan telah melebihi batas durasi ujian">Waktu Habis</span>
+                                          ) : (
+                                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold text-center w-24">Mengerjakan</span>
+                                          );
+                                        })()
                                       ) : res.gradingStatus === "PENDING" ? (
                                         <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-semibold text-center w-24">Menunggu AI</span>
                                       ) : res.gradingStatus === "MANUAL_REVIEW" ? (
@@ -614,6 +631,23 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                   </td>
                                   <td className="py-3 px-5 align-middle text-right">
                                     <div className="flex gap-2 items-center justify-end flex-wrap">
+                                      {res.gradingStatus === "STARTED" && (
+                                        <button 
+                                          onClick={async () => {
+                                            if (!window.confirm(`Paksa selesaikan ujian untuk ${res.student.name || res.student.username}? Jawaban yang sudah tersimpan saat ini akan langsung dinilai.`)) return;
+                                            const finRes = await forceFinalizeExamResult(res.id);
+                                            if (finRes.success) {
+                                              router.refresh();
+                                            } else {
+                                              alert(finRes.error);
+                                            }
+                                          }}
+                                          className="text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors whitespace-nowrap"
+                                          title="Kunci ujian murid ini dan langsung hitung nilainya"
+                                        >
+                                          Paksa Selesai
+                                        </button>
+                                      )}
                                       <button 
                                         onClick={() => { setViewingResult(res); setViewingExam(exam); }}
                                         className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors whitespace-nowrap"

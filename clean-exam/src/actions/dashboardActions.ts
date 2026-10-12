@@ -679,3 +679,70 @@ export async function deleteExamResult(resultId: string) {
     return { success: false, error: "Gagal menghapus hasil ujian siswa." };
   }
 }
+
+export async function forceFinalizeExamResult(resultId: string) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    const result = await prisma.examResult.findUnique({
+      where: { id: resultId },
+      include: { exam: { include: { questions: true } } }
+    });
+
+    if (!result) return { success: false, error: "Data ujian tidak ditemukan." };
+
+    let answers: Record<string, string> = {};
+    try {
+      answers = JSON.parse((result.answersJson as string) || "{}");
+    } catch {
+      answers = {};
+    }
+
+    let totalEarnedPG = 0;
+    let totalMaxPG = 0;
+    let totalMaxEssay = 0;
+    let hasEssay = false;
+
+    result.exam.questions.forEach(q => {
+      const studentAnswer = answers[q.id];
+      if (q.type === "ESSAY") {
+        hasEssay = true;
+        const essayMaxW = q.weightA && q.weightA > 0 ? q.weightA : 100;
+        totalMaxEssay += essayMaxW;
+      } else {
+        const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
+        const questionMax = maxW > 0 ? maxW : 100;
+        totalMaxPG += questionMax;
+
+        let earned = 0;
+        if (studentAnswer === "A") earned = q.weightA || 0;
+        else if (studentAnswer === "B") earned = q.weightB || 0;
+        else if (studentAnswer === "C") earned = q.weightC || 0;
+        else if (studentAnswer === "D") earned = q.weightD || 0;
+        totalEarnedPG += earned;
+      }
+    });
+
+    const pgWeight = hasEssay ? 60 : 100;
+    const pgScore = totalMaxPG > 0 ? (totalEarnedPG / totalMaxPG) * pgWeight : 0;
+    const finalScore = parseFloat(pgScore.toFixed(2));
+
+    const finalGradingStatus = hasEssay && result.exam.isAIGradingEnabled ? "PENDING" : "GRADED";
+    const timeSpent = result.timeSpent > 0 ? result.timeSpent : result.exam.duration * 60;
+
+    await prisma.examResult.update({
+      where: { id: resultId },
+      data: {
+        score: finalScore,
+        essayScore: 0,
+        timeSpent: timeSpent,
+        gradingStatus: finalGradingStatus
+      }
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Gagal memproses penilaian paksa." };
+  }
+}
+

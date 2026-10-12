@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AntiCheatWrapper } from '@/components/exam/AntiCheatWrapper';
 import { Button } from '@/components/ui/Button';
-import { getExamData, submitExam } from '@/actions/examActions';
+import { getExamData, submitExam, saveStudentAnswersProgress } from '@/actions/examActions';
 import { Loader2 } from 'lucide-react';
 import { use } from 'react';
 import Image from 'next/image';
@@ -103,12 +103,25 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
 
 
 
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const syncToServer = (newAnswers: Record<string, string>) => {
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = setTimeout(() => {
+      const startKey = `exam_start_${examId}`;
+      const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
+      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+      saveStudentAnswersProgress(examId, newAnswers, timeSpent).catch(() => {});
+    }, 500);
+  };
+
   const handleSelect = (optionValue: string) => {
     if (!examData) return;
     const qId = examData.questions[currentQuestion].id;
     setAnswers((prev) => {
       const newAnswers = { ...prev, [qId]: optionValue };
       localStorage.setItem(`exam_answers_${examId}`, JSON.stringify(newAnswers));
+      syncToServer(newAnswers);
       return newAnswers;
     });
   };
