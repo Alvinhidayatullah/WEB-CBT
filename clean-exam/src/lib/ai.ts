@@ -39,8 +39,13 @@ export async function gradeEssay(questionText: string, referenceAnswer: string, 
     return { score: 0, reason: "Tidak ada jawaban (kosong)." };
   }
 
-  if (!geminiApiKey && (!gatewayUrl || !gatewayKey)) {
-    return { score: 0, reason: "GAGAL: API Key Gemini (GEMINI_API_KEY) atau Gateway AI (AI_GATEWAY_KEY) belum dipasang di Vercel/Lingkungan Anda." };
+  const currentGatewayUrl = process.env.AI_GATEWAY_URL;
+  const currentGatewayKey = process.env.AI_GATEWAY_KEY;
+  const currentGeminiKey = process.env.GEMINI_API_KEY;
+  const currentModel = process.env.AI_GATEWAY_MODEL || "test-cbt";
+
+  if (!currentGeminiKey && (!currentGatewayUrl || !currentGatewayKey)) {
+    return { score: 0, reason: "GAGAL: API Key Gateway AI (AI_GATEWAY_KEY) atau URL belum dipasang di Vercel/Lingkungan Anda." };
   }
 
   const prompt = `Kamu adalah guru evaluator profesional yang sangat suportif, empatik, dan rendah hati. Tugasmu adalah menilai jawaban esai siswa dengan skala 0 hingga 100.
@@ -77,8 +82,9 @@ ${studentAnswer}
 \`\`\`
 `;
 
-  // 1. Coba gunakan Google Gemini SDK jika GEMINI_API_KEY tersedia
-  if (geminiApiKey) {
+
+  // 1. Coba gunakan Google Gemini SDK jika GEMINI_API_KEY tersedia dan AI_PROVIDER === 'gemini'
+  if (currentGeminiKey && process.env.AI_PROVIDER === "gemini") {
     let lastGeminiError: any = null;
     const maxRetries = 3;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -92,27 +98,26 @@ ${studentAnswer}
         }
       }
     }
-    // Jika tidak ada gateway sebagai fallback, return error Gemini
-    if (!gatewayUrl || !gatewayKey) {
+    if (!currentGatewayUrl || !currentGatewayKey) {
       return { score: 0, reason: `Gagal memproses penilaian Gemini AI: ${lastGeminiError?.message || "Kesalahan Google Gemini"}` };
     }
-    console.warn("Gemini gagal setelah 3 percobaan, mencoba fallback ke AI Gateway...");
+    console.warn("Gemini gagal setelah 3 percobaan, mencoba fallback ke 9Router / AI Gateway...");
   }
 
-  // 2. Fallback atau penggunaan OpenAI-Compatible Gateway (Groq, 9Router, OpenRouter, dll.)
+  // 2. Gunakan OpenAI-Compatible Gateway (9Router, Groq, dll.)
   let lastGatewayError = null;
   const maxRetries = 3;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const response = await fetch(gatewayUrl!, {
+      const response = await fetch(currentGatewayUrl!, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${gatewayKey}`,
+          "Authorization": `Bearer ${currentGatewayKey}`,
         },
         body: JSON.stringify({
-          model: process.env.AI_GATEWAY_MODEL || "gemini-1.5-flash", 
+          model: currentModel, 
           stream: false,
           messages: [
             {
@@ -134,14 +139,18 @@ ${studentAnswer}
         throw new Error(data.error?.message || "Format respons tidak valid dari AI Gateway");
       }
 
-      const text = data.choices[0].message.content.trim();
+      const rawText = data.choices[0].message?.content || "";
+      const cleanText = rawText
+        .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .trim();
       
-      const match = text.match(/\{[\s\S]*\}/);
+      const match = cleanText.match(/\{[\s\S]*\}/);
       if (!match) {
-        if (text.includes("<none>")) {
+        if (cleanText.includes("<none>")) {
           return { score: 0, reason: "Sistem AI tidak dapat menilai (Respons kosong). Silakan nilai manual." };
         }
-        throw new Error(`Respons AI bukan JSON: ${text.substring(0, 40)}...`);
+        throw new Error(`Respons AI bukan JSON: ${cleanText.substring(0, 40)}...`);
       }
       
       const parsed = JSON.parse(match[0]);
@@ -153,8 +162,18 @@ ${studentAnswer}
       console.error(`AI Gateway Scoring Error (Attempt ${attempt}/${maxRetries}):`, error);
       lastGatewayError = error;
       if (attempt < maxRetries) {
-        await new Promise(res => setTimeout(res, 3000));
+        await new Promise(res => setTimeout(res, 2000));
       }
+    }
+  }
+
+  // 3. Fallback ke Gemini jika gateway gagal dan GEMINI_API_KEY ada
+  if (currentGeminiKey && process.env.AI_PROVIDER !== "gemini") {
+    try {
+      console.log("Mencoba fallback ke Gemini SDK...");
+      return await gradeWithGemini(prompt);
+    } catch (gErr: any) {
+      console.error("Gemini Fallback juga gagal:", gErr);
     }
   }
 
