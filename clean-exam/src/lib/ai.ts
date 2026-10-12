@@ -1,17 +1,46 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const geminiApiKey = process.env.GEMINI_API_KEY;
 const gatewayUrl = process.env.AI_GATEWAY_URL;
 const gatewayKey = process.env.AI_GATEWAY_KEY;
 
-if (!gatewayUrl || !gatewayKey) {
-  console.warn("AI_GATEWAY_URL or AI_GATEWAY_KEY is not set. AI Features will not work.");
+if (!geminiApiKey && (!gatewayUrl || !gatewayKey)) {
+  console.warn("Neither GEMINI_API_KEY nor AI_GATEWAY_URL/KEY is set. AI Features will not work.");
+}
+
+async function gradeWithGemini(prompt: string): Promise<{ score: number; reason: string }> {
+  const genAI = new GoogleGenerativeAI(geminiApiKey!);
+  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.1,
+    },
+  });
+
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text().trim();
+  
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) {
+    throw new Error(`Respons Gemini bukan JSON valid: ${text.substring(0, 40)}...`);
+  }
+  const parsed = JSON.parse(match[0]);
+  return {
+    score: typeof parsed.score === "number" ? parsed.score : 0,
+    reason: parsed.reason || "Dinilai oleh Google Gemini AI"
+  };
 }
 
 export async function gradeEssay(questionText: string, referenceAnswer: string, studentAnswer: string): Promise<{score: number, reason: string}> {
-  if (!gatewayUrl || !gatewayKey) {
-    return { score: 0, reason: "GAGAL: API Key 9Router (AI_GATEWAY_KEY) atau URL belum dipasang di Vercel/Lingkungan Anda." };
-  }
-
   if (!studentAnswer || studentAnswer.trim() === "") {
     return { score: 0, reason: "Tidak ada jawaban (kosong)." };
+  }
+
+  if (!geminiApiKey && (!gatewayUrl || !gatewayKey)) {
+    return { score: 0, reason: "GAGAL: API Key Gemini (GEMINI_API_KEY) atau Gateway AI (AI_GATEWAY_KEY) belum dipasang di Vercel/Lingkungan Anda." };
   }
 
   const prompt = `Kamu adalah guru evaluator profesional yang sangat suportif, empatik, dan rendah hati. Tugasmu adalah menilai jawaban esai siswa dengan skala 0 hingga 100.
@@ -48,19 +77,42 @@ ${studentAnswer}
 \`\`\`
 `;
 
-  let lastError = null;
+  // 1. Coba gunakan Google Gemini SDK jika GEMINI_API_KEY tersedia
+  if (geminiApiKey) {
+    let lastGeminiError: any = null;
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await gradeWithGemini(prompt);
+      } catch (error: any) {
+        console.error(`Gemini AI Scoring Error (Attempt ${attempt}/${maxRetries}):`, error);
+        lastGeminiError = error;
+        if (attempt < maxRetries) {
+          await new Promise(res => setTimeout(res, 2000));
+        }
+      }
+    }
+    // Jika tidak ada gateway sebagai fallback, return error Gemini
+    if (!gatewayUrl || !gatewayKey) {
+      return { score: 0, reason: `Gagal memproses penilaian Gemini AI: ${lastGeminiError?.message || "Kesalahan Google Gemini"}` };
+    }
+    console.warn("Gemini gagal setelah 3 percobaan, mencoba fallback ke AI Gateway...");
+  }
+
+  // 2. Fallback atau penggunaan OpenAI-Compatible Gateway (Groq, 9Router, OpenRouter, dll.)
+  let lastGatewayError = null;
   const maxRetries = 3;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const response = await fetch(gatewayUrl, {
+      const response = await fetch(gatewayUrl!, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${gatewayKey}`,
         },
         body: JSON.stringify({
-          model: process.env.AI_GATEWAY_MODEL || "test-cbt", 
+          model: process.env.AI_GATEWAY_MODEL || "gemini-1.5-flash", 
           stream: false,
           messages: [
             {
@@ -79,7 +131,7 @@ ${studentAnswer}
 
       const data = await response.json();
       if (!data.choices || !data.choices[0]) {
-        throw new Error(data.error?.message || "Invalid response format from 9Router Gateway");
+        throw new Error(data.error?.message || "Format respons tidak valid dari AI Gateway");
       }
 
       const text = data.choices[0].message.content.trim();
@@ -99,13 +151,12 @@ ${studentAnswer}
       };
     } catch (error: any) {
       console.error(`AI Gateway Scoring Error (Attempt ${attempt}/${maxRetries}):`, error);
-      lastError = error;
+      lastGatewayError = error;
       if (attempt < maxRetries) {
-        // Wait 3 seconds before retrying to prevent rapid rate-limiting
         await new Promise(res => setTimeout(res, 3000));
       }
     }
   }
 
-  return { score: 0, reason: `Gagal memproses penilaian: ${lastError?.message || "Kesalahan Gateway 9Router"}` };
+  return { score: 0, reason: `Gagal memproses penilaian: ${lastGatewayError?.message || "Kesalahan Gateway AI"}` };
 }
