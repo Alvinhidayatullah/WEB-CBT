@@ -300,14 +300,100 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     setLoading(false);
   };
 
+  const [finalizingIds, setFinalizingIds] = useState<Set<string>>(new Set());
+
   const handleDeleteExam = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!window.confirm("Hapus sesi ujian ini beserta semua soalnya?")) return;
+    const prevExams = localExams;
+    setLocalExams(prev => prev.filter(exam => exam.id !== id));
     const res = await deleteExam(id);
-    if (res.success) {
-      setLocalExams(localExams.filter(exam => exam.id !== id));
-    } else {
+    if (!res.success) {
+      setLocalExams(prevExams);
       alert(res.error || "Gagal menghapus ujian");
+    }
+  };
+
+  const handleDeleteStudentResult = async (examId: string, resultId: string, studentName: string) => {
+    if (!window.confirm(`Hapus nilai atas nama ${studentName}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
+
+    // Snapshot untuk rollback jika gagal
+    const prevExams = localExams;
+
+    // OPTIMISTIC UPDATE: Langsung hilangkan dari layar seketika (0 detik)!
+    setLocalExams(prev => prev.map(e => {
+      if (e.id !== examId) return e;
+      return {
+        ...e,
+        results: (e.results || []).filter((r: any) => r.id !== resultId)
+      };
+    }));
+
+    try {
+      const res = await deleteExamResult(resultId);
+      if (!res.success) {
+        setLocalExams(prevExams);
+        alert(res.error || "Gagal menghapus nilai siswa.");
+      }
+    } catch {
+      setLocalExams(prevExams);
+      alert("Terjadi kesalahan jaringan saat menghapus siswa.");
+    }
+  };
+
+  const handleForceFinalizeStudent = async (examId: string, result: any) => {
+    const studentName = result.student.name || result.student.username;
+    if (!window.confirm(`Paksa selesaikan ujian untuk ${studentName}? Jawaban yang sudah tersimpan saat ini akan langsung dinilai.`)) return;
+
+    setFinalizingIds(prev => new Set(prev).add(result.id));
+
+    // OPTIMISTIC UPDATE: Langsung ubah status agar tombol 'Paksa Selesai' hilang seketika (0 detik)!
+    setLocalExams(prev => prev.map(e => {
+      if (e.id !== examId) return e;
+      return {
+        ...e,
+        results: (e.results || []).map((r: any) => {
+          if (r.id !== result.id) return r;
+          return {
+            ...r,
+            gradingStatus: "PENDING",
+          };
+        })
+      };
+    }));
+
+    try {
+      const finRes = await forceFinalizeExamResult(result.id);
+      if (finRes.success && finRes.result) {
+        setLocalExams(prev => prev.map(e => {
+          if (e.id !== examId) return e;
+          return {
+            ...e,
+            results: (e.results || []).map((r: any) => {
+              if (r.id !== result.id) return r;
+              return {
+                ...r,
+                score: finRes.result.score,
+                essayScore: finRes.result.essayScore,
+                gradingStatus: finRes.result.gradingStatus,
+                timeSpent: finRes.result.timeSpent
+              };
+            })
+          };
+        }));
+      } else if (!finRes.success) {
+        alert(finRes.error || "Gagal memproses penilaian paksa.");
+        router.refresh();
+      }
+    } catch {
+      alert("Terjadi kesalahan jaringan saat memproses ujian.");
+      router.refresh();
+    } finally {
+      setFinalizingIds(prev => {
+        const next = new Set(prev);
+        next.delete(result.id);
+        return next;
+      });
     }
   };
 
@@ -528,19 +614,12 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                             <div className="flex gap-2 items-center justify-end flex-wrap">
                               {res.gradingStatus === "STARTED" && (
                                 <button 
-                                  onClick={async () => {
-                                    if (!window.confirm(`Paksa selesaikan ujian untuk ${res.student.name || res.student.username}? Jawaban yang sudah tersimpan saat ini akan langsung dinilai.`)) return;
-                                    const finRes = await forceFinalizeExamResult(res.id);
-                                    if (finRes.success) {
-                                      router.refresh();
-                                    } else {
-                                      alert(finRes.error);
-                                    }
-                                  }}
-                                  className="text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors whitespace-nowrap"
+                                  onClick={() => handleForceFinalizeStudent(exam.id, res)}
+                                  disabled={finalizingIds.has(res.id)}
+                                  className="text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors whitespace-nowrap disabled:opacity-50"
                                   title="Kunci ujian murid ini dan langsung hitung nilainya"
                                 >
-                                  Paksa Selesai
+                                  {finalizingIds.has(res.id) ? "Memproses..." : "Paksa Selesai"}
                                 </button>
                               )}
                               <button 
@@ -550,15 +629,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                 Detail Jawaban
                               </button>
                               <button 
-                                onClick={async () => {
-                                  if (!window.confirm(`Hapus nilai atas nama ${res.student.name || res.student.username}? Mereka harus mengerjakan ulang ujian ini jika dihapus.`)) return;
-                                  const deleteRes = await deleteExamResult(res.id);
-                                  if (deleteRes.success) {
-                                    setLocalExams(prev => prev.map(e => e.id === exam.id ? { ...e, results: e.results?.filter((r: any) => r.id !== res.id) } : e));
-                                  } else {
-                                    alert(deleteRes.error);
-                                  }
-                                }}
+                                onClick={() => handleDeleteStudentResult(exam.id, res.id, res.student.name || res.student.username)}
                                 className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors whitespace-nowrap"
                                 title="Hapus Nilai Murid Ini"
                               >

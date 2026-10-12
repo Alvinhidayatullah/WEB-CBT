@@ -673,7 +673,8 @@ export async function deleteExamResult(resultId: string) {
     await prisma.examResult.delete({
       where: { id: resultId }
     });
-    revalidatePath("/", "layout");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/teacher/dashboard");
     return { success: true };
   } catch (error) {
     return { success: false, error: "Gagal menghapus hasil ujian siswa." };
@@ -729,7 +730,7 @@ export async function forceFinalizeExamResult(resultId: string) {
     const finalGradingStatus = hasEssay && result.exam.isAIGradingEnabled ? "PENDING" : "GRADED";
     const timeSpent = result.timeSpent > 0 ? result.timeSpent : result.exam.duration * 60;
 
-    await prisma.examResult.update({
+    const updated = await prisma.examResult.update({
       where: { id: resultId },
       data: {
         score: finalScore,
@@ -739,8 +740,18 @@ export async function forceFinalizeExamResult(resultId: string) {
       }
     });
 
-    revalidatePath("/", "layout");
-    return { success: true };
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/teacher/dashboard");
+    return { 
+      success: true,
+      result: {
+        id: updated.id,
+        score: updated.score,
+        essayScore: updated.essayScore,
+        gradingStatus: updated.gradingStatus,
+        timeSpent: updated.timeSpent
+      }
+    };
   } catch (error) {
     return { success: false, error: "Gagal memproses penilaian paksa." };
   }

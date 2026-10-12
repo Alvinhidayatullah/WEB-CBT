@@ -165,15 +165,18 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus pengguna ini?")) return;
+    const prevUsers = users;
+    // OPTIMISTIC UPDATE: Langsung hilangkan user dari UI
+    setUsers(prev => prev.filter((u) => u.id !== id));
+    setSelectedUsers(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
     const res = await deleteUser(id);
-    if (res.success) {
-      setUsers(prev => prev.filter((u) => u.id !== id));
-      setSelectedUsers(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    } else {
+    if (!res.success) {
+      setUsers(prevUsers);
       alert(res.error || "Gagal menghapus user");
     }
   };
@@ -183,11 +186,14 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     if (!window.confirm(`Yakin ingin menghapus ${selectedUsers.size} pengguna terpilih?`)) return;
     
     const ids = Array.from(selectedUsers);
+    const prevUsers = users;
+    // OPTIMISTIC UPDATE: Langsung hilangkan user terpilih dari UI
+    setUsers(prev => prev.filter((u) => !selectedUsers.has(u.id)));
+    setSelectedUsers(new Set());
+
     const res = await bulkDeleteUsers(ids);
-    if (res.success) {
-      setUsers(prev => prev.filter((u) => !selectedUsers.has(u.id)));
-      setSelectedUsers(new Set());
-    } else {
+    if (!res.success) {
+      setUsers(prevUsers);
       alert(res.error || "Gagal menghapus beberapa user");
     }
   };
