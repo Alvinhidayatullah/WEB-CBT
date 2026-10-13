@@ -25,14 +25,17 @@ export async function GET() {
     for (const job of jobs) {
       try {
         const payload = JSON.parse(job.payload);
-        const { examResultId, essays } = payload;
+        const examResultId = payload.examResultId || payload.resultId;
+        const essays = Array.isArray(payload.essays) ? payload.essays : [];
         
-        let totalEssayRaw = 0;
-        let totalMaxEssay = essays.reduce((acc: number, curr: any) => acc + curr.weight, 0);
-        let aiFeedbacks: string[] = [];
+        if (!examResultId) throw new Error("Result ID not provided in job payload");
 
         const examRes = await prisma.examResult.findUnique({ where: { id: examResultId } });
-        if (!examRes) throw new Error("ExamResult not found");
+        if (!examRes) throw new Error(`ExamResult ${examResultId} not found`);
+
+        let totalEssayRaw = 0;
+        let totalMaxEssay = essays.reduce((acc: number, curr: any) => acc + (curr.weight || 0), 0);
+        let aiFeedbacks: string[] = [];
 
         for (const essay of essays) {
           const { questionText, referenceAnswer, studentAnswer, weight } = essay;

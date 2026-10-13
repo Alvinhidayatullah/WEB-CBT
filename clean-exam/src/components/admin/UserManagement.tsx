@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trash2, UserPlus, Download, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
-import { createUser, deleteUser, bulkDeleteUsers, getUsers } from "@/actions/userActions";
+import { Trash2, UserPlus, Download, ChevronDown, ChevronUp, RefreshCw, Upload, FileSpreadsheet } from "lucide-react";
+import { createUser, deleteUser, bulkDeleteUsers, getUsers, bulkCreateUsers } from "@/actions/userActions";
 import * as XLSX from "xlsx";
 
 export interface UIUser {
@@ -21,25 +21,27 @@ export interface UIUser {
 
 export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GURU", "SUPER_ADMIN"] }: { initialUsers: UIUser[], allowedRoles?: string[] }) {
   const sortUsers = (userList: UIUser[]) => {
+    if (!Array.isArray(userList)) return [];
     const roleOrder: Record<string, number> = { SUPER_ADMIN: 1, GURU: 2, MURID: 3 };
-    return [...userList].sort((a, b) => {
-      // 1. Urutkan berdasarkan Role (SUPER_ADMIN -> GURU -> MURID)
-      if (roleOrder[a.role] !== roleOrder[b.role]) {
-        return (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
+    return [...userList].filter(Boolean).sort((a, b) => {
+      if (!a || !b) return 0;
+      const roleA = a.role || "";
+      const roleB = b.role || "";
+      if (roleOrder[roleA] !== roleOrder[roleB]) {
+        return (roleOrder[roleA] || 99) - (roleOrder[roleB] || 99);
       }
       
-      // 2. Jika murid, urutkan berdasarkan Kelas (angka dalam string akan diurutkan secara numerik, misal: 7 sebelum 10)
-      if (a.role === "MURID") {
+      // 2. Jika murid, urutkan berdasarkan Kelas
+      if (roleA === "MURID") {
         const classA = a.className || "";
         const classB = b.className || "";
         const classCompare = classA.localeCompare(classB, undefined, { numeric: true, sensitivity: 'base' });
-        
         if (classCompare !== 0) {
           return classCompare;
         }
       }
       
-      // 3. Terakhir, urutkan berdasarkan Username (Alfabetikal A-Z)
+      // 3. Terakhir, urutkan berdasarkan Username
       const userA = a.username || "";
       const userB = b.username || "";
       return userA.localeCompare(userB, undefined, { numeric: true, sensitivity: 'base' });
@@ -48,9 +50,11 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
 
   const [users, setUsers] = useState(() => sortUsers(initialUsers));
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [isListOpen, setIsListOpen] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   React.useEffect(() => {
     setUsers(sortUsers(initialUsers));
@@ -136,6 +140,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
       setUsers(prev => sortUsers([{
         id: res.user!.id,
         username: res.user!.username,
+        name: res.user!.name || name || null,
         role: res.user!.role,
         token: res.user!.token,
         className: res.user!.className,
@@ -230,13 +235,140 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
     XLSX.writeFile(wb, "Data_Pengguna_Kartu_Ujian.xlsx");
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        "Nama Lengkap": "Ahmad Pratama",
+        "Username": "ahmad_pratama",
+        "Password": "", // Kosongkan jika ingin token otomatis 5 digit acak
+        "Kelas": "MIPA 1",
+        "Role": "MURID"
+      },
+      {
+        "Nama Lengkap": "Siti Nurhaliza",
+        "Username": "siti_nurhaliza",
+        "Password": "SITI1", // Atau masukkan token/password custom
+        "Kelas": "MIPA 1",
+        "Role": "MURID"
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template Pengguna");
+    XLSX.writeFile(wb, "Template_Import_Pengguna.xlsx");
+  };
+
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setImporting(true);
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const rawData = XLSX.utils.sheet_to_json<any>(ws, { defval: "" });
+
+        if (rawData.length === 0) {
+          alert("File Excel kosong atau tidak memiliki data baris.");
+          setImporting(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+
+        const parsedUsers = rawData.map((row: any) => {
+          const getVal = (keys: string[]) => {
+            for (const k of Object.keys(row)) {
+              const cleanKey = k.trim().toLowerCase();
+              if (keys.some(expected => cleanKey === expected.toLowerCase())) {
+                return String(row[k]).trim();
+              }
+            }
+            return "";
+          };
+
+          const username = getVal(["Username", "User", "NIS", "NISN"]);
+          const name = getVal(["Nama Lengkap", "Nama", "Name", "Full Name"]);
+          const password = getVal(["Password", "Pass", "Token", "Pass/Token"]);
+          const className = getVal(["Kelas", "Class", "Rombel"]);
+          const role = getVal(["Role", "Peran"]) || "MURID";
+
+          return { username, name, password, className, role };
+        }).filter(u => u.username && u.username !== "-");
+
+        if (parsedUsers.length === 0) {
+          alert("Tidak ditemukan data dengan kolom 'Username' yang valid.");
+          setImporting(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+
+        const res = await bulkCreateUsers(parsedUsers);
+        if (res.success && res.users) {
+          setUsers(prev => sortUsers([...res.users, ...prev]));
+          let msg = `Berhasil mengimpor ${res.count} pengguna!`;
+          if (res.skipped && res.skipped.length > 0) {
+            msg += `\n\nCatatan: ${res.skipped.length} pengguna dilewati (karena username sudah terdaftar atau tidak valid).`;
+          }
+          alert(msg);
+        } else {
+          alert(res.error || "Gagal mengimpor pengguna dari file Excel.");
+        }
+      } catch (err: any) {
+        console.error(err);
+        alert("Gagal membaca file Excel. Pastikan format file sesuai.");
+      } finally {
+        setImporting(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <Card className="mt-8 shadow-sm border-slate-200/60 rounded-2xl">
-      <CardHeader className="flex flex-row justify-between items-center border-b border-slate-100 pb-4">
+      <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
         <h2 className="text-xl font-bold text-slate-900 tracking-tight">Manajemen Pengguna</h2>
-        <Button variant="secondary" onClick={handleExportExcel} className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
-          <Download className="w-4 h-4 mr-2" /> Export Excel
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            accept=".xlsx, .xls, .csv" 
+            onChange={handleImportExcel} 
+            className="hidden" 
+          />
+          <Button 
+            type="button"
+            variant="secondary" 
+            onClick={handleDownloadTemplate}
+            className="text-slate-700 hover:bg-slate-100 border-slate-200 text-xs sm:text-sm"
+            title="Unduh format template kosong Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4 mr-1.5 text-blue-600" /> Template
+          </Button>
+          <Button 
+            type="button"
+            variant="secondary" 
+            onClick={() => fileInputRef.current?.click()} 
+            disabled={importing}
+            className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200 text-xs sm:text-sm"
+            title="Import data pengguna dari file Excel"
+          >
+            <Upload className="w-4 h-4 mr-1.5" /> {importing ? "Mengimpor..." : "Import Excel"}
+          </Button>
+          <Button 
+            type="button"
+            variant="secondary" 
+            onClick={handleExportExcel} 
+            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 text-xs sm:text-sm"
+            title="Export semua data pengguna ke file Excel"
+          >
+            <Download className="w-4 h-4 mr-1.5" /> Export Excel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="pt-6">
         {/* FORM TAMBAH PENGGUNA */}
@@ -427,7 +559,7 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                  <td colSpan={9} className="py-8 text-center text-slate-500">
                     Belum ada data pengguna.
                   </td>
                 </tr>

@@ -3,13 +3,14 @@ import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
 // --- SECURITY GATEWAY (WAF Mini) ---
-// Simple in-memory rate limiting (Per-Isolate)
+// In-memory rate limiting with automatic pruning and support for high-concurrency school networks (200+ students per IP)
 const rateLimitMap = new Map<string, { count: number, timestamp: number }>();
-const RATE_LIMIT_MAX = 500; // max requests
+const RATE_LIMIT_MAX = 3000; // max requests per minute (allows hundreds of students on one shared school NAT router)
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 
 export async function middleware(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+  const rawIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+  const ip = rawIp.split(',')[0].trim();
   const userAgent = request.headers.get('user-agent') || '';
 
   // 1. WAF: Anti-Scanner & Anti-Bot Protection
@@ -20,6 +21,16 @@ export async function middleware(request: NextRequest) {
 
   // 2. WAF: Rate Limiting (Anti-Bruteforce & DDoS Protection)
   const now = Date.now();
+  
+  // Prune expired entries periodically to prevent memory leaks in serverless isolates
+  if (rateLimitMap.size > 500) {
+    for (const [k, v] of rateLimitMap.entries()) {
+      if (now - v.timestamp > RATE_LIMIT_WINDOW_MS) {
+        rateLimitMap.delete(k);
+      }
+    }
+  }
+
   const rateData = rateLimitMap.get(ip);
   if (!rateData || now - rateData.timestamp > RATE_LIMIT_WINDOW_MS) {
     rateLimitMap.set(ip, { count: 1, timestamp: now });

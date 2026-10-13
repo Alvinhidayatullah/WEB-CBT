@@ -275,3 +275,139 @@ export async function updateProfile(data: { username: string; oldPassword?: stri
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
+
+export async function bulkCreateUsers(dataList: Array<{
+  name?: string;
+  username: string;
+  password?: string;
+  token?: string;
+  className?: string;
+  role?: string;
+  teacherSubject?: string;
+}>) {
+  try {
+    const { userRole, userId } = await checkAuth(["SUPER_ADMIN", "GURU"]);
+    
+    let guruClassName: string | undefined = undefined;
+    if (userRole === "GURU") {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      guruClassName = user?.className || undefined;
+    }
+
+    if (!Array.isArray(dataList) || dataList.length === 0) {
+      return { success: false, error: "Tidak ada data pengguna yang valid untuk diimpor." };
+    }
+
+    if (dataList.length > 500) {
+      return { success: false, error: "Maksimal 500 pengguna per proses impor." };
+    }
+
+    const generateRandomToken = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 5; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+
+    const insertedUsers: any[] = [];
+    const skippedUsers: string[] = [];
+
+    for (let i = 0; i < dataList.length; i++) {
+      const item = dataList[i];
+      const rawUsername = String(item.username || "").trim();
+      if (!rawUsername) {
+        skippedUsers.push(`Baris ${i + 1}: Username kosong`);
+        continue;
+      }
+
+      let assignedRole = String(item.role || "MURID").trim().toUpperCase();
+      if (userRole === "GURU") {
+        assignedRole = "MURID";
+      }
+
+      if (!["MURID", "GURU", "SUPER_ADMIN"].includes(assignedRole)) {
+        assignedRole = "MURID";
+      }
+
+      let rawClass = item.className ? String(item.className).trim() : null;
+      if (rawClass === "-" || rawClass === "") rawClass = null;
+
+      if (assignedRole === "MURID") {
+        if (userRole === "GURU") {
+          if (!guruClassName) {
+            skippedUsers.push(`Baris ${i + 1} (${rawUsername}): Guru tidak memiliki kelas yang diampu`);
+            continue;
+          }
+          const allowedClasses = guruClassName.split(",").map(c => c.trim().toLowerCase());
+          const reqClass = (rawClass || "").toLowerCase();
+          if (!allowedClasses.includes(reqClass)) {
+            skippedUsers.push(`Baris ${i + 1} (${rawUsername}): Kelas ${rawClass} di luar wewenang Anda`);
+            continue;
+          }
+        }
+        if (!rawClass) {
+          rawClass = "Umum";
+        }
+      }
+
+      let rawToken = item.token || item.password ? String(item.token || item.password).trim() : "";
+      if (rawToken === "(Password disembunyikan)" || rawToken === "-" || !rawToken) {
+        rawToken = generateRandomToken();
+      }
+
+      const finalPassword = rawToken;
+      const hashedPassword = await bcrypt.hash(finalPassword, 10);
+      const resolvedClassName = assignedRole === "SUPER_ADMIN" ? null : rawClass;
+
+      const existingExact = await prisma.user.findFirst({
+        where: {
+          username: rawUsername,
+          role: assignedRole,
+          className: resolvedClassName
+        }
+      });
+
+      if (existingExact) {
+        skippedUsers.push(`Baris ${i + 1} (${rawUsername}): Sudah terdaftar`);
+        continue;
+      }
+
+      const newUser = await prisma.user.create({
+        data: {
+          username: rawUsername,
+          name: item.name ? String(item.name).trim() : null,
+          password: hashedPassword,
+          role: assignedRole,
+          className: resolvedClassName,
+          teacherSubject: assignedRole === "GURU" ? (item.teacherSubject ? String(item.teacherSubject).trim() : null) : null,
+          token: assignedRole === "SUPER_ADMIN" ? null : finalPassword,
+        },
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          role: true,
+          token: true,
+          className: true,
+          teacherSubject: true,
+          createdAt: true
+        }
+      });
+
+      insertedUsers.push(newUser);
+    }
+
+    revalidatePath("/", "layout");
+    return {
+      success: true,
+      count: insertedUsers.length,
+      users: insertedUsers,
+      skipped: skippedUsers
+    };
+  } catch (error: unknown) {
+    console.error("Bulk create users error:", error);
+    return { success: false, error: "Terjadi kesalahan internal saat mengimpor data pengguna." };
+  }
+}

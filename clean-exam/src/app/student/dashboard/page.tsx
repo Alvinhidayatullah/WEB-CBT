@@ -17,8 +17,9 @@ export default function StudentDashboard() {
     e.preventDefault();
     setError("");
     
-    if (token.length !== 5) {
-      setError("Token ujian harus 5 karakter.");
+    const cleanToken = token.trim().toUpperCase();
+    if (cleanToken.length < 3 || cleanToken.length > 25) {
+      setError("Token ujian tidak valid (3-25 karakter).");
       return;
     }
 
@@ -30,7 +31,8 @@ export default function StudentDashboard() {
     setShowConfirm(false);
     setLoading(true);
     
-    const res = await joinExam(token);
+    const cleanToken = token.trim().toUpperCase();
+    const res = await joinExam(cleanToken);
     
     if (res.success && res.examId) {
       router.push(`/student/exam/${res.examId}`);
@@ -73,11 +75,11 @@ export default function StudentDashboard() {
                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block mb-2 text-center">Token Ujian</label>
                  <input
                     type="text"
-                    className="flex w-full text-center font-mono text-3xl tracking-widest uppercase h-16 bg-black/40 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl transition-all"
-                    placeholder="XXXX-XXXX"
+                    className="flex w-full text-center font-mono text-2xl md:text-3xl tracking-widest uppercase h-16 bg-black/40 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl transition-all"
+                    placeholder="TOKEN UJIAN"
                     value={token}
                     onChange={(e) => setToken(e.target.value.toUpperCase())}
-                    maxLength={10}
+                    maxLength={25}
                     required
                  />
                </div>

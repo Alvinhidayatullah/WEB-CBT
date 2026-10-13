@@ -220,7 +220,7 @@ export async function getPendingResultIds() {
   }
 }
 
-export async function createExam(examType: string, subject: string, targetClass: string, duration: number = 60, isAIGradingEnabled: boolean = true) {
+export async function createExam(examType: string, subject: string, targetClass: string, duration: number = 60, isAIGradingEnabled: boolean = true, customToken?: string) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
@@ -230,7 +230,18 @@ export async function createExam(examType: string, subject: string, targetClass:
       for (let i = 0; i < 5; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
       return result;
     };
-    const examToken = generateToken();
+    
+    let examToken = generateToken();
+    if (customToken && customToken.trim()) {
+      const formatted = customToken.trim().toUpperCase();
+      const existing = await prisma.exam.findFirst({
+        where: { token: formatted }
+      });
+      if (existing) {
+        return { success: false, error: `Token "${formatted}" sudah digunakan oleh ujian lain. Silakan gunakan token yang berbeda.` };
+      }
+      examToken = formatted;
+    }
 
     const session = await getSession();
     const userId = session?.userId as string;
@@ -281,11 +292,14 @@ export async function createExam(examType: string, subject: string, targetClass:
     });
     return { success: true, exam: newExam };
   } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
+      return { success: false, error: "Token ini sudah digunakan oleh sesi ujian lain. Silakan gunakan token lain." };
+    }
     return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
 
-export async function updateExam(id: string, data: { examType?: string, subject?: string, targetClass?: string, duration?: number, isAIGradingEnabled?: boolean }) {
+export async function updateExam(id: string, data: { examType?: string, subject?: string, targetClass?: string, duration?: number, isAIGradingEnabled?: boolean, token?: string }) {
   try {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     const session = await getSession();
@@ -293,6 +307,27 @@ export async function updateExam(id: string, data: { examType?: string, subject?
     
     let finalTargetClass = data.targetClass;
     let finalSubject = data.subject;
+    let finalToken: string | undefined = undefined;
+
+    if (data.token !== undefined) {
+      const trimmed = data.token.trim().toUpperCase();
+      if (!trimmed) {
+        return { success: false, error: "Token tidak boleh kosong." };
+      }
+      if (trimmed.length > 25) {
+        return { success: false, error: "Panjang token maksimal 25 karakter." };
+      }
+      const existing = await prisma.exam.findFirst({
+        where: {
+          token: trimmed,
+          NOT: { id }
+        }
+      });
+      if (existing) {
+        return { success: false, error: `Token "${trimmed}" sudah digunakan oleh sesi ujian lain. Silakan pilih token lain.` };
+      }
+      finalToken = trimmed;
+    }
 
     if (userId) {
       const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -328,11 +363,15 @@ export async function updateExam(id: string, data: { examType?: string, subject?
         ...(finalSubject && { subject: finalSubject }),
         ...(finalTargetClass && { targetClass: finalTargetClass }),
         ...(data.duration && { duration: data.duration }),
-        ...(data.isAIGradingEnabled !== undefined && { isAIGradingEnabled: data.isAIGradingEnabled })
+        ...(data.isAIGradingEnabled !== undefined && { isAIGradingEnabled: data.isAIGradingEnabled }),
+        ...(finalToken && { token: finalToken })
       }
     });
     return { success: true, exam: updated };
   } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
+      return { success: false, error: "Token ini sudah digunakan oleh sesi ujian lain. Silakan pilih token yang berbeda." };
+    }
     return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
 }
@@ -372,6 +411,14 @@ export async function createQuestion(data: {
        return { success: false, error: "Format gambar tidak valid atau terdeteksi malware. Hanya menerima JPEG, PNG, WEBP, atau URL aman." };
     }
 
+    let wA = data.weightA || 0;
+    let wB = data.weightB || 0;
+    let wC = data.weightC || 0;
+    let wD = data.weightD || 0;
+    if ((data.type || "MULTIPLE_CHOICE") !== "ESSAY" && wA === 0 && wB === 0 && wC === 0 && wD === 0) {
+      wA = 100;
+    }
+
     await prisma.question.create({
       data: {
         examId: data.examId,
@@ -381,10 +428,10 @@ export async function createQuestion(data: {
         optionB: data.optionB || null,
         optionC: data.optionC || null,
         optionD: data.optionD || null,
-        weightA: data.weightA || 0,
-        weightB: data.weightB || 0,
-        weightC: data.weightC || 0,
-        weightD: data.weightD || 0,
+        weightA: wA,
+        weightB: wB,
+        weightC: wC,
+        weightD: wD,
         essayReference: data.essayReference || null,
         imageUrl: data.imageUrl || null,
         optionAImg: data.optionAImg || null,
@@ -530,26 +577,41 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
     }
 
     const now = new Date();
-    const formattedQuestions = questions.map((q, index) => ({
-      examId,
-      type: q.type || "MULTIPLE_CHOICE",
-      text: q.text,
-      imageUrl: q.imageUrl || null,
-      optionA: q.optionA || null,
-      optionAImg: q.optionAImg || null,
-      optionB: q.optionB || null,
-      optionBImg: q.optionBImg || null,
-      optionC: q.optionC || null,
-      optionCImg: q.optionCImg || null,
-      optionD: q.optionD || null,
-      optionDImg: q.optionDImg || null,
-      weightA: q.weightA || 0,
-      weightB: q.weightB || 0,
-      weightC: q.weightC || 0,
-      weightD: q.weightD || 0,
-      essayReference: q.essayReference || null,
-      createdAt: new Date(now.getTime() + index * 1000), // Stagger by 1 second to ensure stable sorting
-    }));
+    const formattedQuestions = questions.map((q, index) => {
+      let wA = Number(q.weightA) || 0;
+      let wB = Number(q.weightB) || 0;
+      let wC = Number(q.weightC) || 0;
+      let wD = Number(q.weightD) || 0;
+      const isEssay = (q.type || "").toUpperCase() === "ESSAY";
+      if (!isEssay && wA === 0 && wB === 0 && wC === 0 && wD === 0) {
+        const correct = String(q.correctOption || q.kunci || "").toUpperCase();
+        if (correct === "B") wB = 100;
+        else if (correct === "C") wC = 100;
+        else if (correct === "D") wD = 100;
+        else wA = 100;
+      }
+
+      return {
+        examId,
+        type: q.type || "MULTIPLE_CHOICE",
+        text: q.text,
+        imageUrl: q.imageUrl || null,
+        optionA: q.optionA || null,
+        optionAImg: q.optionAImg || null,
+        optionB: q.optionB || null,
+        optionBImg: q.optionBImg || null,
+        optionC: q.optionC || null,
+        optionCImg: q.optionCImg || null,
+        optionD: q.optionD || null,
+        optionDImg: q.optionDImg || null,
+        weightA: wA,
+        weightB: wB,
+        weightC: wC,
+        weightD: wD,
+        essayReference: q.essayReference || null,
+        createdAt: new Date(now.getTime() + index * 1000), // Stagger by 1 second to ensure stable sorting
+      };
+    });
 
     await prisma.question.createMany({
       data: formattedQuestions
@@ -591,16 +653,28 @@ export async function getPendingEssayPayloads(resultId: string) {
           studentAnswer: studentAnswer || "",
           weight: essayMaxW
         });
-      } else {
         const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
-        const questionMax = maxW > 0 ? maxW : 100;
+        let wA = q.weightA || 0;
+        let wB = q.weightB || 0;
+        let wC = q.weightC || 0;
+        let wD = q.weightD || 0;
+
+        if (maxW === 0) {
+          const legacyCorrect = (q as any).correctOption || "A";
+          if (legacyCorrect === "B") wB = 100;
+          else if (legacyCorrect === "C") wC = 100;
+          else if (legacyCorrect === "D") wD = 100;
+          else wA = 100;
+        }
+
+        const questionMax = Math.max(wA, wB, wC, wD, 100);
         totalMaxPG += questionMax;
 
         let earned = 0;
-        if (studentAnswer === "A") earned = q.weightA || 0;
-        else if (studentAnswer === "B") earned = q.weightB || 0;
-        else if (studentAnswer === "C") earned = q.weightC || 0;
-        else if (studentAnswer === "D") earned = q.weightD || 0;
+        if (studentAnswer === "A") earned = wA;
+        else if (studentAnswer === "B") earned = wB;
+        else if (studentAnswer === "C") earned = wC;
+        else if (studentAnswer === "D") earned = wD;
         totalEarnedPG += earned;
       }
     });
@@ -727,7 +801,9 @@ export async function forceFinalizeExamResult(resultId: string) {
     const pgScore = totalMaxPG > 0 ? (totalEarnedPG / totalMaxPG) * pgWeight : 0;
     const finalScore = parseFloat(pgScore.toFixed(2));
 
-    const finalGradingStatus = hasEssay && result.exam.isAIGradingEnabled ? "PENDING" : "GRADED";
+    const finalGradingStatus = hasEssay 
+      ? (result.exam.isAIGradingEnabled ? "PENDING" : "MANUAL_REVIEW") 
+      : "GRADED";
     const timeSpent = result.timeSpent > 0 ? result.timeSpent : result.exam.duration * 60;
 
     const updated = await prisma.examResult.update({
@@ -760,6 +836,7 @@ export async function forceFinalizeExamResult(resultId: string) {
             type: "AI_GRADING",
             payload: JSON.stringify({
               resultId: result.id,
+              examResultId: result.id,
               essays: essayPayloads
             })
           }

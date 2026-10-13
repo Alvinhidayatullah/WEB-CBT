@@ -11,15 +11,23 @@ export async function loginUser(username: string, password: string) {
     if (typeof username !== 'string' || typeof password !== 'string') {
       return { success: false, error: "Tipe data tidak valid." };
     }
-    if (username.length === 0 || username.length > 50 || password.length === 0 || password.length > 50) {
+    const cleanUsername = username.trim();
+    const cleanPassword = password.trim();
+
+    if (cleanUsername.length === 0 || cleanUsername.length > 50 || cleanPassword.length === 0 || cleanPassword.length > 50) {
       return { success: false, error: "Panjang input tidak valid." };
     }
 
     const cookieStore = await cookies();
 
-    // Login verification using database (support multiple same usernames)
+    // Login verification using database (support case-insensitive username match for mobile devices)
     const users = await prisma.user.findMany({
-      where: { username },
+      where: { 
+        username: {
+          equals: cleanUsername,
+          mode: 'insensitive'
+        }
+      },
     });
 
     if (users.length === 0) {
@@ -28,7 +36,7 @@ export async function loginUser(username: string, password: string) {
 
     let matchedUser = null;
     for (const u of users) {
-      const isValid = await bcrypt.compare(password, u.password);
+      const isValid = await bcrypt.compare(cleanPassword, u.password);
       if (isValid) {
         matchedUser = u;
         break;
@@ -53,7 +61,7 @@ export async function loginUser(username: string, password: string) {
       httpOnly: true, 
       path: '/',
       maxAge: 24 * 60 * 60, // 1 day (anti cookie injection max)
-      sameSite: 'strict'
+      sameSite: 'lax'
     });
 
     return { success: true, role: user.role };

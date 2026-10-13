@@ -12,7 +12,7 @@ import { use } from "react";
 
 // Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis
 const formatMathText = (text: string) => {
-  if (!text) return text;
+  if (!text || typeof text !== 'string') return text || "";
   // Character class for numbers and unicode superscripts (strictly no letters to prevent tindakan/kata)
   const charClass = "[0-9\u00B2\u00B3\u00B9\u2070-\u2079\u207B]+";
   const splitRegex = new RegExp(`(${charClass}\\s*\\/\\s*${charClass}|\\^[-]?\\w+)`, "g");
@@ -211,24 +211,42 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
         
-        const formattedQuestions = data.map((row: any) => ({
-          type: (row["Tipe Soal"]?.toString().toUpperCase() === "ESAI" || row["Tipe Soal"]?.toString().toUpperCase() === "ESSAY") ? "ESSAY" : "MULTIPLE_CHOICE",
-          text: row["Pertanyaan"]?.toString() || "",
-          imageUrl: row["Gambar Soal (URL)"]?.toString() || null,
-          optionA: row["Opsi A"]?.toString() || "",
-          optionAImg: row["Gambar Opsi A (URL)"]?.toString() || null,
-          optionB: row["Opsi B"]?.toString() || "",
-          optionBImg: row["Gambar Opsi B (URL)"]?.toString() || null,
-          optionC: row["Opsi C"]?.toString() || "",
-          optionCImg: row["Gambar Opsi C (URL)"]?.toString() || null,
-          optionD: row["Opsi D"]?.toString() || "",
-          optionDImg: row["Gambar Opsi D (URL)"]?.toString() || null,
-          weightA: parseInt(row["Bobot A"]) || 0,
-          weightB: parseInt(row["Bobot B"]) || 0,
-          weightC: parseInt(row["Bobot C"]) || 0,
-          weightD: parseInt(row["Bobot D"]) || 0,
-          essayReference: row["Kunci Referensi Esai"]?.toString() || "",
-        })).filter(q => q.text !== "");
+        const formattedQuestions = data.map((row: any) => {
+          const typeStr = (row["Tipe Soal"] || row["Tipe"] || "").toString().toUpperCase();
+          const isEssay = typeStr === "ESAI" || typeStr === "ESSAY";
+          const kunci = (row["Kunci Jawaban"] || row["Kunci"] || row["Jawaban Benar"] || row["Jawaban"] || "").toString().trim().toUpperCase();
+
+          let wA = parseInt(row["Bobot A"]) || 0;
+          let wB = parseInt(row["Bobot B"]) || 0;
+          let wC = parseInt(row["Bobot C"]) || 0;
+          let wD = parseInt(row["Bobot D"]) || 0;
+
+          if (!isEssay && wA === 0 && wB === 0 && wC === 0 && wD === 0) {
+            if (kunci === "B") wB = 100;
+            else if (kunci === "C") wC = 100;
+            else if (kunci === "D") wD = 100;
+            else wA = 100; // default safe fallback
+          }
+
+          return {
+            type: isEssay ? "ESSAY" : "MULTIPLE_CHOICE",
+            text: (row["Pertanyaan"] || row["Soal"] || "").toString(),
+            imageUrl: row["Gambar Soal (URL)"]?.toString() || null,
+            optionA: (row["Opsi A"] || row["A"] || "").toString(),
+            optionAImg: row["Gambar Opsi A (URL)"]?.toString() || null,
+            optionB: (row["Opsi B"] || row["B"] || "").toString(),
+            optionBImg: row["Gambar Opsi B (URL)"]?.toString() || null,
+            optionC: (row["Opsi C"] || row["C"] || "").toString(),
+            optionCImg: row["Gambar Opsi C (URL)"]?.toString() || null,
+            optionD: (row["Opsi D"] || row["D"] || "").toString(),
+            optionDImg: row["Gambar Opsi D (URL)"]?.toString() || null,
+            weightA: wA,
+            weightB: wB,
+            weightC: wC,
+            weightD: wD,
+            essayReference: (row["Kunci Referensi Esai"] || row["Kunci Esai"] || row["Rubrik"] || "").toString() || "",
+          };
+        }).filter(q => q.text.trim() !== "");
 
         if (formattedQuestions.length === 0) {
           alert("Format file tidak valid atau data kosong.");

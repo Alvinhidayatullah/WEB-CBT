@@ -28,8 +28,10 @@ async function gradeWithGemini(prompt: string): Promise<{ score: number; reason:
     throw new Error(`Respons Gemini bukan JSON valid: ${text.substring(0, 40)}...`);
   }
   const parsed = JSON.parse(match[0]);
+  const rawScore = typeof parsed.score === "number" ? parsed.score : parseFloat(String(parsed.score || 0));
+  const finalScore = isNaN(rawScore) ? 0 : Math.min(100, Math.max(0, Math.round(rawScore * 100) / 100));
   return {
-    score: typeof parsed.score === "number" ? parsed.score : 0,
+    score: finalScore,
     reason: parsed.reason || "Dinilai oleh Google Gemini AI"
   };
 }
@@ -154,8 +156,10 @@ ${studentAnswer}
       }
       
       const parsed = JSON.parse(match[0]);
+      const rawScore = typeof parsed.score === 'number' ? parsed.score : parseFloat(String(parsed.score || 0));
+      const finalScore = isNaN(rawScore) ? 0 : Math.min(100, Math.max(0, Math.round(rawScore * 100) / 100));
       return {
-        score: typeof parsed.score === 'number' ? parsed.score : 0,
+        score: finalScore,
         reason: parsed.reason || "Dinilai oleh AI"
       };
     } catch (error: any) {

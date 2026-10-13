@@ -8,8 +8,12 @@ import { gradeEssay } from "@/lib/ai";
 export async function joinExam(token: string) {
   try {
     // 1. Strict Payload Validation
-    if (typeof token !== 'string' || token.length > 20) {
+    if (typeof token !== 'string') {
       return { success: false, error: "Format token tidak valid." };
+    }
+    const cleanToken = token.trim().toUpperCase();
+    if (cleanToken.length < 3 || cleanToken.length > 30) {
+      return { success: false, error: "Panjang token ujian tidak valid (3-30 karakter)." };
     }
 
     const session = await getSession();
@@ -21,7 +25,7 @@ export async function joinExam(token: string) {
     }
 
     const exam = await prisma.exam.findUnique({
-      where: { token: token },
+      where: { token: cleanToken },
     });
 
     if (!exam || !exam.isActive) {
@@ -297,14 +301,27 @@ export async function submitExam(examId: string, answers: Record<string, string>
         });
       } else {
         const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
-        const questionMax = maxW > 0 ? maxW : 100; // Default 100 jika lupa set bobot
+        let wA = q.weightA || 0;
+        let wB = q.weightB || 0;
+        let wC = q.weightC || 0;
+        let wD = q.weightD || 0;
+
+        if (maxW === 0) {
+          const legacyCorrect = (q as any).correctOption || "A";
+          if (legacyCorrect === "B") wB = 100;
+          else if (legacyCorrect === "C") wC = 100;
+          else if (legacyCorrect === "D") wD = 100;
+          else wA = 100;
+        }
+
+        const questionMax = Math.max(wA, wB, wC, wD, 100);
         totalMaxPG += questionMax;
 
         let earned = 0;
-        if (studentAnswer === "A") earned = q.weightA || 0;
-        else if (studentAnswer === "B") earned = q.weightB || 0;
-        else if (studentAnswer === "C") earned = q.weightC || 0;
-        else if (studentAnswer === "D") earned = q.weightD || 0;
+        if (studentAnswer === "A") earned = wA;
+        else if (studentAnswer === "B") earned = wB;
+        else if (studentAnswer === "C") earned = wC;
+        else if (studentAnswer === "D") earned = wD;
 
         totalEarnedPG += earned;
       }

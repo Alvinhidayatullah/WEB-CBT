@@ -68,7 +68,7 @@ const LiveTime = ({ createdAt, timeSpent, status }: { createdAt: string | Date, 
 
 // Helper untuk merender pecahan (1/2) dan pangkat (^2) secara matematis di sisi Admin
 const formatMathText = (text: string) => {
-  if (!text) return text;
+  if (!text || typeof text !== 'string') return text || "";
   const charClass = "[0-9\u00B2\u00B3\u00B9\u2070-\u2079\u207B]+";
   const splitRegex = new RegExp(`(${charClass}\\s*\\/\\s*${charClass}|\\^[-]?\\w+)`, "g");
   const matchRegex = new RegExp(`^(${charClass})\\s*\\/\\s*(${charClass})$`);
@@ -142,6 +142,9 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   // Edit State
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
   const [editDuration, setEditDuration] = useState(60);
+  const [editingTokenExamId, setEditingTokenExamId] = useState<string | null>(null);
+  const [editToken, setEditToken] = useState("");
+  const [examTokenInput, setExamTokenInput] = useState("");
 
   // View Details State
   const [viewingResult, setViewingResult] = useState<any | null>(null);
@@ -263,6 +266,12 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     } finally {
       setProcessingProgress(prev => { const n = {...prev}; delete n[resId]; return n; });
       setActiveBatch(prev => { const n = new Set(prev); n.delete(resId); return n; });
+      try {
+        const freshExams = await getExams();
+        setLocalExams(freshExams as unknown as UIExam[]);
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
@@ -275,12 +284,13 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     if (!subject.trim()) return;
     setLoading(true);
     const finalTargetClass = targetClasses.length > 0 ? targetClasses.join(", ") : "Semua Kelas";
-    const res = await createExam(examType, subject, finalTargetClass, duration, isAIGradingEnabled);
+    const res = await createExam(examType, subject, finalTargetClass, duration, isAIGradingEnabled, examTokenInput.trim() || undefined);
     if (res.success && res.exam) {
       setLocalExams([res.exam, ...localExams]);
       setSubject("");
       setTargetClasses([]);
       setDuration(60);
+      setExamTokenInput("");
       setIsAIGradingEnabled(true);
       setIsCustomExamType(false);
       setExamType("Ujian Tengah Semester");
@@ -297,6 +307,23 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
       setLocalExams(localExams.map(e => e.id === id ? { ...e, duration: editDuration } : e));
     }
     setEditingExamId(null);
+    setLoading(false);
+  };
+
+  const handleUpdateToken = async (id: string) => {
+    const trimmed = editToken.trim().toUpperCase();
+    if (!trimmed) {
+      alert("Token ujian tidak boleh kosong.");
+      return;
+    }
+    setLoading(true);
+    const res = await updateExam(id, { token: trimmed });
+    if (res.success && res.exam) {
+      setLocalExams(localExams.map(e => e.id === id ? { ...e, token: res.exam.token } : e));
+      setEditingTokenExamId(null);
+    } else {
+      alert(res.error || "Gagal mengubah token ujian.");
+    }
     setLoading(false);
   };
 
@@ -342,7 +369,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   };
 
   const handleForceFinalizeStudent = async (examId: string, result: any) => {
-    const studentName = result.student.name || result.student.username;
+    const studentName = result.student?.name || result.student?.username || "Siswa";
     if (!window.confirm(`Paksa selesaikan ujian untuk ${studentName}? Jawaban yang sudah tersimpan saat ini akan langsung dinilai.`)) return;
 
     setFinalizingIds(prev => new Set(prev).add(result.id));
@@ -418,8 +445,8 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     const dataToExport = exam.results.map((res: any, index: number) => ({
       "No": index + 1,
       "Nama Ujian": `${exam.examType} - ${exam.subject}`,
-      "Nama Siswa": res.student.name || res.student.username,
-      "Kelas": res.student.className || "-",
+      "Nama Siswa": res.student?.name || res.student?.username || "Siswa",
+      "Kelas": res.student?.className || "-",
       "Total Nilai": res.score,
       "Status Ujian": res.gradingStatus === "STARTED" ? "Mengerjakan" : res.gradingStatus === "PENDING" ? "Menunggu AI" : res.gradingStatus === "MANUAL_REVIEW" ? "Menunggu Koreksi Guru" : "Selesai"
     }));
@@ -521,8 +548,36 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                       </button>
                    </span>
                 )}
-                <span className="hidden md:inline text-slate-300">•</span>
-                <span className="font-mono bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md border border-blue-100 font-semibold tracking-wider">Token: {exam.token}</span>
+                {editingTokenExamId === exam.id ? (
+                   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                     <span className="text-xs font-semibold text-slate-500">Token:</span>
+                     <Input 
+                       type="text" 
+                       className="w-28 h-7 text-xs font-mono uppercase font-bold" 
+                       value={editToken} 
+                       onChange={(e) => setEditToken(e.target.value.toUpperCase())}
+                       placeholder="TOKEN" 
+                       autoFocus
+                     />
+                     <button onClick={() => handleUpdateToken(exam.id)} disabled={loading} className="p-1 bg-green-100 text-green-700 rounded hover:bg-green-200" title="Simpan Token"><Save className="w-3.5 h-3.5" /></button>
+                     <button onClick={() => setEditingTokenExamId(null)} className="p-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200" title="Batal"><X className="w-3.5 h-3.5" /></button>
+                   </div>
+                ) : (
+                   <span className="font-mono bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md border border-blue-100 font-semibold tracking-wider flex items-center gap-1.5 shadow-sm">
+                     Token: {exam.token}
+                     <button 
+                       onClick={(e) => { 
+                         e.stopPropagation(); 
+                         setEditingTokenExamId(exam.id); 
+                         setEditToken(exam.token); 
+                       }}
+                       className="ml-1 hover:text-blue-900 transition-colors"
+                       title="Ubah Token Ujian"
+                     >
+                       <Edit2 className="w-3 h-3" />
+                     </button>
+                   </span>
+                )}
               </div>
             </div>
           </div>
@@ -580,17 +635,17 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                     {exam.results && exam.results.map((res: any) => {
                       return (
                         <tr key={res.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-3 px-5 font-semibold text-slate-900">{res.student.name || res.student.username}</td>
-                          <td className="py-3 px-5 text-slate-600">{res.student.className || "-"}</td>
+                          <td className="py-3 px-5 font-semibold text-slate-900">{res.student?.name || res.student?.username || "Siswa"}</td>
+                          <td className="py-3 px-5 text-slate-600">{res.student?.className || "-"}</td>
                           <td className="py-3 px-5 text-slate-600 font-mono text-sm">
                             <LiveTime createdAt={res.createdAt} timeSpent={res.timeSpent} status={res.gradingStatus} />
                           </td>
                           <td className="py-3 px-5 font-bold text-slate-900 text-base">
                             <div className="flex flex-col">
-                              <span>{res.score}</span>
+                              <span>{res.score ?? 0}</span>
                               {res.essayScore !== null && typeof res.essayScore !== 'undefined' && (
                                 <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight mt-0.5">
-                                  PG: {parseFloat((res.score - res.essayScore).toFixed(2))} <span className="text-slate-300">|</span> Esai: {res.essayScore}
+                                  PG: {parseFloat(((res.score || 0) - (res.essayScore || 0)).toFixed(2))} <span className="text-slate-300">|</span> Esai: {res.essayScore}
                                 </span>
                               )}
                             </div>
@@ -637,25 +692,25 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                 Detail Jawaban
                               </button>
                               <button 
-                                onClick={() => handleDeleteStudentResult(exam.id, res.id, res.student.name || res.student.username)}
+                                onClick={() => handleDeleteStudentResult(exam.id, res.id, res.student?.name || res.student?.username || "Siswa")}
                                 className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors whitespace-nowrap"
                                 title="Hapus Nilai Murid Ini"
                               >
                                 Hapus
                               </button>
-                              {(res.gradingStatus === "PENDING" || res.gradingStatus === "GRADED") && (
+                              {(res.gradingStatus === "PENDING" || res.gradingStatus === "GRADED" || res.gradingStatus === "MANUAL_REVIEW") && (
                                 <button 
                                   onClick={() => handleProcessAI(res.id)}
                                   disabled={activeBatch.has(res.id)}
                                   className="flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors disabled:opacity-50 whitespace-nowrap"
-                                  title="Gunakan ini untuk menilai ulang esai jika sistem AI sebelumnya gagal"
+                                  title="Gunakan ini untuk menilai esai menggunakan AI"
                                 >
                                   {activeBatch.has(res.id) ? (
                                     processingProgress[res.id] || "Memproses..."
                                   ) : (
                                     <>
                                       <Bot className="w-3.5 h-3.5" />
-                                      {res.gradingStatus === "PENDING" ? "Proses AI" : "Nilai Ulang AI"}
+                                      {res.gradingStatus === "PENDING" ? "Proses AI" : res.gradingStatus === "MANUAL_REVIEW" ? "Koreksi AI" : "Nilai Ulang AI"}
                                     </>
                                   )}
                                 </button>
@@ -797,6 +852,19 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                 value={duration} 
                 onChange={(e) => setDuration(parseInt(e.target.value) || 60)}
                 required
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className="text-sm font-medium text-slate-700 block mb-1">
+                Token Ujian <span className="text-xs text-slate-400 font-normal">(Opsional / Custom)</span>
+              </label>
+              <Input 
+                type="text"
+                placeholder="Otomatis jika kosong" 
+                value={examTokenInput} 
+                onChange={(e) => setExamTokenInput(e.target.value.toUpperCase())}
+                className="uppercase font-mono"
+                maxLength={20}
               />
             </div>
             <div className="md:col-span-1 flex items-end">
@@ -964,12 +1032,12 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
           <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div>
-                <h3 className="font-bold text-xl text-slate-900">Detail Jawaban: {viewingResult.student.name || viewingResult.student.username}</h3>
+                <h3 className="font-bold text-xl text-slate-900">Detail Jawaban: {viewingResult.student?.name || viewingResult.student?.username || "Siswa"}</h3>
                 <p className="text-sm text-slate-500 mt-1 flex items-center flex-wrap gap-2">
-                  <span>Nilai Total: <strong className="text-slate-900 text-lg">{viewingResult.score}</strong></span>
+                  <span>Nilai Total: <strong className="text-slate-900 text-lg">{viewingResult.score ?? 0}</strong></span>
                   {viewingResult.essayScore !== null && typeof viewingResult.essayScore !== 'undefined' && (
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-bold border border-blue-100">
-                      PG: {parseFloat((viewingResult.score - viewingResult.essayScore).toFixed(2))} + Esai: {viewingResult.essayScore}
+                      PG: {parseFloat(((viewingResult.score || 0) - (viewingResult.essayScore || 0)).toFixed(2))} + Esai: {viewingResult.essayScore}
                     </span>
                   )}
                   <span className="text-slate-300">|</span> 
@@ -1038,6 +1106,8 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                       else if (q.weightB === maxW) calculatedCorrectAnswer = "B";
                       else if (q.weightC === maxW) calculatedCorrectAnswer = "C";
                       else if (q.weightD === maxW) calculatedCorrectAnswer = "D";
+                    } else if ((q as any).correctOption) {
+                      calculatedCorrectAnswer = (q as any).correctOption;
                     }
                   }
                   
