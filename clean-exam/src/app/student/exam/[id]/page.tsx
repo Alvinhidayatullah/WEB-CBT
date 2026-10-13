@@ -147,11 +147,13 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
       const res = await submitExam(examId, answers, true, timeSpent);
       if (res.success) {
         localStorage.removeItem('exam_violations');
+        localStorage.removeItem(`exam_violations_${examId}`);
         localStorage.removeItem(startKey);
         window.location.href = '/student/dashboard';
       } else {
         if (res.error?.includes("sudah mensubmit") || res.error?.includes("tidak ditemukan") || res.error?.includes("tidak memiliki akses")) {
             localStorage.removeItem('exam_violations');
+            localStorage.removeItem(`exam_violations_${examId}`);
             localStorage.removeItem(startKey);
             alert(res.error);
             window.location.href = '/student/dashboard';
@@ -183,6 +185,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
          const res = await submitExam(examId, answers, false, timeSpent);
          if (res.success) {
            localStorage.removeItem('exam_violations');
+           localStorage.removeItem(`exam_violations_${examId}`);
            localStorage.removeItem(startKey);
            setShowSubmitModal(false);
            alert(`Ujian selesai! Pekerjaan Anda telah direkam.`);
@@ -190,6 +193,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
          } else {
            if (res.error?.includes("sudah mensubmit") || res.error?.includes("tidak ditemukan")) {
                localStorage.removeItem('exam_violations');
+               localStorage.removeItem(`exam_violations_${examId}`);
                localStorage.removeItem(startKey);
                alert(res.error);
                window.location.href = '/student/dashboard';
@@ -274,7 +278,7 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   };
 
   return (
-    <AntiCheatWrapper onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
+    <AntiCheatWrapper examId={examId} onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
       <div className="min-h-[100dvh] bg-[#030305] flex flex-col relative overflow-x-hidden selection:bg-blue-500/30">
         
         {/* Fixed Background from Login */}
