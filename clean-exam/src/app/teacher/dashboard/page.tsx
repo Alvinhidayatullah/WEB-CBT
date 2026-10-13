@@ -15,11 +15,25 @@ export default async function TeacherDashboard() {
   const session = await getSession();
   if (!session) redirect("/api/auth/logout");
   const userId = session.userId as string;
-  const { users: rawUsers = [] } = await getUsers();
+  let rawUsers: any[] = [];
+  let currentUser: any = null;
+  let rawExams: any[] = [];
+
+  try {
+    const [usersRes, userRes, examsRes] = await Promise.all([
+      getUsers().then(r => r.users || []).catch(() => []),
+      prisma.user.findUnique({ where: { id: userId } }).catch(() => null),
+      getExams().catch(() => [])
+    ]);
+    rawUsers = usersRes;
+    currentUser = userRes;
+    rawExams = examsRes;
+  } catch (err) {
+    console.error("Gagal memuat sebagian data teacher dashboard:", err);
+  }
+
   const users = JSON.parse(JSON.stringify(rawUsers));
-  
-  const currentUser = await prisma.user.findUnique({ where: { id: userId } });
-  const rawUsername = currentUser?.username || "Guru";
+  const rawUsername = currentUser?.name || currentUser?.username || "Guru";
   const capitalizedUsername = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
   
   const hour = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })).getHours();
@@ -33,16 +47,15 @@ export default async function TeacherDashboard() {
   const userClasses = currentUser?.className || "-";
   const userSubjects = currentUser?.teacherSubject || "-";
   
-  const availableSubjects = userSubjects !== "-" ? userSubjects.split(",").map(s => s.trim()) : [];
+  const availableSubjects = userSubjects !== "-" ? userSubjects.split(",").map((s: string) => s.trim()) : [];
 
   // Filter pengguna agar hanya murid yang terlihat oleh guru (opsional, tapi disarankan)
   const muridUsers = users.filter((u: any) => u.role === "MURID");
   
-  const rawExams = await getExams();
   const exams = JSON.parse(JSON.stringify(rawExams));
   
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-  const availableClasses = (userClasses !== "-" ? userClasses.split(",").map(c => c.trim()) : []).sort(collator.compare);
+  const availableClasses = (userClasses !== "-" ? (userClasses as string).split(",").map((c: string) => c.trim()) : []).sort(collator.compare);
   
   return (
     <div className="min-h-screen bg-slate-50/50 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/50 via-slate-50 to-slate-50">

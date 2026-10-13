@@ -6,7 +6,6 @@ import { QuestionManagement } from "@/components/admin/QuestionManagement";
 import { ProfileSettings } from "@/components/admin/ProfileSettings";
 import { getUsers } from "@/actions/userActions";
 import { getDashboardStats, getExams } from "@/actions/dashboardActions";
-import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -16,22 +15,34 @@ export default async function AdminDashboard() {
   if (!session) redirect("/api/auth/logout");
   const userId = session.userId as string;
 
-  // Parallelize database queries to drastically reduce loading time (avoid waterfall)
-  const [
-    { users: rawUsers = [] },
-    { totalUsers, activeExams },
-    rawExams
-  ] = await Promise.all([
-    getUsers(),
-    getDashboardStats(),
-    getExams()
-  ]);
+  // Tangani query secara paralel dan aman dengan fallback jika koneksi database sedang sibuk/wake-up
+  let rawUsers: any[] = [];
+  let totalUsers = 0;
+  let activeExams = 0;
+  let rawExams: any[] = [];
+  let currentUser: any = null;
+
+  try {
+    const [usersRes, statsRes, examsRes, userRes] = await Promise.all([
+      getUsers().then(r => r.users || []).catch(() => []),
+      getDashboardStats().catch(() => ({ totalUsers: 0, activeExams: 0 })),
+      getExams().catch(() => []),
+      prisma.user.findUnique({ where: { id: userId } }).catch(() => null)
+    ]);
+
+    rawUsers = usersRes;
+    totalUsers = statsRes.totalUsers || 0;
+    activeExams = statsRes.activeExams || 0;
+    rawExams = examsRes;
+    currentUser = userRes;
+  } catch (err) {
+    console.error("Gagal mengambil data dashboard secara penuh:", err);
+  }
 
   const users = JSON.parse(JSON.stringify(rawUsers));
   const exams = JSON.parse(JSON.stringify(rawExams));
   
-  const currentUser = await prisma.user.findUnique({ where: { id: userId } });
-  const rawUsername = currentUser?.username || "Admin";
+  const rawUsername = currentUser?.name || currentUser?.username || "Admin";
   const capitalizedUsername = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
   
   const hour = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })).getHours();
@@ -45,7 +56,7 @@ export default async function AdminDashboard() {
   const totalAdmins = users.filter((u: any) => u.role === "SUPER_ADMIN").length;
   const totalTeachers = users.filter((u: any) => u.role === "GURU").length;
   const totalStudents = users.filter((u: any) => u.role === "MURID").length;
-  const totalRealUsers = users.length;
+  const totalRealUsers = totalUsers || users.length;
   
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
   const availableClasses = (Array.from(new Set(
