@@ -42,6 +42,14 @@ export default function StudentDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch {}
+    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    window.location.href = "/";
+  };
+
 
 
   return (
@@ -101,13 +109,14 @@ export default function StudentDashboard() {
         </div>
         
         <div className="w-full mt-1">
-          <a 
-            href="/api/auth/logout"
-            className="mx-auto flex items-center justify-center gap-2 text-xs font-semibold text-red-500/80 hover:text-red-400 hover:bg-red-500/10 px-4 py-2.5 rounded-lg transition-all bg-transparent border border-red-500/20"
+          <button 
+            type="button"
+            onClick={handleLogout}
+            className="mx-auto flex items-center justify-center gap-2 text-xs font-semibold text-red-500/80 hover:text-red-400 hover:bg-red-500/10 px-4 py-2.5 rounded-lg transition-all bg-transparent border border-red-500/20 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Keluar Akun</span>
-          </a>
+          </button>
         </div>
         
         <div className="text-center bg-yellow-500/10 p-4 rounded-2xl border border-yellow-500/20 text-yellow-200/90 text-[13px] leading-relaxed shadow-lg backdrop-blur-md mx-auto">

@@ -75,19 +75,33 @@ export async function logoutUser() {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get("session")?.value;
     
+    // Always delete the session cookie unconditionally
+    cookieStore.set("session", "", {
+      path: "/",
+      expires: new Date(0),
+      maxAge: 0,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+
     if (sessionToken) {
-      const payload = await verifyToken(sessionToken);
-      if (payload?.userId) {
-        await prisma.user.update({
-          where: { id: payload.userId as string },
-          data: { sessionVersion: { increment: 1 } }
-        });
+      try {
+        const payload = await verifyToken(sessionToken);
+        if (payload?.userId) {
+          await prisma.user.update({
+            where: { id: payload.userId as string },
+            data: { sessionVersion: { increment: 1 } }
+          });
+        }
+      } catch (dbErr) {
+        console.warn("DB sessionVersion update skipped in logout:", dbErr);
       }
     }
 
-    cookieStore.delete("session");
     return { success: true };
   } catch (error) {
+    console.error("Logout error:", error);
     return { success: false };
   }
 }

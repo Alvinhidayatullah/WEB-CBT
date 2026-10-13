@@ -5,10 +5,15 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 async function checkAuth(allowedRoles: string[]) {
   const session = await getSession();
-  if (!session) redirect("/api/auth/logout");
+  if (!session) {
+    const cookieStore = await cookies();
+    cookieStore.delete("session");
+    redirect("/");
+  }
 
   let userRole = session.userRole as string;
   const userId = session.userId as string;
@@ -19,7 +24,9 @@ async function checkAuth(allowedRoles: string[]) {
   }
 
   if (!userRole || !allowedRoles.includes(userRole)) {
-    redirect("/api/auth/logout");
+    const cookieStore = await cookies();
+    cookieStore.delete("session");
+    redirect("/");
   }
 
   return { userId, userRole };

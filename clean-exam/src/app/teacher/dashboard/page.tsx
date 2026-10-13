@@ -10,10 +10,15 @@ import { logoutUser } from "@/actions/authActions";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { cookies } from "next/headers";
 
 export default async function TeacherDashboard() {
   const session = await getSession();
-  if (!session) redirect("/api/auth/logout");
+  if (!session) {
+    const cookieStore = await cookies();
+    cookieStore.delete("session");
+    redirect("/");
+  }
   const userId = session.userId as string;
   let rawUsers: any[] = [];
   let currentUser: any = null;
