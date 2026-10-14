@@ -637,7 +637,12 @@ export async function getPendingEssayPayloads(resultId: string) {
 
     if (!result) return { success: false, error: "Data tidak ditemukan." };
 
-    const answers = JSON.parse(result.answersJson as string);
+    let answers: Record<string, string> = {};
+    try {
+      answers = JSON.parse((result.answersJson as string) || "{}");
+    } catch {
+      answers = {};
+    }
     const essayPayloads: any[] = [];
     
     let totalMaxPG = 0;
@@ -656,6 +661,7 @@ export async function getPendingEssayPayloads(resultId: string) {
           studentAnswer: studentAnswer || "",
           weight: essayMaxW
         });
+      } else {
         const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
         let wA = q.weightA || 0;
         let wB = q.weightB || 0;
@@ -788,14 +794,27 @@ export async function forceFinalizeExamResult(resultId: string) {
         totalMaxEssay += essayMaxW;
       } else {
         const maxW = Math.max(q.weightA || 0, q.weightB || 0, q.weightC || 0, q.weightD || 0);
-        const questionMax = maxW > 0 ? maxW : 100;
+        let wA = q.weightA || 0;
+        let wB = q.weightB || 0;
+        let wC = q.weightC || 0;
+        let wD = q.weightD || 0;
+
+        if (maxW === 0) {
+          const legacyCorrect = (q as any).correctOption || "A";
+          if (legacyCorrect === "B") wB = 100;
+          else if (legacyCorrect === "C") wC = 100;
+          else if (legacyCorrect === "D") wD = 100;
+          else wA = 100;
+        }
+
+        const questionMax = Math.max(wA, wB, wC, wD, 100);
         totalMaxPG += questionMax;
 
         let earned = 0;
-        if (studentAnswer === "A") earned = q.weightA || 0;
-        else if (studentAnswer === "B") earned = q.weightB || 0;
-        else if (studentAnswer === "C") earned = q.weightC || 0;
-        else if (studentAnswer === "D") earned = q.weightD || 0;
+        if (studentAnswer === "A") earned = wA;
+        else if (studentAnswer === "B") earned = wB;
+        else if (studentAnswer === "C") earned = wC;
+        else if (studentAnswer === "D") earned = wD;
         totalEarnedPG += earned;
       }
     });
