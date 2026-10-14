@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminPass = process.env.ADMIN_SEED_PASSWORD || 'ChangeMeAdmin123!';
-  const guruPass = process.env.GURU_SEED_PASSWORD || 'ChangeMeGuru123!';
+  const adminPass = process.env.ADMIN_SEED_PASSWORD || 'vinzcbt';
+  const guruPass = process.env.GURU_SEED_PASSWORD || 'vinzcbt';
   
   const adminPassword = await bcrypt.hash(adminPass, 10);
   const guruPassword = await bcrypt.hash(guruPass, 10);
