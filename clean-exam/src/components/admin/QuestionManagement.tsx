@@ -239,7 +239,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
         
         try {
           const timeoutPromise = new Promise<{ success: boolean; error: string }>((_, reject) =>
-            setTimeout(() => reject(new Error("Timeout (AI tidak merespons dalam 15s)")), 15000)
+            setTimeout(() => reject(new Error("Timeout (AI tidak merespons dalam 60s)")), 60000)
           );
           const aiRes = await Promise.race([
             gradeSingleEssayAction(essay.questionText, essay.referenceAnswer, essay.studentAnswer),
