@@ -47,7 +47,28 @@ export async function joinExam(token: string) {
     });
 
     if (existingResult) {
-      return { success: false, error: "Token sudah digunakan. Harap hubungi administrator ujian." };
+      if (existingResult.gradingStatus === "STARTED") {
+        // Siswa mental atau keluar browser saat sedang mengerjakan
+        // Periksa apakah waktu durasi ujian sudah habis total
+        const startTime = new Date(existingResult.createdAt).getTime();
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const totalDurationSeconds = (exam.duration || 60) * 60;
+
+        if (elapsedSeconds > totalDurationSeconds + 300) {
+          return { 
+            success: false, 
+            error: "Waktu pelaksanaan ujian Anda telah habis dan sesi telah berakhir." 
+          };
+        }
+
+        return { 
+          success: true, 
+          examId: exam.id, 
+          isResumed: true,
+          message: "Melanjutkan sesi ujian Anda..." 
+        };
+      }
+      return { success: false, error: "Token sudah digunakan. Anda sudah menyelesaikan ujian ini." };
     }
 
     // Create a placeholder result so the token is immediately consumed
@@ -61,7 +82,7 @@ export async function joinExam(token: string) {
       }
     });
 
-    return { success: true, examId: exam.id };
+    return { success: true, examId: exam.id, isResumed: false };
   } catch (error) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
@@ -122,9 +143,28 @@ export async function getExamData(examId: string) {
       },
     });
 
-    if (existingResult && existingResult.gradingStatus !== "STARTED") {
+    if (!existingResult) {
+      return { error: "Sesi ujian belum dimulai. Silakan masukkan token terlebih dahulu di portal siswa." };
+    }
+
+    if (existingResult.gradingStatus !== "STARTED") {
       return { error: "Anda sudah menyelesaikan ujian ini." };
     }
+
+    // Ambil jawaban tersimpan di database untuk memulihkan sesi jika siswa mental / reload
+    let savedAnswers: Record<string, string> = {};
+    if (existingResult.answersJson) {
+      try {
+        savedAnswers = JSON.parse(existingResult.answersJson);
+      } catch {
+        savedAnswers = {};
+      }
+    }
+
+    const startTime = new Date(existingResult.createdAt).getTime();
+    const durationMs = (exam.duration || 60) * 60 * 1000;
+    const elapsedMs = Date.now() - startTime;
+    const remainingSeconds = Math.max(0, Math.floor((durationMs - elapsedMs) / 1000));
 
     // Pisahkan PG dan Essay
     let pgQuestions = exam.questions.filter((q: any) => q.type !== 'ESSAY');
@@ -210,8 +250,85 @@ export async function getExamData(examId: string) {
       studentName: user?.name || user?.username || "Siswa",
       studentClass: userClass || "-",
       questions: processedQuestions,
+      savedAnswers,
+      startTime,
+      remainingSeconds,
+      isResumed: Object.keys(savedAnswers).length > 0 || elapsedMs > 15000,
     };
   } catch (error) {
+    return null;
+  }
+}
+
+export async function getActiveStudentExam() {
+  try {
+    const session = await getSession();
+    const userId = session?.userId as string;
+    const userClass = session?.className as string;
+
+    if (!userId) return null;
+
+    const activeResult = await prisma.examResult.findFirst({
+      where: {
+        studentId: userId,
+        gradingStatus: "STARTED",
+        exam: {
+          isActive: true
+        }
+      },
+      include: {
+        exam: {
+          select: {
+            id: true,
+            subject: true,
+            examType: true,
+            targetClass: true,
+            duration: true,
+            token: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    if (!activeResult) return null;
+
+    const exam = activeResult.exam;
+    const allowedClasses = exam.targetClass.split(",").map(c => c.trim());
+    if (exam.targetClass !== "Semua Kelas" && !allowedClasses.includes(userClass || "")) {
+      return null;
+    }
+
+    const startTime = new Date(activeResult.createdAt).getTime();
+    const durationMs = (exam.duration || 60) * 60 * 1000;
+    const elapsedMs = Date.now() - startTime;
+    const remainingSeconds = Math.max(0, Math.floor((durationMs - elapsedMs) / 1000));
+
+    // Jika waktu sudah lewat durasi + 5 menit, jangan anggap sesi aktif lagi
+    if (elapsedMs > (exam.duration * 60 + 300) * 1000) {
+      return null;
+    }
+
+    let answeredCount = 0;
+    if (activeResult.answersJson) {
+      try {
+        const parsed = JSON.parse(activeResult.answersJson);
+        answeredCount = Object.keys(parsed).length;
+      } catch {}
+    }
+
+    return {
+      examId: exam.id,
+      subject: exam.subject,
+      examType: exam.examType,
+      duration: exam.duration,
+      remainingSeconds,
+      answeredCount,
+      startTime
+    };
+  } catch {
     return null;
   }
 }

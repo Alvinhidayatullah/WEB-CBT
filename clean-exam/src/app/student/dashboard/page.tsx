@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { KeyRound, LogOut, Info } from "lucide-react";
-import { joinExam } from "@/actions/examActions";
+import { KeyRound, LogOut, Info, Sparkles, Clock, CheckCircle2, Play } from "lucide-react";
+import { joinExam, getActiveStudentExam } from "@/actions/examActions";
 import { logoutUser } from "@/actions/authActions";
 
 export default function StudentDashboard() {
@@ -12,6 +12,28 @@ export default function StudentDashboard() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [activeExam, setActiveExam] = useState<any>(null);
+  const [checkingActive, setCheckingActive] = useState(true);
+
+  useEffect(() => {
+    async function checkActive() {
+      try {
+        const res = await getActiveStudentExam();
+        if (res) {
+          setActiveExam(res);
+        }
+      } catch {}
+      setCheckingActive(false);
+    }
+    checkActive();
+  }, []);
+
+  const formatRemaining = (seconds: number) => {
+    if (seconds <= 0) return "Waktu Habis";
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s}s`;
+  };
 
   const handleJoinExamClick = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +72,6 @@ export default function StudentDashboard() {
     window.location.href = "/";
   };
 
-
-
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4 font-sans selection:bg-blue-500/30">
       {/* Fixed Background to prevent white space on scroll */}
@@ -69,9 +89,54 @@ export default function StudentDashboard() {
         
         <div className="text-center mb-1">
           <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">Portal Siswa</h1>
-          <p className="text-slate-400 text-sm font-medium tracking-wide">Masukkan Token Ujian dari Guru</p>
+          <p className="text-slate-400 text-sm font-medium tracking-wide">
+            {activeExam ? "Sesi Ujian Aktif Terdeteksi" : "Masukkan Token Ujian dari Guru"}
+          </p>
         </div>
 
+        {/* Banner Sesi Ujian Aktif (Jika siswa sempat mental / keluar browser) */}
+        {activeExam && (
+          <div className="w-full bg-gradient-to-br from-amber-500/15 via-[#0f0e15] to-blue-500/10 border border-amber-500/30 rounded-[2rem] p-6 shadow-2xl backdrop-blur-xl relative overflow-hidden ring-1 ring-amber-500/20">
+            <div className="flex items-start gap-4">
+              <div className="bg-amber-500/20 border border-amber-500/30 p-3.5 rounded-2xl text-amber-400 shrink-0">
+                <Sparkles className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    Sesi Berlangsung
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-white truncate">{activeExam.subject}</h3>
+                <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+                  Sistem mendeteksi Anda memiliki sesi ujian yang sedang berjalan. Jawaban Anda aman dan tersimpan.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-white/5 text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Terjawab: <strong className="text-white font-mono">{activeExam.answeredCount}</strong> soal</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Sisa Waktu: <strong className="text-amber-300 font-mono">{formatRemaining(activeExam.remainingSeconds)}</strong></span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => router.push(`/student/exam/${activeExam.examId}`)}
+                  className="mt-5 w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-sm rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  <span>Lanjutkan Ujian Sekarang</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Kotak Masukkan Token Ujian */}
         <div className="w-full shadow-2xl border border-white/10 bg-[#0a0a0c]/90 md:bg-[#0a0a0c]/80 backdrop-blur-md md:backdrop-blur-xl rounded-[2rem] overflow-hidden ring-1 ring-white/5 p-6 md:p-8 relative">
           <form onSubmit={handleJoinExamClick} className="space-y-6">
                 <div className="flex justify-center mb-5">
@@ -80,7 +145,9 @@ export default function StudentDashboard() {
                   </div>
                </div>
                <div className="space-y-1">
-                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block mb-2 text-center">Token Ujian</label>
+                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block mb-2 text-center">
+                   {activeExam ? "Atau Masukkan Token Ujian" : "Token Ujian"}
+                 </label>
                  <input
                     type="text"
                     className="flex w-full text-center font-mono text-2xl md:text-3xl tracking-widest uppercase h-16 bg-black/40 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl transition-all"
@@ -101,7 +168,7 @@ export default function StudentDashboard() {
                <button 
                  type="submit" 
                  disabled={loading} 
-                 className="w-full h-14 text-lg font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
+                 className="w-full h-14 text-lg font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 cursor-pointer"
                >
                  {loading ? "Memvalidasi..." : "Mulai Ujian"}
                </button>
@@ -141,14 +208,14 @@ export default function StudentDashboard() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-2.5 bg-transparent border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 rounded-xl text-sm font-medium transition-all"
+                className="flex-1 py-2.5 bg-transparent border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 rounded-xl text-sm font-medium transition-all cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleConfirmStart}
                 disabled={loading}
-                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)]"
+                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] cursor-pointer disabled:opacity-50"
               >
                 {loading ? "Memproses..." : "Mulai Ujian"}
               </button>

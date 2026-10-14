@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AntiCheatWrapper } from '@/components/exam/AntiCheatWrapper';
 import { Button } from '@/components/ui/Button';
 import { getExamData, submitExam, saveStudentAnswersProgress } from '@/actions/examActions';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { use } from 'react';
 import Image from 'next/image';
 
@@ -74,24 +74,36 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
         } else {
           setExamData(data);
           
-          // Timer Logic
+          // Timer Logic (Sinkronkan dengan waktu resmi di database server)
           const startKey = `exam_start_${examId}`;
-          const startTimeStr = localStorage.getItem(startKey);
-          const startTime = startTimeStr ? parseInt(startTimeStr) : Date.now();
-          if (!startTimeStr) {
-            localStorage.setItem(startKey, startTime.toString());
-          }
+          const startTime = data.startTime || Date.now();
+          localStorage.setItem(startKey, startTime.toString());
           
-          const durationMs = (data.duration || 60) * 60 * 1000;
-          const endTime = startTime + durationMs;
-          const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+          const remaining = typeof data.remainingSeconds === 'number'
+            ? data.remainingSeconds
+            : Math.max(0, Math.floor(((startTime + (data.duration || 60) * 60 * 1000) - Date.now()) / 1000));
           setInitialTimeLeft(remaining);
 
-          // Restore answers & marks from local storage (if internet dropped)
+          // Restore answers: utamakan jawaban tersimpan dari database server, lalu gabungkan dengan local storage
+          let restoredAnswers: Record<string, string> = {};
+          if (data.savedAnswers && typeof data.savedAnswers === 'object') {
+            restoredAnswers = { ...data.savedAnswers };
+          }
           const savedAnswers = localStorage.getItem(`exam_answers_${examId}`);
-          if (savedAnswers) setAnswers(JSON.parse(savedAnswers));
+          if (savedAnswers) {
+            try {
+              restoredAnswers = { ...restoredAnswers, ...JSON.parse(savedAnswers) };
+            } catch {}
+          }
+          setAnswers(restoredAnswers);
+          localStorage.setItem(`exam_answers_${examId}`, JSON.stringify(restoredAnswers));
+
           const savedMarks = localStorage.getItem(`exam_marks_${examId}`);
-          if (savedMarks) setMarkedQuestions(JSON.parse(savedMarks));
+          if (savedMarks) {
+            try {
+              setMarkedQuestions(JSON.parse(savedMarks));
+            } catch {}
+          }
         }
       } else {
         setError("Ujian tidak ditemukan atau akses ditolak.");
@@ -148,12 +160,16 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
       if (res.success) {
         localStorage.removeItem('exam_violations');
         localStorage.removeItem(`exam_violations_${examId}`);
+        localStorage.removeItem(`exam_answers_${examId}`);
+        localStorage.removeItem(`exam_marks_${examId}`);
         localStorage.removeItem(startKey);
         window.location.href = '/student/dashboard';
       } else {
         if (res.error?.includes("sudah mensubmit") || res.error?.includes("tidak ditemukan") || res.error?.includes("tidak memiliki akses")) {
             localStorage.removeItem('exam_violations');
             localStorage.removeItem(`exam_violations_${examId}`);
+            localStorage.removeItem(`exam_answers_${examId}`);
+            localStorage.removeItem(`exam_marks_${examId}`);
             localStorage.removeItem(startKey);
             alert(res.error);
             window.location.href = '/student/dashboard';
@@ -186,6 +202,8 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
          if (res.success) {
            localStorage.removeItem('exam_violations');
            localStorage.removeItem(`exam_violations_${examId}`);
+           localStorage.removeItem(`exam_answers_${examId}`);
+           localStorage.removeItem(`exam_marks_${examId}`);
            localStorage.removeItem(startKey);
            setShowSubmitModal(false);
            alert(`Ujian selesai! Pekerjaan Anda telah direkam.`);
@@ -194,6 +212,8 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
            if (res.error?.includes("sudah mensubmit") || res.error?.includes("tidak ditemukan")) {
                localStorage.removeItem('exam_violations');
                localStorage.removeItem(`exam_violations_${examId}`);
+               localStorage.removeItem(`exam_answers_${examId}`);
+               localStorage.removeItem(`exam_marks_${examId}`);
                localStorage.removeItem(startKey);
                alert(res.error);
                window.location.href = '/student/dashboard';
@@ -348,6 +368,15 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
           {/* Area Soal */}
           <section className="lg:col-span-3 order-1 lg:order-2 relative z-10 min-w-0">
             <div className="bg-white rounded-3xl border border-slate-100 p-5 md:p-10 lg:p-12 shadow-xl shadow-black/10 min-h-[500px] flex flex-col">
+              {examData.isResumed && (
+                <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3.5 text-emerald-800 text-xs md:text-sm shadow-sm animate-in fade-in duration-300">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <div className="flex-1">
+                    <strong className="font-semibold block text-emerald-950">Sesi Ujian Berhasil Dipulihkan</strong>
+                    <span>Sistem mendeteksi Anda sempat keluar/terputus. Jawaban Anda sebelumnya tersimpan aman dan waktu ujian berjalan melanjutkan sisa waktu sebelumnya.</span>
+                  </div>
+                </div>
+              )}
               <div className="flex flex-wrap gap-4 justify-between items-center mb-6 pb-6 border-b border-slate-100">
                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Soal Nomor {currentQuestion + 1}</h2>
                  <span className="text-xs font-bold tracking-wide text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full uppercase">
