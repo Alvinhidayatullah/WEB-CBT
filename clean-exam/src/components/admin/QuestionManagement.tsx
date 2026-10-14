@@ -284,21 +284,27 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     e.preventDefault();
     if (!subject.trim()) return;
     setLoading(true);
-    const finalTargetClass = targetClasses.length > 0 ? targetClasses.join(", ") : "Semua Kelas";
-    const res = await createExam(examType, subject, finalTargetClass, duration, isAIGradingEnabled, examTokenInput.trim() || undefined);
-    if (res.success && res.exam) {
-      setLocalExams([res.exam, ...localExams]);
-      setSubject("");
-      setTargetClasses([]);
-      setDuration(60);
-      setExamTokenInput("");
-      setIsAIGradingEnabled(true);
-      setIsCustomExamType(false);
-      setExamType("Ujian Tengah Semester");
-    } else {
-      alert(res.error || "Gagal membuat sesi ujian");
+    try {
+      const finalTargetClass = targetClasses.length > 0 ? targetClasses.join(", ") : "Semua Kelas";
+      const res = await createExam(examType, subject, finalTargetClass, duration, isAIGradingEnabled, examTokenInput.trim() || undefined);
+      if (res.success && res.exam) {
+        setLocalExams(prev => [{ ...res.exam, questions: [], results: [] } as UIExam, ...prev]);
+        setSubject("");
+        setTargetClasses([]);
+        setDuration(60);
+        setExamTokenInput("");
+        setIsAIGradingEnabled(true);
+        setIsCustomExamType(false);
+        setExamType("Ujian Tengah Semester");
+        router.refresh();
+      } else {
+        alert(res.error || "Gagal membuat sesi ujian");
+      }
+    } catch (err: any) {
+      alert("Terjadi kendala koneksi saat menyimpan. Silakan muat ulang halaman jika sesi sudah terbentuk di daftar bawah.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleUpdateDuration = async (id: string) => {

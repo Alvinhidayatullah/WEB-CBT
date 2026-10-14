@@ -293,7 +293,18 @@ export async function createExam(examType: string, subject: string, targetClass:
         isAIGradingEnabled
       } 
     });
-    return { success: true, exam: newExam };
+
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/teacher/dashboard");
+
+    return { 
+      success: true, 
+      exam: {
+        ...newExam,
+        questions: [],
+        results: []
+      } 
+    };
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
       return { success: false, error: "Token ini sudah digunakan oleh sesi ujian lain. Silakan gunakan token lain." };
