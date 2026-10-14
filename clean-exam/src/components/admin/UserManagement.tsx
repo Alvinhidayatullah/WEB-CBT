@@ -135,37 +135,44 @@ export function UserManagement({ initialUsers = [], allowedRoles = ["MURID", "GU
       teacherSubject: role === "GURU" ? teacherSubject : undefined
     };
 
-    const res = await createUser(payload);
-    if (res.success && res.user) {
-      setUsers(prev => sortUsers([{
-        id: res.user!.id,
-        username: res.user!.username,
-        name: res.user!.name || name || null,
-        role: res.user!.role,
-        token: res.user!.token,
-        className: res.user!.className,
-        teacherSubject: res.user!.teacherSubject,
-        createdAt: res.user!.createdAt
-      }, ...prev]));
-      setUsername("");
-      setName("");
-      setClassName("");
-      setTeacherSubject("");
-      setCustomPassword("");
-      setToken(generateRandomToken()); // refresh token untuk form berikutnya
-    } else if (res.success) {
-      // Fallback if user wasn't returned for some reason
-      setUsername("");
-      setName("");
-      setClassName("");
-      setTeacherSubject("");
-      setCustomPassword("");
-      setToken(generateRandomToken());
-    } else {
-      alert(res.error || "Gagal menambahkan user");
-      setError(res.error || "Gagal menambahkan user");
+    try {
+      const res = await createUser(payload);
+      if (res.success && res.user) {
+        setUsers(prev => sortUsers([{
+          id: res.user!.id,
+          username: res.user!.username,
+          name: res.user!.name || name || null,
+          role: res.user!.role,
+          token: res.user!.token,
+          className: res.user!.className,
+          teacherSubject: res.user!.teacherSubject,
+          createdAt: res.user!.createdAt
+        }, ...prev]));
+        setUsername("");
+        setName("");
+        setClassName("");
+        setTeacherSubject("");
+        setCustomPassword("");
+        setToken(generateRandomToken()); // refresh token untuk form berikutnya
+      } else if (res.success) {
+        // Fallback if user wasn't returned for some reason
+        setUsername("");
+        setName("");
+        setClassName("");
+        setTeacherSubject("");
+        setCustomPassword("");
+        setToken(generateRandomToken());
+      } else {
+        alert(res.error || "Gagal menambahkan user");
+        setError(res.error || "Gagal menambahkan user");
+      }
+    } catch (err: any) {
+      console.error("Error creating user:", err);
+      alert("Gagal menambahkan user: " + (err?.message || "Koneksi bermasalah"));
+      setError(err?.message || "Terjadi kesalahan jaringan.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDelete = async (id: string) => {

@@ -187,6 +187,8 @@ export async function createUser(data: { username: string; name?: string; role: 
       }
     });
 
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/teacher/dashboard");
     return { success: true, user: newUser };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
