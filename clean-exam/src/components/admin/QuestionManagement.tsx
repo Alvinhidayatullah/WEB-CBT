@@ -176,11 +176,11 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   // Background Worker Effect dengan Controlled Concurrency (Batch processing)
   React.useEffect(() => {
     const processBatch = async () => {
-      // Kita batasi maksimum 3 proses bersamaan
-      if (activeBatch.size >= 3 || autoProcessQueue.length === 0) return;
+      // Kita batasi maksimum 5 proses bersamaan (karena AI sudah di VPS & menggunakan Antigravity)
+      if (activeBatch.size >= 5 || autoProcessQueue.length === 0) return;
       
-      // Ambil tugas yang bisa dijalankan (sampai kuota 3 penuh)
-      const availableSlots = 3 - activeBatch.size;
+      // Ambil tugas yang bisa dijalankan (sampai kuota 5 penuh)
+      const availableSlots = 5 - activeBatch.size;
       const nextIds = autoProcessQueue.slice(0, availableSlots);
       if (nextIds.length === 0) return;
 
