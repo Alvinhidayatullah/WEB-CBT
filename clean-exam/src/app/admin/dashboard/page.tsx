@@ -14,9 +14,7 @@ import { cookies } from "next/headers";
 export default async function AdminDashboard() {
   const session = await getSession();
   if (!session) {
-    const cookieStore = await cookies();
-    cookieStore.delete("session");
-    redirect("/");
+    redirect("/api/auth/logout");
   }
   const userId = session.userId as string;
 

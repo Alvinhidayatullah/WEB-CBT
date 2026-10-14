@@ -105,3 +105,14 @@ export async function logoutUser() {
     return { success: false };
   }
 }
+
+export async function checkSessionValid() {
+  try {
+    const { getSession } = await import("@/lib/auth");
+    const session = await getSession();
+    return !!session;
+  } catch {
+    return false;
+  }
+}
+

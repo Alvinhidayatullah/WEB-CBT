@@ -16,9 +16,8 @@ export default function GlobalError({
   }, [error]);
 
   const handleReturnToLogin = () => {
-    // Bersihkan sesi dan kembali ke login secara bersih
-    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    window.location.href = "/";
+    // Bersihkan sesi via server route handler agar cookie httpOnly terhapus tuntas
+    window.location.href = "/api/auth/logout";
   };
 
   return (

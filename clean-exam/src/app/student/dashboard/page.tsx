@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound, LogOut, Info, Sparkles, Clock, CheckCircle2, Play } from "lucide-react";
 import { joinExam, getActiveStudentExam } from "@/actions/examActions";
-import { logoutUser } from "@/actions/authActions";
+import { logoutUser, checkSessionValid } from "@/actions/authActions";
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -18,6 +18,11 @@ export default function StudentDashboard() {
   useEffect(() => {
     async function checkActive() {
       try {
+        const isValid = await checkSessionValid();
+        if (!isValid) {
+          window.location.href = "/api/auth/logout";
+          return;
+        }
         const res = await getActiveStudentExam();
         if (res) {
           setActiveExam(res);
@@ -64,12 +69,8 @@ export default function StudentDashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
-    } catch {}
-    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    window.location.href = "/";
+  const handleLogout = () => {
+    window.location.href = "/api/auth/logout";
   };
 
   return (

@@ -10,9 +10,7 @@ import { cookies } from "next/headers";
 async function checkAuth(allowedRoles: string[]) {
   const session = await getSession();
   if (!session) {
-    const cookieStore = await cookies();
-    cookieStore.delete("session");
-    redirect("/");
+    redirect("/api/auth/logout");
   }
 
   let userRole = session.userRole as string;
@@ -24,9 +22,7 @@ async function checkAuth(allowedRoles: string[]) {
   }
 
   if (!userRole || !allowedRoles.includes(userRole)) {
-    const cookieStore = await cookies();
-    cookieStore.delete("session");
-    redirect("/");
+    redirect("/api/auth/logout");
   }
 }
 

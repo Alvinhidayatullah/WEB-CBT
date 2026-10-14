@@ -58,6 +58,20 @@ export async function middleware(request: NextRequest) {
   }
   
   const path = request.nextUrl.pathname;
+
+  // Handle instant logout via query param (e.g. /?logout=1)
+  if (request.nextUrl.searchParams.has('logout')) {
+    const res = NextResponse.redirect(new URL('/', request.url));
+    res.cookies.set('session', '', {
+      path: '/',
+      expires: new Date(0),
+      maxAge: 0,
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+    return res;
+  }
   
   // Protect routes based on role
   if (path.startsWith('/admin')) {
