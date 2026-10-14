@@ -8,25 +8,52 @@ interface AntiCheatWrapperProps {
   onAutoSubmit?: () => void;
   isDisabled?: boolean;
   examId?: string;
+  initialViolations?: number;
+  onViolation?: (violationCount: number) => void;
 }
 
-export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false, examId = 'default' }: AntiCheatWrapperProps) {
+export function AntiCheatWrapper({
+  children,
+  onAutoSubmit,
+  isDisabled = false,
+  examId = 'default',
+  initialViolations = 0,
+  onViolation
+}: AntiCheatWrapperProps) {
   const router = useRouter();
   const disabledRef = useRef(isDisabled);
+  const onViolationRef = useRef(onViolation);
 
   useEffect(() => {
     disabledRef.current = isDisabled;
   }, [isDisabled]);
 
+  useEffect(() => {
+    onViolationRef.current = onViolation;
+  }, [onViolation]);
+
   const storageKey = `exam_violations_${examId}`;
 
   const [violations, setViolations] = useState(() => {
+    let count = 0;
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(storageKey);
-      return stored ? parseInt(stored, 10) : 0;
+      if (stored) count = Math.max(count, parseInt(stored, 10) || 0);
     }
-    return 0;
+    if (typeof initialViolations === 'number') {
+      count = Math.max(count, initialViolations);
+    }
+    return count;
   });
+
+  useEffect(() => {
+    if (typeof initialViolations === 'number' && initialViolations > violations) {
+      setViolations(initialViolations);
+      try {
+        localStorage.setItem(storageKey, initialViolations.toString());
+      } catch {}
+    }
+  }, [initialViolations, storageKey, violations]);
 
   const [showWarning, setShowWarning] = useState(false);
   const [isTabInactive, setIsTabInactive] = useState(false);
@@ -34,18 +61,18 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false, e
   // Deteksi perangkat mobile
   const isMobile = typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-  // Toleransi pelanggaran:
-  // - HP: 10x (karena banyak interupsi sistem seperti WA, notif baterai, alarm, dsb)
-  // - Laptop/PC: 5x
-  const MAX_VIOLATIONS = isMobile ? 10 : 5;
+  // Toleransi pelanggaran KETAT:
+  // - HP: Maksimal 3x (1: Peringatan keras, 2: Peringatan terakhir, 3: AUTO-SUBMIT)
+  // - Laptop/PC: Maksimal 2x (1: Peringatan keras, 2: AUTO-SUBMIT)
+  const MAX_VIOLATIONS = isMobile ? 3 : 2;
 
-  // Jeda antar pelanggaran (agar tidak terhitung berkali-kali dalam 1 kejadian)
-  const VIOLATION_COOLDOWN_MS = isMobile ? 5000 : 3000;
+  // Jeda antar pelanggaran (agar tidak double trigger dalam 1 kejadian)
+  const VIOLATION_COOLDOWN_MS = 2000;
 
-  // Minimal durasi tab tersembunyi agar dianggap pelanggaran:
-  // - HP: minimal 3.5 detik (notif cepat, intip jam/baterai, gesture senggolan < 3.5 detik TIDAK DIHITUNG)
-  // - Desktop: minimal 1.5 detik
-  const MIN_AWAY_DURATION_MS = isMobile ? 3500 : 1500;
+  // Minimal durasi tab tersembunyi / kehilangan fokus agar dihitung:
+  // - HP: 1000ms (1 detik) - menangkap buka tab lain, split screen, atau floating window
+  // - Desktop: 500ms (0.5 detik)
+  const MIN_AWAY_DURATION_MS = isMobile ? 1000 : 500;
 
   const lastViolationTime = useRef(0);
   const myTabId = useRef(typeof window !== 'undefined' ? Math.random().toString(36).slice(2) : '');
@@ -134,17 +161,19 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false, e
   };
 
   // ────────────────────────────────────────────────────────────────
-  // 3. ANTI-CHEAT MAIN EFFECT (Akurat, Tidak Mudah False-Positive)
+  // 3. ANTI-CHEAT MAIN EFFECT (Sangat Ketat: Visibility + Blur / Split-Screen)
   // ────────────────────────────────────────────────────────────────
   useEffect(() => {
     let isUnloading = false;
     let pageJustLoaded = true;
     let hiddenTimestamp = 0;
+    let blurTimestamp = 0;
+    let blurCheckTimer: NodeJS.Timeout | null = null;
 
-    // Grace period 3 detik setelah halaman pertama kali dimuat
+    // Grace period 2.5 detik saat pertama kali halaman dibuka
     const loadedTimeout = setTimeout(() => {
       pageJustLoaded = false;
-    }, 3000);
+    }, 2500);
 
     const handleViolation = () => {
       if (disabledRef.current) return;
@@ -164,6 +193,13 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false, e
           // Ignore storage quota error
         }
 
+        // Laporkan pelanggaran ke server secara real-time
+        if (onViolationRef.current) {
+          try {
+            onViolationRef.current(nextViolations);
+          } catch {}
+        }
+
         setTimeout(() => {
           if (nextViolations >= MAX_VIOLATIONS) {
             setShowWarning(false);
@@ -181,24 +217,47 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false, e
       });
     };
 
-    // Deteksi Pindah Tab / Minimalkan Aplikasi Berdasarkan Durasi
+    // Deteksi Pindah Tab / Layar Mati / Minimize Browser
     const handleVisibilityChange = () => {
       if (disabledRef.current || isUnloading) return;
 
       if (document.hidden) {
-        // Pengguna meninggalkan tab / layar mati / meminimalkan browser
         hiddenTimestamp = Date.now();
       } else {
-        // Pengguna kembali ke tab ujian
         if (hiddenTimestamp > 0) {
           const awayDuration = Date.now() - hiddenTimestamp;
           hiddenTimestamp = 0;
-
-          // HANYA hitung pelanggaran jika siswa meninggalkan halaman cukup lama
-          // Notifikasi cepat, intip status bar, sentuhan ringan < MIN_AWAY_DURATION_MS diabaikan
           if (awayDuration >= MIN_AWAY_DURATION_MS) {
             handleViolation();
           }
+        }
+      }
+    };
+
+    // Deteksi Hilang Fokus (Split Screen Android, Pop-up Window, Jendela Bersebelahan di Laptop)
+    const handleWindowBlur = () => {
+      if (disabledRef.current || isUnloading || pageJustLoaded) return;
+      blurTimestamp = Date.now();
+
+      // Periksa apakah pengguna tetap berada di luar fokus setelah durasi minimal
+      if (blurCheckTimer) clearTimeout(blurCheckTimer);
+      blurCheckTimer = setTimeout(() => {
+        if (!document.hasFocus() && blurTimestamp > 0) {
+          handleViolation();
+        }
+      }, MIN_AWAY_DURATION_MS + 200);
+    };
+
+    const handleWindowFocus = () => {
+      if (blurCheckTimer) {
+        clearTimeout(blurCheckTimer);
+        blurCheckTimer = null;
+      }
+      if (blurTimestamp > 0) {
+        const awayDuration = Date.now() - blurTimestamp;
+        blurTimestamp = 0;
+        if (awayDuration >= MIN_AWAY_DURATION_MS) {
+          handleViolation();
         }
       }
     };
@@ -208,28 +267,34 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false, e
       e.preventDefault();
     };
 
-    // Blokir Copy Paste
+    // Blokir Copy & Paste
     const handleCopyPaste = (e: ClipboardEvent) => {
       e.preventDefault();
     };
 
-    // Blokir Shortcut DevTools (F12, Ctrl+Shift+I, dll)
+    // Blokir Drag & Drop
+    const handleDragStart = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    // Blokir Shortcut DevTools, Screenshot & Print
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         e.key === 'F12' ||
         (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
-        (e.ctrlKey && e.key === 'u')
+        (e.ctrlKey && (e.key === 'u' || e.key === 'U')) ||
+        (e.ctrlKey && (e.key === 'p' || e.key === 'P')) ||
+        (e.ctrlKey && (e.key === 's' || e.key === 'S'))
       ) {
         e.preventDefault();
       }
     };
 
-    // Cegah Tombol Back / Swipe Back Gesture di HP agar tidak keluar ruang ujian
+    // Cegah Tombol Back / Swipe Back Gesture di HP
     window.history.pushState(null, document.title, window.location.href);
 
     const handlePopState = () => {
       if (disabledRef.current) return;
-      // Selalu kembalikan state agar siswa tetap berada di ruang ujian tanpa dialog konfirmasi yang mengganggu
       window.history.pushState(null, document.title, window.location.href);
     };
 
@@ -246,19 +311,28 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false, e
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('copy', handleCopyPaste);
+    document.addEventListener('cut', handleCopyPaste);
     document.addEventListener('paste', handleCopyPaste);
+    document.addEventListener('dragstart', handleDragStart);
     document.addEventListener('keydown', handleKeyDown);
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       clearTimeout(loadedTimeout);
+      if (blurCheckTimer) clearTimeout(blurCheckTimer);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('copy', handleCopyPaste);
+      document.removeEventListener('cut', handleCopyPaste);
       document.removeEventListener('paste', handleCopyPaste);
+      document.removeEventListener('dragstart', handleDragStart);
       document.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -305,23 +379,27 @@ export function AntiCheatWrapper({ children, onAutoSubmit, isDisabled = false, e
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-red-600 mb-3 tracking-tight">Peringatan Ujian!</h2>
-            <p className="text-slate-700 mb-2 text-base md:text-lg leading-relaxed font-medium">
-              Sistem mendeteksi Anda meninggalkan halaman ujian.
+            <h2 className="text-2xl font-bold text-red-600 mb-2 tracking-tight">⚠️ Peringatan Pelanggaran!</h2>
+            <p className="text-slate-800 mb-2 text-sm md:text-base leading-relaxed font-semibold">
+              Sistem mendeteksi Anda meninggalkan lembar ujian (pindah tab, split-screen, atau membuka aplikasi lain).
             </p>
-            <p className="text-slate-500 mb-6 text-sm leading-relaxed">
-              Pelanggaran ke-<strong className="text-red-600 font-bold">{violations}</strong> dari batas toleransi <strong className="text-slate-900 font-bold">{MAX_VIOLATIONS}</strong>.
-              {violations >= MAX_VIOLATIONS - 2 && (
-                <span className="block mt-2 text-red-600 font-bold bg-red-50 p-2.5 rounded-xl border border-red-200 text-xs">
-                  ⚠️ Peringatan Terakhir: Ujian akan otomatis terkirim jika Anda keluar lagi!
-                </span>
-              )}
-            </p>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-3 text-xs md:text-sm text-red-700 font-medium">
+              Pelanggaran ke-<strong className="text-red-900 font-extrabold text-base mx-1">{violations}</strong> dari batas toleransi <strong className="text-slate-900 font-bold mx-1">{MAX_VIOLATIONS}</strong>.
+              <p className="mt-1 text-slate-600 text-xs">
+                Aktivitas ini direkam dan dilaporkan secara real-time ke pengawas ujian.
+              </p>
+            </div>
+            {violations >= MAX_VIOLATIONS - 1 && (
+              <div className="mb-4 text-red-800 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-300 text-xs text-left flex items-start gap-2">
+                <span className="text-base">🚨</span>
+                <span><strong>PERINGATAN TERAKHIR:</strong> Jika Anda meninggalkan ujian 1 kali lagi, ujian akan <u>otomatis terkirim (AUTO-SUBMIT)</u> dan ditandai <u>CURANG</u>!</span>
+              </div>
+            )}
             <button
               onClick={() => setShowWarning(false)}
-              className="w-full bg-blue-600 text-white font-bold py-3.5 md:py-4 text-base md:text-lg rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-600/30"
+              className="w-full bg-blue-600 text-white font-bold py-3 text-sm md:text-base rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-md shadow-blue-600/30"
             >
-              Kembali ke Ujian
+              Saya Mengerti & Lanjut Mengerjakan
             </button>
           </div>
         </div>

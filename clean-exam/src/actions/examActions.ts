@@ -251,6 +251,7 @@ export async function getExamData(examId: string) {
       studentClass: userClass || "-",
       questions: processedQuestions,
       savedAnswers,
+      savedViolations: existingResult.violations || 0,
       startTime,
       remainingSeconds,
       isResumed: Object.keys(savedAnswers).length > 0 || elapsedMs > 15000,
@@ -333,7 +334,30 @@ export async function getActiveStudentExam() {
   }
 }
 
-export async function saveStudentAnswersProgress(examId: string, answers: Record<string, string>, timeSpent?: number) {
+export async function recordExamViolation(examId: string, count: number) {
+  try {
+    const session = await getSession();
+    const userId = session?.userId as string;
+    if (!userId || typeof count !== 'number') return { success: false };
+
+    await prisma.examResult.updateMany({
+      where: {
+        studentId: userId,
+        examId: examId,
+        gradingStatus: "STARTED"
+      },
+      data: {
+        violations: count,
+        isCheated: count > 0
+      }
+    });
+    return { success: true };
+  } catch {
+    return { success: false };
+  }
+}
+
+export async function saveStudentAnswersProgress(examId: string, answers: Record<string, string>, timeSpent?: number, violations?: number) {
   try {
     const session = await getSession();
     const userId = session?.userId as string;
@@ -347,7 +371,8 @@ export async function saveStudentAnswersProgress(examId: string, answers: Record
       },
       data: {
         answersJson: JSON.stringify(answers),
-        ...(typeof timeSpent === 'number' && timeSpent > 0 ? { timeSpent } : {})
+        ...(typeof timeSpent === 'number' && timeSpent > 0 ? { timeSpent } : {}),
+        ...(typeof violations === 'number' ? { violations, isCheated: violations > 0 } : {})
       }
     });
     return { success: true };
@@ -356,7 +381,7 @@ export async function saveStudentAnswersProgress(examId: string, answers: Record
   }
 }
 
-export async function submitExam(examId: string, answers: Record<string, string>, isCheated: boolean = false, timeSpent: number = 0) {
+export async function submitExam(examId: string, answers: Record<string, string>, isCheated: boolean = false, timeSpent: number = 0, violations: number = 0) {
   try {
     // 1. Strict Payload Validation
     if (typeof examId !== 'string' || examId.length > 100) {
@@ -454,6 +479,9 @@ export async function submitExam(examId: string, answers: Record<string, string>
       finalGradingStatus = exam.isAIGradingEnabled ? "PENDING" : "MANUAL_REVIEW";
     }
 
+    const finalViolations = Math.max(existingResult.violations || 0, violations || 0);
+    const finalIsCheated = isCheated || finalViolations > 0;
+
     const resultRecord = await prisma.examResult.update({
       where: {
         studentId_examId: {
@@ -463,7 +491,8 @@ export async function submitExam(examId: string, answers: Record<string, string>
       },
       data: {
         score: finalScore,
-        isCheated: isCheated,
+        isCheated: finalIsCheated,
+        violations: finalViolations,
         timeSpent: timeSpent,
         answersJson: JSON.stringify(answers),
         gradingStatus: finalGradingStatus

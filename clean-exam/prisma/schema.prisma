@@ -73,6 +73,7 @@ model ExamResult {
   exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   score       Float
   isCheated   Boolean  @default(false)
+  violations  Int      @default(0) // Jumlah pelanggaran keluar tab / hilang fokus
   timeSpent   Int      @default(0) // Waktu pengerjaan dalam detik
   answersJson String?  // Menyimpan jawaban asli murid dalam format JSON
   essayScore  Float?   // Nilai esai khusus dari AI

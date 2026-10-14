@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AntiCheatWrapper } from '@/components/exam/AntiCheatWrapper';
 import { Button } from '@/components/ui/Button';
-import { getExamData, submitExam, saveStudentAnswersProgress } from '@/actions/examActions';
+import { getExamData, submitExam, saveStudentAnswersProgress, recordExamViolation } from '@/actions/examActions';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { use } from 'react';
 import Image from 'next/image';
@@ -123,8 +123,16 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
       const startKey = `exam_start_${examId}`;
       const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
       const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-      saveStudentAnswersProgress(examId, newAnswers, timeSpent).catch(() => {});
+      const violationsKey = `exam_violations_${examId}`;
+      const currentViolations = parseInt(localStorage.getItem(violationsKey) || "0", 10);
+      saveStudentAnswersProgress(examId, newAnswers, timeSpent, currentViolations).catch(() => {});
     }, 500);
+  };
+
+  const handleViolationRecorded = async (count: number) => {
+    try {
+      await recordExamViolation(examId, count);
+    } catch {}
   };
 
   const handleSelect = (optionValue: string) => {
@@ -155,8 +163,11 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
     const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
+    const violationsKey = `exam_violations_${examId}`;
+    const currentViolations = parseInt(localStorage.getItem(violationsKey) || "0", 10);
+
     try {
-      const res = await submitExam(examId, answers, true, timeSpent);
+      const res = await submitExam(examId, answers, true, timeSpent, currentViolations);
       if (res.success) {
         localStorage.removeItem('exam_violations');
         localStorage.removeItem(`exam_violations_${examId}`);
@@ -197,8 +208,12 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
        const startTime = parseInt(localStorage.getItem(startKey) || Date.now().toString());
        const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
+       const violationsKey = `exam_violations_${examId}`;
+       const currentViolations = parseInt(localStorage.getItem(violationsKey) || "0", 10);
+       const hasCheated = currentViolations > 0;
+
        try {
-         const res = await submitExam(examId, answers, false, timeSpent);
+         const res = await submitExam(examId, answers, hasCheated, timeSpent, currentViolations);
          if (res.success) {
            localStorage.removeItem('exam_violations');
            localStorage.removeItem(`exam_violations_${examId}`);
@@ -298,7 +313,13 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
   };
 
   return (
-    <AntiCheatWrapper examId={examId} onAutoSubmit={handleAutoSubmit} isDisabled={showSubmitModal || isSubmitting}>
+    <AntiCheatWrapper 
+      examId={examId} 
+      onAutoSubmit={handleAutoSubmit} 
+      isDisabled={showSubmitModal || isSubmitting}
+      initialViolations={examData?.savedViolations || 0}
+      onViolation={handleViolationRecorded}
+    >
       <div className="min-h-[100dvh] bg-[#030305] flex flex-col relative overflow-x-hidden selection:bg-blue-500/30">
         
         {/* Fixed Background from Login */}
@@ -411,10 +432,20 @@ export default function ExamRoom({ params }: { params: Promise<{ id: string }> }
                 {question.type === "ESSAY" ? (
                   <textarea 
                     key={`essay-${qId}`}
-                    className="w-full flex-1 min-h-[200px] p-4 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-800 text-lg leading-relaxed transition-all resize-y"
-                    placeholder="Ketik jawaban esai Anda di sini..."
+                    className="w-full flex-1 min-h-[200px] p-4 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-800 text-lg leading-relaxed transition-all resize-y select-text"
+                    placeholder="Ketik jawaban esai Anda langsung di sini..."
                     value={answers[qId] || ""}
                     onChange={(e) => handleSelect(e.target.value)}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      alert("⚠️ DILARANG MENEMPEL (PASTE) JAWABAN!\nSeluruh jawaban esai wajib diketik secara mandiri.");
+                    }}
+                    onCopy={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
+                    onContextMenu={(e) => e.preventDefault()}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
                   />
                 ) : (
                   question.shuffledOptions?.map((opt: any, idx: number) => {

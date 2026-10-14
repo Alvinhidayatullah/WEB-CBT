@@ -24,6 +24,7 @@ export interface UIExamResult {
   id: string;
   score: number;
   isCheated: boolean;
+  violations?: number;
   timeSpent?: number;
   essayScore?: number;
   aiFeedback?: string;
@@ -668,8 +669,15 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                               ) : (
                                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold text-center w-24">Selesai</span>
                               )}
+                              {Boolean(res.violations && res.violations > 0) && (
+                                <span className="text-xs bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded font-semibold text-center mt-1 w-24" title={`${res.violations} kali terdeteksi meninggalkan tab / layar ujian`}>
+                                  ⚠️ {res.violations}x Keluar
+                                </span>
+                              )}
                               {res.isCheated && (
-                                <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded font-semibold text-center mt-1 w-24">Curang</span>
+                                <span className="text-xs bg-red-100 text-red-700 border border-red-300 px-2 py-0.5 rounded font-bold text-center mt-1 w-24">
+                                  Curang
+                                </span>
                               )}
                             </div>
                           </td>
@@ -1042,6 +1050,16 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                   )}
                   <span className="text-slate-300">|</span> 
                   <span>Status: <span className="font-semibold text-slate-700">{viewingResult.gradingStatus}</span></span>
+                  {Boolean(viewingResult.violations && viewingResult.violations > 0) && (
+                    <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-md text-xs font-bold">
+                      ⚠️ {viewingResult.violations}x Keluar Layar/Tab
+                    </span>
+                  )}
+                  {viewingResult.isCheated && (
+                    <span className="px-2.5 py-0.5 bg-red-100 text-red-700 border border-red-300 rounded-md text-xs font-bold">
+                      ⛔ Terindikasi Curang
+                    </span>
+                  )}
                 </p>
               </div>
               <button onClick={() => { setViewingResult(null); setViewingExam(null); }} className="p-2 bg-slate-200 hover:bg-slate-300 rounded-full text-slate-600 transition-colors">
