@@ -201,8 +201,6 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
             newBatch.delete(id);
             return newBatch;
           });
-          // Refresh data layar (karena polling otomatis di atas tidak refresh data lengkap)
-          getExams().then(freshExams => setLocalExams(freshExams as unknown as UIExam[]));
         });
       });
     };
@@ -296,7 +294,9 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
         setIsAIGradingEnabled(true);
         setIsCustomExamType(false);
         setExamType("Ujian Tengah Semester");
+        setLoading(false);
         router.refresh();
+        return;
       } else {
         alert(res.error || "Gagal membuat sesi ujian");
       }

@@ -294,9 +294,6 @@ export async function createExam(examType: string, subject: string, targetClass:
       } 
     });
 
-    revalidatePath("/admin/dashboard");
-    revalidatePath("/teacher/dashboard");
-
     return { 
       success: true, 
       exam: {
@@ -767,8 +764,6 @@ export async function deleteExamResult(resultId: string) {
     await prisma.examResult.delete({
       where: { id: resultId }
     });
-    revalidatePath("/admin/dashboard");
-    revalidatePath("/teacher/dashboard");
     return { success: true };
   } catch (error) {
     return { success: false, error: "Gagal menghapus hasil ujian siswa." };
@@ -877,8 +872,6 @@ export async function forceFinalizeExamResult(resultId: string) {
       }
     }
 
-    revalidatePath("/admin/dashboard");
-    revalidatePath("/teacher/dashboard");
     return { 
       success: true,
       result: {
