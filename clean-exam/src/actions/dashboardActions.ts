@@ -168,6 +168,30 @@ export async function getExams() {
   }
 }
 
+export async function getExamQuestions(examId: string) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    const exam = await prisma.exam.findUnique({
+      where: { id: examId },
+      include: {
+        questions: { orderBy: { createdAt: "asc" } }
+      }
+    });
+
+    if (!exam) return { success: false, error: "Ujian tidak ditemukan" };
+
+    if (exam.questions && Array.isArray(exam.questions)) {
+      const pg = exam.questions.filter((q: any) => q.type !== 'ESSAY');
+      const essay = exam.questions.filter((q: any) => q.type === 'ESSAY');
+      exam.questions = [...pg, ...essay];
+    }
+
+    return { success: true, exam };
+  } catch (error) {
+    return { success: false, error: "Gagal mengambil data soal ujian" };
+  }
+}
+
 export async function getPendingResultIds() {
   try {
     const session = await getSession();
@@ -430,7 +454,7 @@ export async function createQuestion(data: {
       wA = 100;
     }
 
-    await prisma.question.create({
+    const newQuestion = await prisma.question.create({
       data: {
         examId: data.examId,
         type: data.type || "MULTIPLE_CHOICE",
@@ -451,8 +475,7 @@ export async function createQuestion(data: {
         optionDImg: data.optionDImg || null,
       },
     });
-    revalidatePath("/", "layout");
-    return { success: true };
+    return { success: true, question: newQuestion };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
@@ -463,7 +486,6 @@ export async function deleteQuestion(id: string) {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
     await prisma.question.delete({ where: { id } });
-    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
@@ -475,7 +497,6 @@ export async function deleteAllQuestions(examId: string) {
     await checkAuth(["SUPER_ADMIN", "GURU"]);
     
     await prisma.question.deleteMany({ where: { examId } });
-    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
@@ -501,7 +522,6 @@ export async function updateExamSettings(id: string, randomizeQuestions: boolean
       where: { id },
       data: { randomizeQuestions, randomizeOptions }
     });
-    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
@@ -516,7 +536,6 @@ export async function updateQuestionSettings(id: string, isShuffled: boolean, is
       where: { id },
       data: { isShuffled, isOptionsShuffled }
     });
-    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
@@ -548,7 +567,7 @@ export async function updateQuestion(id: string, data: {
        return { success: false, error: "Format gambar tidak valid atau terdeteksi malware. Hanya menerima JPEG, PNG, WEBP, atau URL aman." };
     }
 
-    await prisma.question.update({
+    const updated = await prisma.question.update({
       where: { id },
       data: {
         type: data.type || "MULTIPLE_CHOICE",
@@ -569,8 +588,7 @@ export async function updateQuestion(id: string, data: {
         optionDImg: data.optionDImg !== undefined ? data.optionDImg : undefined,
       },
     });
-    revalidatePath("/", "layout");
-    return { success: true };
+    return { success: true, question: updated };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };
   }
@@ -628,7 +646,6 @@ export async function bulkCreateQuestions(examId: string, questions: any[]) {
       data: formattedQuestions
     });
     
-    revalidatePath("/", "layout");
     return { success: true, count: formattedQuestions.length };
   } catch (error: unknown) {
     return { success: false, error: "Terjadi kesalahan sistem internal." };

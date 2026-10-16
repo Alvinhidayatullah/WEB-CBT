@@ -6,7 +6,7 @@ import { ArrowLeft, Trash2, Loader2, Save, Upload, Download, Edit } from "lucide
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Image as ImageIcon, X } from "lucide-react";
-import { getExams, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions, deleteAllQuestions, updateExamSettings, updateQuestionSettings } from "@/actions/dashboardActions";
+import { getExamQuestions, createQuestion, deleteQuestion, updateQuestion, bulkCreateQuestions, deleteAllQuestions, updateExamSettings, updateQuestionSettings } from "@/actions/dashboardActions";
 import * as XLSX from "xlsx";
 import { use } from "react";
 
@@ -74,9 +74,10 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
   }, [examId]);
 
   const fetchExam = async (id: string) => {
-    const exams = await getExams();
-    const found = exams.find((e: any) => e.id === id);
-    if (found) setExam(found);
+    const res = await getExamQuestions(id);
+    if (res.success && res.exam) {
+      setExam(res.exam);
+    }
     setLoading(false);
   };
 
@@ -170,7 +171,9 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
       setQImageUrl(""); setOptAImg(""); setOptBImg(""); setOptCImg(""); setOptDImg("");
       setWeightA(100); setWeightB(0); setWeightC(0); setWeightD(0);
       setEditingId(null);
+      setIsSubmitting(false);
       await fetchExam(examId);
+      return;
     } else {
       alert(res.error || "Gagal menyimpan soal");
     }
@@ -283,24 +286,26 @@ export default function ManageQuestionsPage({ params }: { params: Promise<{ id: 
 
   const handleDeleteQuestion = async (qId: string) => {
     if (!window.confirm("Hapus soal ini?")) return;
-    setIsSubmitting(true);
-    const res = await deleteQuestion(qId);
-    if (res.success) {
-      await fetchExam(examId);
-    } else {
-      alert(res.error || "Gagal menghapus soal");
+    if (exam && exam.questions) {
+      setExam({ ...exam, questions: exam.questions.filter((q: any) => q.id !== qId) });
     }
-    setIsSubmitting(false);
+    const res = await deleteQuestion(qId);
+    if (!res.success) {
+      alert(res.error || "Gagal menghapus soal");
+      await fetchExam(examId);
+    }
   };
 
   const handleDeleteAllQuestions = async () => {
     if (!window.confirm("Yakin ingin menghapus SEMUA soal pada ujian ini secara permanen?")) return;
     setIsSubmitting(true);
+    if (exam) {
+      setExam({ ...exam, questions: [] });
+    }
     const res = await deleteAllQuestions(examId);
-    if (res.success) {
-      await fetchExam(examId);
-    } else {
+    if (!res.success) {
       alert(res.error || "Gagal menghapus semua soal");
+      await fetchExam(examId);
     }
     setIsSubmitting(false);
   };
