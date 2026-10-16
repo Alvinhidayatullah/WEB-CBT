@@ -119,14 +119,27 @@ export async function getExams() {
     let exams = await prisma.exam.findMany({
       where: whereClause,
       include: { 
-        questions: { orderBy: { createdAt: 'asc' } },
+        questions: {
+          select: { id: true, type: true }
+        },
         results: { 
           orderBy: { createdAt: "asc" },
-          include: { 
+          select: {
+            id: true,
+            examId: true,
+            studentId: true,
+            score: true,
+            essayScore: true,
+            gradingStatus: true,
+            violations: true,
+            isCheated: true,
+            createdAt: true,
+            timeSpent: true,
+            aiFeedback: true,
             student: {
               select: { id: true, username: true, name: true, className: true }
-            } 
-          } 
+            }
+          }
         }
       },
       orderBy: [
@@ -189,6 +202,38 @@ export async function getExamQuestions(examId: string) {
     return { success: true, exam };
   } catch (error) {
     return { success: false, error: "Gagal mengambil data soal ujian" };
+  }
+}
+
+export async function getStudentResultDetail(examId: string, resultId: string) {
+  try {
+    await checkAuth(["SUPER_ADMIN", "GURU"]);
+    const [exam, result] = await Promise.all([
+      prisma.exam.findUnique({
+        where: { id: examId },
+        include: {
+          questions: { orderBy: { createdAt: "asc" } }
+        }
+      }),
+      prisma.examResult.findUnique({
+        where: { id: resultId },
+        include: {
+          student: { select: { id: true, username: true, name: true, className: true } }
+        }
+      })
+    ]);
+
+    if (!exam || !result) return { success: false, error: "Data ujian atau siswa tidak ditemukan" };
+
+    if (exam.questions && Array.isArray(exam.questions)) {
+      const pg = exam.questions.filter((q: any) => q.type !== 'ESSAY');
+      const essay = exam.questions.filter((q: any) => q.type === 'ESSAY');
+      exam.questions = [...pg, ...essay];
+    }
+
+    return { success: true, exam, result };
+  } catch (error) {
+    return { success: false, error: "Gagal mengambil rincian jawaban siswa" };
   }
 }
 

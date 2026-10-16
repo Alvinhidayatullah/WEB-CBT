@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { BookOpen, Trash2, Edit2, ChevronDown, ChevronUp, Save, X, ExternalLink, FolderEdit, Download, Bot, Users, Flame, Sparkles } from "lucide-react";
-import { createExam, deleteExam, updateExam, getExams, getPendingResultIds, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult, forceFinalizeExamResult } from "@/actions/dashboardActions";
+import { createExam, deleteExam, updateExam, getExams, getStudentResultDetail, getPendingResultIds, getPendingEssayPayloads, gradeSingleEssayAction, finalizeAIGrading, deleteExamResult, forceFinalizeExamResult } from "@/actions/dashboardActions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -131,12 +131,13 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
     return localExams.filter((e) => !e.results || e.results.length === 0);
   }, [localExams]);
 
-  // Auto-refresh untuk melihat siswa yang baru bergabung / berpindah mapel secara live
+  // Auto-refresh untuk melihat siswa yang baru bergabung / berpindah mapel secara live (dengan throttling hemat database)
   useEffect(() => {
     if (!isExamListOpen && !expandedExam) return;
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== "visible") return;
       router.refresh(); // Fetch data terbaru dari server tanpa reset state client
-    }, expandedExam ? 5000 : 8000);
+    }, expandedExam ? 15000 : 25000);
     return () => clearInterval(interval);
   }, [isExamListOpen, expandedExam, router]);
 
@@ -150,6 +151,7 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
   // View Details State
   const [viewingResult, setViewingResult] = useState<any | null>(null);
   const [viewingExam, setViewingExam] = useState<UIExam | null>(null);
+  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
   const [activeBatch, setActiveBatch] = useState<Set<string>>(new Set());
   const [processingProgress, setProcessingProgress] = useState<Record<string, string>>({});
   const [autoProcessQueue, setAutoProcessQueue] = useState<string[]>([]);
@@ -700,10 +702,26 @@ export function QuestionManagement({ exams = [], availableClasses = [], availabl
                                 </button>
                               )}
                               <button 
-                                onClick={() => { setViewingResult(res); setViewingExam(exam); }}
-                                className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors whitespace-nowrap"
+                                onClick={async () => {
+                                  setLoadingDetailId(res.id);
+                                  try {
+                                    const d = await getStudentResultDetail(exam.id, res.id);
+                                    if (d.success && d.exam && d.result) {
+                                      setViewingExam(d.exam as unknown as UIExam);
+                                      setViewingResult(d.result);
+                                    } else {
+                                      alert(d.error || "Gagal memuat rincian jawaban");
+                                    }
+                                  } catch (err: any) {
+                                    alert("Gagal memuat rincian: " + (err.message || "Kesalahan jaringan"));
+                                  } finally {
+                                    setLoadingDetailId(null);
+                                  }
+                                }}
+                                disabled={loadingDetailId === res.id}
+                                className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors whitespace-nowrap disabled:opacity-50"
                               >
-                                Detail Jawaban
+                                {loadingDetailId === res.id ? "Memuat..." : "Detail Jawaban"}
                               </button>
                               <button 
                                 onClick={() => handleDeleteStudentResult(exam.id, res.id, res.student?.name || res.student?.username || "Siswa")}
